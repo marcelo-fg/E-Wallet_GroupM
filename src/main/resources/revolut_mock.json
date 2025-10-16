@@ -1,0 +1,7 @@
+{
+  "accounts": [
+    { "accountID": "REV001", "type": "bank", "balance": 2450.75 },
+    { "accountID": "REV002", "type": "crypto", "balance": 0.05 },
+    { "accountID": "REV003", "type": "etf", "balance": 1330.40 }
+  ]
+}
