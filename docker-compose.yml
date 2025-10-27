@@ -1,15 +1,13 @@
-version: "3.8"
-
 services:
   payara:
-    container_name: payara-ws
+    container_name: payara-ewallet
     image: payara/server-full:6.2025.8-jdk17
     environment:
       SECURE_ADMIN: "true"
       ADMIN_USER: "admin"
       ADMIN_PASSWORD: "admin"
     ports:
-      - "8080:8080"
-      - "4848:4848"
+      - "8080:8080"  # Application
+      - "4848:4848"  # Console d'administration
     volumes:
-      - ./target/E-Wallet_GroupM-1.0-SNAPSHOT.war:/opt/payara/appserver/glassfish/domains/domain1/autodeploy/E-Wallet_GroupM-1.0-SNAPSHOT.war
+      - ./webservice/target/E-Wallet-WebService-1.0-SNAPSHOT.war:/opt/payara/appserver/glassfish/domains/domain1/autodeploy/E-Wallet-WebService-1.0-SNAPSHOT.war
