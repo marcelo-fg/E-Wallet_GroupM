@@ -1,5 +1,6 @@
+version: "3.8"
+
 services:
-  #Payara server
   payara:
     container_name: payara-ws
     image: payara/server-full:6.2025.8-jdk17
@@ -8,9 +9,7 @@ services:
       ADMIN_USER: "admin"
       ADMIN_PASSWORD: "admin"
     ports:
-      - "8080:8080"   #apps
-      - "4848:4848"   #admin console
+      - "8080:8080"
+      - "4848:4848"
     volumes:
-      #auto deploy (maps local target artefact to container)
       - ./target/E-Wallet_GroupM-1.0-SNAPSHOT.war:/opt/payara/appserver/glassfish/domains/domain1/autodeploy/E-Wallet_GroupM-1.0-SNAPSHOT.war
-
