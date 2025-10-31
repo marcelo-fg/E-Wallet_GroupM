@@ -11,6 +11,7 @@ public class User {
     private String firstName;            // Prénom de l'utilisateur
     private String lastName;             // Nom de famille de l'utilisateur
     private List<Account> accounts;      // Liste des comptes bancaires liés à cet utilisateur
+    private Portfolio portfolio;        // Portefeuille d’investissement de l’utilisateur
 
     /**
      * Constructeur de la classe User.
@@ -29,6 +30,7 @@ public class User {
         this.firstName = firstName;
         this.lastName = lastName;
         this.accounts = new ArrayList<>();
+        this.portfolio = new Portfolio();
     }
 
     // Getters pour accéder aux informations privées de l'utilisateur
@@ -91,6 +93,9 @@ public class User {
         return total;
     }
 
+    public Portfolio getPortfolio() {
+        return portfolio;
+    }
     /**
      * Retourne une représentation textuelle de l'utilisateur sous la forme:
      * "User: prénom nom (email)"

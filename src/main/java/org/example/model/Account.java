@@ -1,5 +1,8 @@
 package org.example.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * La classe Account représente un compte bancaire simple.
  * Elle contient des informations sur le compte comme son identifiant,
@@ -24,6 +27,8 @@ public class Account {
      */
     private double balance;
 
+    private List<Transaction> transactions;
+
     /**
      * Constructeur de la classe Account.
      * Il permet de créer un nouveau compte en initialisant l'identifiant,
@@ -37,6 +42,7 @@ public class Account {
         this.accountID = accountID;
         this.type = type;
         this.balance = balance;
+        this.transactions = new ArrayList<>();
     }
 
     /**
@@ -56,7 +62,10 @@ public class Account {
      * @param amount Montant à déposer sur le compte.
      */
     public void deposit(double amount) {
-        if (amount > 0) balance += amount;
+        if (amount > 0) {
+            balance += amount;
+            addTransaction("deposit", amount, "Dépôt sur le compte");
+        }
     }
 
     /**
@@ -66,7 +75,22 @@ public class Account {
      * @param amount Montant à retirer du compte.
      */
     public void withdraw(double amount) {
-        if (amount > 0 && amount <= balance) balance -= amount;
+        if (amount > 0 && amount <= balance) {
+            balance -= amount;
+            addTransaction("withdraw", amount, "Retrait du compte");
+        }
+    }
+
+    private void addTransaction(String type, double amount, String description) {
+        String id = "TXN-" + (transactions.size() + 1);
+        Transaction txn = new Transaction(id, type, amount, description); // ✅ ajout du type
+        transactions.add(txn);
+    }
+
+    public void printTransactionHistory() {
+        for (Transaction transaction : transactions) {
+            System.out.println(transaction);
+        }
     }
 
     /**
