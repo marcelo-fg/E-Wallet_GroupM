@@ -1,7 +1,11 @@
 package org.example.service;
 
 import org.example.model.User;
+import org.example.model.Portfolio;
+import org.example.model.WealthTracker;
+import org.example.model.Asset;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -10,39 +14,27 @@ import java.util.List;
  * et d'afficher la liste des utilisateurs enregistrés.
  */
 public class UserManager {
-    /**
-     * Liste qui stocke tous les utilisateurs enregistrés.
-     * Chaque utilisateur est représenté par un objet de la classe User.
-     */
-    private List<User> users;
 
-    /**
-     * Constructeur de la classe UserManager.
-     * Il initialise la liste des utilisateurs comme une liste vide.
-     * Cela signifie qu'au départ, aucun utilisateur n'est enregistré.
-     */
+    /** Liste des utilisateurs enregistrés */
+    private final List<User> users;
+
+    /** Liste des portefeuilles associés */
+    private final List<Portfolio> portfolios;
+
+    /** Constructeur : initialise les listes */
     public UserManager() {
         this.users = new ArrayList<>();
+        this.portfolios = new ArrayList<>();
     }
 
     /**
-     * Cette méthode permet d'enregistrer un nouvel utilisateur.
-     * Elle prend en paramètres les informations nécessaires pour créer un utilisateur :
-     * - userID : un identifiant unique pour l'utilisateur
-     * - email : l'adresse email de l'utilisateur
-     * - password : le mot de passe choisi par l'utilisateur
-     * - firstName : le prénom de l'utilisateur
-     * - lastName : le nom de famille de l'utilisateur
-     *
-     * La méthode crée un nouvel objet User avec ces informations,
-     * l'ajoute à la liste des utilisateurs, puis retourne cet objet.
-     *
-     * @param userID Identifiant unique de l'utilisateur
-     * @param email Adresse email de l'utilisateur
-     * @param password Mot de passe de l'utilisateur
-     * @param firstName Prénom de l'utilisateur
-     * @param lastName Nom de famille de l'utilisateur
-     * @return L'objet User nouvellement créé
+     * Enregistre un nouvel utilisateur.
+     * @param userID Identifiant unique de l'utilisateur (String)
+     * @param email Adresse email
+     * @param password Mot de passe
+     * @param firstName Prénom
+     * @param lastName Nom de famille
+     * @return L'utilisateur nouvellement créé
      */
     public User registerUser(String userID, String email, String password, String firstName, String lastName) {
         User newUser = new User(userID, email, password, firstName, lastName);
@@ -51,46 +43,106 @@ public class UserManager {
     }
 
     /**
-     * Cette méthode permet à un utilisateur de se connecter.
-     * Elle prend en paramètres l'email et le mot de passe fournis par l'utilisateur.
-     * La méthode parcourt la liste des utilisateurs pour vérifier si un utilisateur
-     * a l'email et le mot de passe correspondants.
-     *
-     * Si une correspondance est trouvée, un message de succès est affiché,
-     * et l'objet User correspondant est retourné.
-     * Sinon, un message d'erreur est affiché, et la méthode retourne null.
-     *
-     * @param email Email fourni pour la connexion
-     * @param password Mot de passe fourni pour la connexion
-     * @return L'objet User si la connexion réussit, sinon null
+     * Authentifie un utilisateur par email et mot de passe.
+     * @param email Email fourni
+     * @param password Mot de passe fourni
+     * @return L'utilisateur si la connexion réussit, sinon null
      */
     public User login(String email, String password) {
         for (User user : users) {
-            if (user.getEmail().equals(email) && user.getPassword().equals(password)) {
-                System.out.println("Login successful for " + user.getFirstName());
+            if (user.getEmail().equalsIgnoreCase(email) && user.getPassword().equals(password)) {
+                System.out.println("Connexion réussie pour " + user.getFirstName());
                 return user;
             }
         }
-        System.out.println("Invalid email or password.");
+        System.out.println("Échec de la connexion : email ou mot de passe invalide.");
         return null;
     }
 
-    /**
-     * Cette méthode affiche la liste de tous les utilisateurs enregistrés.
-     * Elle parcourt la liste des utilisateurs et affiche chaque utilisateur.
-     * Cela peut être utile pour vérifier quels utilisateurs sont actuellement enregistrés.
-     */
+    /** Affiche tous les utilisateurs dans la console */
+    @SuppressWarnings("unused")
     public void listUsers() {
         for (User user : users) {
             System.out.println(user);
         }
     }
 
-    /**
-     * Retourne la liste de tous les utilisateurs enregistrés.
-     * @return Liste des utilisateurs
-     */
+    /** Retourne tous les utilisateurs */
     public List<User> getAllUsers() {
-        return this.users;
+        return new ArrayList<>(users);
+    }
+
+    /** Retourne tous les portefeuilles */
+    public List<Portfolio> getAllPortfolios() {
+        return new ArrayList<>(portfolios);
+    }
+
+    /** Ajoute un portefeuille */
+    public Portfolio addPortfolio(Portfolio portfolio) {
+        portfolios.add(portfolio);
+        return portfolio;
+    }
+
+    /** Récupère un portefeuille par ID */
+    public Portfolio getPortfolioById(int id) {
+        for (Portfolio portfolio : portfolios) {
+            if (portfolio.getId() == id) {
+                return portfolio;
+            }
+        }
+        return null;
+    }
+
+    /** Supprime un portefeuille par ID */
+    public boolean deletePortfolio(int id) {
+        Iterator<Portfolio> iterator = portfolios.iterator();
+        while (iterator.hasNext()) {
+            Portfolio portfolio = iterator.next();
+            if (portfolio.getId() == id) {
+                iterator.remove();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Récupère un utilisateur par ID (comparaison sur String userID) */
+    public User getUserById(int id) {
+        for (User user : users) {
+            if (user.getUserID().equals(String.valueOf(id))) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    /** Supprime un utilisateur par ID (comparaison sur String userID) */
+    public boolean deleteUser(int id) {
+        Iterator<User> iterator = users.iterator();
+        while (iterator.hasNext()) {
+            User user = iterator.next();
+            if (user.getUserID().equals(String.valueOf(id))) {
+                iterator.remove();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Calcule la richesse totale pour un utilisateur donné */
+    public WealthTracker calculateWealthForUser(int userId) {
+        User user = getUserById(userId);
+        if (user == null) {
+            return null;
+        }
+        double totalWealth = 0.0;
+        for (Portfolio portfolio : portfolios) {
+            if (portfolio.getUserID().equals(user.getUserID())) {
+                for (Asset asset : portfolio.getAssets()) {
+                    totalWealth += asset.getUnitValue() * asset.getQuantity();
+                }
+            }
+        }
+        return new WealthTracker(userId, totalWealth);
     }
 }

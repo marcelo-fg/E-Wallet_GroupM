@@ -16,11 +16,21 @@ public class WealthTracker {
     private double growthRate;
     private final List<Double> historicalValues; // historique en USD
 
+    // ✅ Constructeur principal
     public WealthTracker(User user) {
         this.user = user;
         this.totalWealth = 0;
         this.growthRate = 0;
         this.historicalValues = new ArrayList<>();
+    }
+
+    // ✅ Nouveau constructeur compatible avec UserManager
+    public WealthTracker(int userId, double totalWealth) {
+        this.user = new User(String.valueOf(userId), "", "", "", ""); // user minimal
+        this.totalWealth = totalWealth;
+        this.growthRate = 0;
+        this.historicalValues = new ArrayList<>();
+        this.historicalValues.add(totalWealth);
     }
 
     /**
@@ -31,32 +41,32 @@ public class WealthTracker {
         double accountsTotalConverted = CurrencyConverter.chfToUsd(accountsTotalUsd);
 
         double portfolioUsd = 0;
-        for (Asset a : user.getPortfolio().getAssets()) {
-            double valueChf = a.getTotalValue();
-            portfolioUsd += CurrencyConverter.chfToUsd(valueChf);
+        if (user.getPortfolio() != null && user.getPortfolio().getAssets() != null) {
+            for (Asset a : user.getPortfolio().getAssets()) {
+                double valueChf = a.getTotalValue();
+                portfolioUsd += CurrencyConverter.chfToUsd(valueChf);
+            }
         }
 
         totalWealth = accountsTotalConverted + portfolioUsd;
 
-        // Historique pour calcul du growthRate
+        // Historique pour calcul du taux de croissance
         historicalValues.add(totalWealth);
         if (historicalValues.size() > 1) {
             double first = historicalValues.get(0);
             double last = totalWealth;
-            growthRate = ((last - first) / first) * 100;
+            if (first != 0) {
+                growthRate = ((last - first) / first) * 100;
+            }
         }
     }
 
-    /**
-     * Retourne la valeur totale actuelle du patrimoine en USD.
-     */
+    /** Retourne la valeur totale actuelle du patrimoine en USD. */
     public double getTotalWealth() {
         return totalWealth;
     }
 
-    /**
-     * Retourne la valeur totale actuelle du patrimoine en CHF.
-     */
+    /** Retourne la valeur totale actuelle du patrimoine en CHF. */
     public double getTotalWealthChf() {
         return CurrencyConverter.usdToChf(totalWealth);
     }
@@ -65,9 +75,7 @@ public class WealthTracker {
         return growthRate;
     }
 
-    /**
-     * Affichage clair du suivi de patrimoine.
-     */
+    /** Affichage clair du suivi de patrimoine. */
     @Override
     public String toString() {
         double wealthChf = getTotalWealthChf();

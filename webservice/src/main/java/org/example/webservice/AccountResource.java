@@ -1,33 +1,46 @@
 package org.example.webservice;
 
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.util.List;
-
 import org.example.model.Account;
 import org.example.service.AccountManager;
+import java.util.List;
 
 @Path("/accounts")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class AccountResource {
-    private AccountManager accountManager = new AccountManager();
+
+    private static final AccountManager accountManager = new AccountManager();
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public List<Account> getAllAccounts() {
-        return accountManager.getAllAccounts();
+    public Response getAllAccounts() {
+        List<Account> accounts = accountManager.getAllAccounts();
+        return Response.ok(accounts).build();
     }
 
-    // Optional: Enable if AccountManager supports account creation
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response createAccount(Account account) {
-        Account created = accountManager.createAccount(account);
+        Account created = accountManager.addAccount(account);
         return Response.status(Response.Status.CREATED).entity(created).build();
+    }
+
+    @GET
+    @Path("/{id}")
+    public Response getAccountById(@PathParam("id") int id) {
+        Account account = accountManager.getAccountById(id);
+        if (account == null)
+            return Response.status(Response.Status.NOT_FOUND).entity("Compte non trouvé").build();
+        return Response.ok(account).build();
+    }
+
+    @DELETE
+    @Path("/{id}")
+    public Response deleteAccount(@PathParam("id") int id) {
+        boolean deleted = accountManager.deleteAccount(id);
+        if (!deleted)
+            return Response.status(Response.Status.NOT_FOUND).entity("Compte non trouvé").build();
+        return Response.noContent().build();
     }
 }

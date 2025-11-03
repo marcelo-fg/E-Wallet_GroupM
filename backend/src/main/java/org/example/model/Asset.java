@@ -1,20 +1,26 @@
-// src/main/java/org/example/model/Asset.java
 package org.example.model;
 
+/**
+ * Classe représentant un actif (action, crypto, ETF, etc.).
+ */
 public class Asset {
 
-    private String assetName;   // ex: "Apple", "Bitcoin"
-    private String type;        // "stock", "crypto", "etf"
-    private double quantity;
-    private double unitValue;
-    private String symbol;      // ✅ ex: "AAPL", "BTC", "SPY", "BTC" (id CoinGecko: "bitcoin")
+    private String symbol;     // ex: "AAPL", "bitcoin"
+    private String type;       // ex: "stock", "crypto", "etf"
+    private String assetName;  // nom complet
+    private double unitValue;  // prix unitaire (CHF ou USD selon contexte)
+    private double quantity;   // quantité détenue
 
-    // Ancien constructeur (reste compatible)
-    public Asset(String assetName, String type, double quantity, double unitValue) {
-        this(assetName, type, quantity, unitValue, null);
+    // ✅ Constructeur complet utilisé dans MarketDataService
+    public Asset(String symbol, String type, String assetName, double unitValue) {
+        this.symbol = symbol;
+        this.type = type;
+        this.assetName = assetName;
+        this.unitValue = unitValue;
+        this.quantity = 0.0;
     }
 
-    // Nouveau constructeur avec symbol
+    // ✅ Nouveau constructeur compatible avec Main.java
     public Asset(String assetName, String type, double quantity, double unitValue, String symbol) {
         this.assetName = assetName;
         this.type = type;
@@ -23,28 +29,35 @@ public class Asset {
         this.symbol = symbol;
     }
 
-    public String getAssetName() { return assetName; }
-    public String getType() { return type; }
-    public double getQuantity() { return quantity; }
-    public double getUnitValue() { return unitValue; }
-    public String getSymbol() { return symbol; }
+    // ✅ Constructeur alternatif si besoin d’un actif sans valeur initiale
+    public Asset(String symbol, String type, String assetName) {
+        this(symbol, type, assetName, 0.0);
+    }
 
-    public void setUnitValue(double unitValue) { this.unitValue = unitValue; }
+    // --- Getters et Setters ---
+    public String getSymbol() { return symbol; }
     public void setSymbol(String symbol) { this.symbol = symbol; }
 
-    public double getTotalValue() { return quantity * unitValue; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+
+    public String getAssetName() { return assetName; }
+    public void setAssetName(String assetName) { this.assetName = assetName; }
+
+    public double getUnitValue() { return unitValue; }
+    public void setUnitValue(double unitValue) { this.unitValue = unitValue; }
+
+    public double getQuantity() { return quantity; }
+    public void setQuantity(double quantity) { this.quantity = quantity; }
+
+    // ✅ Méthode pratique pour calculer la valeur totale de l’actif
+    public double getTotalValue() {
+        return unitValue * quantity;
+    }
 
     @Override
     public String toString() {
-        double valueChf = getTotalValue();
-        double valueUsd = org.example.service.connector.CurrencyConverter.chfToUsd(valueChf);
-        double unitUsd = org.example.service.connector.CurrencyConverter.chfToUsd(unitValue);
-
-        String s = symbol != null ? " [" + symbol + "]" : "";
-        return assetName + s + " (" + type + ") - " + quantity +
-                " unités à " + String.format("%.2f", unitValue) + " CHF" +
-                " (≈ " + String.format("%.2f", unitUsd) + " USD)" +
-                " -> " + String.format("%.2f", valueChf) + " CHF" +
-                " (≈ " + String.format("%.2f", valueUsd) + " USD)";
+        return String.format("%s (%s): %.2f CHF x %.2f = %.2f CHF",
+                assetName, symbol, unitValue, quantity, getTotalValue());
     }
 }
