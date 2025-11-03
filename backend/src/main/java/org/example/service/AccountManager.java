@@ -3,19 +3,13 @@ package org.example.service;
 import org.example.model.Account;
 import org.example.model.User;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AccountManager {
-    public void importRevolutMockToUser(User user) {
-        org.example.service.connector.RevolutSandboxConnector connector = new org.example.service.connector.RevolutSandboxConnector();
-        List<Account> accounts = connector.loadMockAccounts();
 
-        for (Account acc : accounts) {
-            user.addAccount(acc);
-        }
+    private List<Account> accounts = new ArrayList<>();
 
-        System.out.println("Comptes Revolut mock importés pour " + user.getFirstName());
-    }
 
     public void listUserAccounts(User user) {
         System.out.println("\n📘 Comptes de " + user.getFirstName() + " :");
@@ -23,5 +17,16 @@ public class AccountManager {
             System.out.println(acc);
         }
         System.out.println("Solde total : " + user.getTotalBalance() + " CHF");
+    }
+
+    // ✅ Ajouté pour le WebService
+    public List<Account> getAllAccounts() {
+        return accounts;
+    }
+
+    // ✅ Ajouté pour le WebService
+    public Account createAccount(Account account) {
+        accounts.add(account);
+        return account;
     }
 }

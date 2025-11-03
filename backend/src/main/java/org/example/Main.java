@@ -1,4 +1,3 @@
-// src/main/java/org/example/Main.java
 package org.example;
 
 import org.example.model.*;
@@ -17,14 +16,20 @@ public class Main {
 
         // --- Import des comptes Revolut mockés ---
         AccountManager accountManager = new AccountManager();
-        accountManager.importRevolutMockToUser(marcelo);
         accountManager.listUserAccounts(marcelo);
 
+        if (marcelo.getAccounts().isEmpty()) {
+            Account newAccount = new Account("A001", "courant", 0.0);
+            marcelo.addAccount(newAccount);
+        }
+
         // --- Transactions de test ---
-        Account firstAccount = marcelo.getAccounts().get(0);
-        firstAccount.deposit(500);
-        firstAccount.withdraw(200);
-        firstAccount.printTransactionHistory();
+        if (!marcelo.getAccounts().isEmpty()) {
+            Account firstAccount = marcelo.getAccounts().get(0);
+            firstAccount.deposit(500);
+            firstAccount.withdraw(200);
+            firstAccount.printTransactionHistory();
+        }
 
         // --- Portefeuille avec symboles ---
         Portfolio portfolio = marcelo.getPortfolio();

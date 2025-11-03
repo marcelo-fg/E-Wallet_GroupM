@@ -85,4 +85,12 @@ public class UserManager {
             System.out.println(user);
         }
     }
+
+    /**
+     * Retourne la liste de tous les utilisateurs enregistrés.
+     * @return Liste des utilisateurs
+     */
+    public List<User> getAllUsers() {
+        return this.users;
+    }
 }
