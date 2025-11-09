@@ -4,7 +4,9 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.example.model.Account;
+import org.example.model.User;
 import org.example.service.AccountManager;
+import org.example.service.UserManager;
 import java.util.List;
 
 @Path("/accounts")
@@ -13,6 +15,7 @@ import java.util.List;
 public class AccountResource {
 
     private static final AccountManager accountManager = new AccountManager();
+    private static final UserManager userManager = new UserManager();
 
     @GET
     public Response getAllAccounts() {
@@ -24,6 +27,22 @@ public class AccountResource {
     public Response createAccount(Account account) {
         Account created = accountManager.addAccount(account);
         return Response.status(Response.Status.CREATED).entity(created).build();
+    }
+
+    @POST
+    @Path("/user/{userId}")
+    public Response createAccountForUser(@PathParam("userId") int userId, Account account) {
+        User user = userManager.getUserById(userId);
+        if (user == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("Utilisateur non trouvé").build();
+        }
+
+        account.setUser(user);
+        user.addAccount(account);
+        accountManager.addAccount(account); // ✅ ajoute aussi à la liste globale
+
+        return Response.status(Response.Status.CREATED).entity(account).build();
     }
 
     @GET
