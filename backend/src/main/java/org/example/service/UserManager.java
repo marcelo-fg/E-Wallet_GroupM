@@ -1,6 +1,7 @@
 package org.example.service;
 
 import org.example.model.User;
+import org.example.model.Account;
 import org.example.model.Portfolio;
 import org.example.model.WealthTracker;
 import org.example.model.Asset;
@@ -16,15 +17,35 @@ import java.util.List;
 public class UserManager {
 
     /** Liste des utilisateurs enregistrés */
-    private final List<User> users;
+    private static final List<User> users = new ArrayList<>();
 
     /** Liste des portefeuilles associés */
-    private final List<Portfolio> portfolios;
+    private static final List<Portfolio> portfolios = new ArrayList<>();
 
     /** Constructeur : initialise les listes */
     public UserManager() {
-        this.users = new ArrayList<>();
-        this.portfolios = new ArrayList<>();
+        // Les listes sont initialisées statiquement
+        populateUsers();
+    }
+
+    /* Populate for demo */
+    public void populateUsers() {
+
+        // Premier utilisateur avec compte courant
+        User user1 = new User("1", "alice@example.com", "1234", "Alice", "Demo");
+        Account account1 = new Account("A001", "courant", 1200.50);
+        account1.setUser(user1);
+        user1.addAccount(account1);
+
+        // Deuxième utilisateur avec compte épargne
+        User user2 = new User("2", "bob@example.com", "5678", "Bob", "Test");
+        Account account2 = new Account("A002", "épargne", 3500.00);
+        account2.setUser(user2);
+        user2.addAccount(account2);
+
+        // Ajout des utilisateurs dans la liste globale
+        users.add(user1);
+        users.add(user2);
     }
 
     /**
@@ -145,4 +166,25 @@ public class UserManager {
         }
         return new WealthTracker(userId, totalWealth);
     }
+
+    /** Modifier un utilisateur **/
+
+
+    public boolean updateUser(int id, User newUser) {
+        Iterator<User> iterator = users.iterator();
+        while (iterator.hasNext()) {
+            User user = iterator.next();
+            if (user.getUserID().equals(String.valueOf(id))) {
+                user.setFirstName(newUser.getFirstName());
+                user.setLastName(newUser.getLastName());
+                user.setEmail(newUser.getEmail());
+                user.setPassword(newUser.getPassword());
+                return  true;
+            }
+        }
+        return false;
+    }
+
+
+
 }

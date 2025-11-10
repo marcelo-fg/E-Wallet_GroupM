@@ -87,13 +87,18 @@ public class UserResource {
      */
     @DELETE
     @Path("/{id}")
-    public Response deleteUser(@PathParam("id") int id) {
-        boolean deleted = userManager.deleteUser(id);
-        if (!deleted) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity("Utilisateur non trouvé")
-                    .build();
-        }
-        return Response.noContent().build();
+    public boolean deleteUser(@PathParam("id") int id) {
+        return userManager.deleteUser(id);
+    }
+
+    /**
+     * Met à jour les informations d'un utilisateur existant.
+     * Endpoint : PUT /api/users/{id}
+     */
+    @PUT
+    @Path("/{id}")
+    public boolean updateUser(@PathParam("id") int id, User updatedUser) {
+        boolean result = userManager.updateUser(id, updatedUser);
+        return result;
     }
 }

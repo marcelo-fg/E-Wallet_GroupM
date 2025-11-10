@@ -11,7 +11,7 @@ public class Asset {
     private double unitValue;  // prix unitaire (CHF ou USD selon contexte)
     private double quantity;   // quantité détenue
 
-    // ✅ Constructeur complet utilisé dans MarketDataService
+    // Constructeur complet utilisé dans MarketDataService
     public Asset(String symbol, String type, String assetName, double unitValue) {
         this.symbol = symbol;
         this.type = type;

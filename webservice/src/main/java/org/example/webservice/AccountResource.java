@@ -56,10 +56,18 @@ public class AccountResource {
 
     @DELETE
     @Path("/{id}")
-    public Response deleteAccount(@PathParam("id") int id) {
-        boolean deleted = accountManager.deleteAccount(id);
-        if (!deleted)
-            return Response.status(Response.Status.NOT_FOUND).entity("Compte non trouvé").build();
-        return Response.noContent().build();
+    public boolean deleteAccount(@PathParam("id") int id) {
+        return accountManager.deleteAccount(id);
+    }
+
+    /**
+     * Met à jour les informations d'un utilisateur existant.
+     * Endpoint : PUT /api/users/{id}
+     */
+    @PUT
+    @Path("/{id}")
+    public boolean updateUser(@PathParam("id") int id, Account newAccount) {
+        boolean result = accountManager.updateAccount(id, newAccount);
+        return result;
     }
 }

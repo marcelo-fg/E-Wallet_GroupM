@@ -14,6 +14,15 @@ public class User {
     private Portfolio portfolio;        // Portefeuille d’investissement de l’utilisateur
 
     /**
+     * Default constructor required for JSON-B deserialization.
+     * Initializes accounts as empty list and portfolio as new Portfolio.
+     */
+    public User() {
+        this.accounts = new ArrayList<>();
+        this.portfolio = new Portfolio();
+    }
+
+    /**
      * Constructeur de la classe User.
      * Initialise un nouvel utilisateur avec ses informations personnelles et crée une liste vide de comptes.
      *
@@ -92,6 +101,36 @@ public class User {
         }
         return total;
     }
+
+    public void setPortfolio(Portfolio portfolio) {
+        this.portfolio = portfolio;
+    }
+
+    public void  setAccounts(List<Account> accounts) {
+        this.accounts = accounts;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setUserID(String userID) {
+        this.userID = userID;
+    }
+
+
 
     public Portfolio getPortfolio() {
         return portfolio;
