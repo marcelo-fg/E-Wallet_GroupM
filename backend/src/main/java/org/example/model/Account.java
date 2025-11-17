@@ -19,9 +19,6 @@ public class Account {
     /** Solde actuel du compte. */
     private double balance;
 
-    /** Utilisateur propriétaire du compte. */
-    private User user;
-
     /** Liste des transactions liées à ce compte. */
     private List<Transaction> transactions;
 
@@ -71,15 +68,6 @@ public class Account {
 
     public void setBalance(double balance) {
         this.balance = balance;
-    }
-
-    @JsonbTransient
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
     }
 
     public List<Transaction> getTransactions() {
@@ -148,8 +136,6 @@ public class Account {
         return "Account{" +
                 "id='" + accountID + '\'' +
                 ", type='" + type + '\'' +
-                ", balance=" + balance +
-                ", owner=" + (user != null ? user.getFirstName() + " " + user.getLastName() : "Aucun") +
-                '}';
+                ", balance=" + balance;
     }
 }

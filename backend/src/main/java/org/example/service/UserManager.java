@@ -1,5 +1,6 @@
 package org.example.service;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import org.example.model.User;
 import org.example.model.Account;
 import org.example.model.Portfolio;
@@ -15,6 +16,7 @@ import java.util.List;
  * Il permet d’enregistrer, d’authentifier, de modifier et de supprimer des utilisateurs,
  * ainsi que de calculer leur richesse totale.
  */
+@ApplicationScoped
 public class UserManager {
 
     /** Liste globale des utilisateurs enregistrés. */
@@ -39,7 +41,6 @@ public class UserManager {
         // Premier utilisateur avec un compte courant
         User user1 = new User("1", "test@example.com", "1234", "test", "Demo");
         Account account1 = new Account("A001", "courant", 1200.50);
-        account1.setUser(user1);
         user1.addAccount(account1);
 
         // Ajout des utilisateurs à la liste

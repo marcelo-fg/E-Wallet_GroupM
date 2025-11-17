@@ -9,6 +9,8 @@ import java.util.List;
  */
 public class User {
 
+    private double totalBalance;
+
     /** Identifiant unique de l’utilisateur. */
     private String userID;
 
@@ -37,6 +39,7 @@ public class User {
     public User() {
         this.accounts = new ArrayList<>();
         this.portfolio = new Portfolio();
+        //this.totalBalance = initiateTotalBalance();
     }
 
     /**
@@ -56,6 +59,7 @@ public class User {
         this.lastName = lastName;
         this.accounts = new ArrayList<>();
         this.portfolio = new Portfolio();
+        this.totalBalance = initiateTotalBalance();
     }
 
     // ===================== Getters =====================
@@ -134,14 +138,19 @@ public class User {
      *
      * @return solde total en CHF
      */
-    public double getTotalBalance() {
+    public double initiateTotalBalance() {
         double total = 0;
         for (Account account : accounts) {
             total += account.getBalance();
         }
         return total;
     }
-
+    public void setTotalBalance(double totalBalance) {
+        this.totalBalance = totalBalance;
+    }
+    public double getTotalBalance(){
+        return this.totalBalance;
+    }
     /**
      * Retourne une représentation textuelle de l’utilisateur sous la forme :
      * "User: prénom nom (email)".
