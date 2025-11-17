@@ -8,6 +8,10 @@ import org.example.service.UserManager;
 
 import java.util.List;
 
+/**
+ * Ressource REST responsable de la gestion des utilisateurs.
+ * Fournit les opérations CRUD ainsi que les endpoints d’enregistrement et d’authentification.
+ */
 @Path("/users")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -16,8 +20,10 @@ public class UserResource {
     private static final UserManager userManager = new UserManager();
 
     /**
-     * Récupère la liste de tous les utilisateurs
+     * Récupère la liste de tous les utilisateurs.
      * Endpoint : GET /api/users
+     *
+     * @return la liste des utilisateurs
      */
     @GET
     public Response getAllUsers() {
@@ -26,8 +32,11 @@ public class UserResource {
     }
 
     /**
-     * Enregistre un nouvel utilisateur
+     * Enregistre un nouvel utilisateur.
      * Endpoint : POST /api/users/register
+     *
+     * @param user nouvel utilisateur à enregistrer
+     * @return l’utilisateur créé avec le statut HTTP 201
      */
     @POST
     @Path("/register")
@@ -49,8 +58,11 @@ public class UserResource {
     }
 
     /**
-     * Authentifie un utilisateur
+     * Authentifie un utilisateur existant.
      * Endpoint : POST /api/users/login
+     *
+     * @param user utilisateur avec email et mot de passe
+     * @return l’utilisateur authentifié ou une erreur 401 si les informations sont incorrectes
      */
     @POST
     @Path("/login")
@@ -58,16 +70,18 @@ public class UserResource {
         User loggedUser = userManager.login(user.getEmail(), user.getPassword());
         if (loggedUser != null) {
             return Response.ok(loggedUser).build();
-        } else {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity("Email ou mot de passe incorrect")
-                    .build();
         }
+        return Response.status(Response.Status.UNAUTHORIZED)
+                .entity("Email ou mot de passe incorrect")
+                .build();
     }
 
     /**
-     * Récupère un utilisateur par ID
+     * Récupère un utilisateur par identifiant.
      * Endpoint : GET /api/users/{id}
+     *
+     * @param id identifiant de l’utilisateur
+     * @return l’utilisateur correspondant ou une erreur 404 s’il n’existe pas
      */
     @GET
     @Path("/{id}")
@@ -82,23 +96,43 @@ public class UserResource {
     }
 
     /**
-     * Supprime un utilisateur par ID
+     * Supprime un utilisateur par identifiant.
      * Endpoint : DELETE /api/users/{id}
+     *
+     * @param id identifiant de l’utilisateur à supprimer
+     * @return réponse 204 si suppression réussie, 404 sinon
      */
     @DELETE
     @Path("/{id}")
-    public boolean deleteUser(@PathParam("id") int id) {
-        return userManager.deleteUser(id);
+    public Response deleteUser(@PathParam("id") int id) {
+        boolean deleted = userManager.deleteUser(id);
+        if (deleted) {
+            return Response.noContent().build();
+        }
+        return Response.status(Response.Status.NOT_FOUND)
+                .entity("Utilisateur non trouvé")
+                .build();
     }
 
     /**
-     * Met à jour les informations d'un utilisateur existant.
+     * Met à jour les informations d’un utilisateur existant.
      * Endpoint : PUT /api/users/{id}
+     *
+     * @param id identifiant de l’utilisateur à mettre à jour
+     * @param updatedUser nouvel utilisateur avec les données à mettre à jour
+     * @return réponse 200 si mise à jour réussie, 404 sinon
      */
     @PUT
     @Path("/{id}")
-    public boolean updateUser(@PathParam("id") int id, User updatedUser) {
-        boolean result = userManager.updateUser(id, updatedUser);
-        return result;
+    public Response updateUser(@PathParam("id") int id, User updatedUser) {
+        boolean updated = userManager.updateUser(id, updatedUser);
+        if (updated) {
+            return Response.ok()
+                    .entity("Utilisateur mis à jour avec succès")
+                    .build();
+        }
+        return Response.status(Response.Status.NOT_FOUND)
+                .entity("Utilisateur non trouvé")
+                .build();
     }
 }

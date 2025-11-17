@@ -4,37 +4,37 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * La classe Transaction représente une opération financière effectuée sur un compte.
- * Elle peut être de type dépôt, retrait ou transfert et contient des informations
- * sur le montant, la date, et une description optionnelle.
+ * Représente une transaction financière effectuée sur un compte.
+ * Une transaction peut correspondre à un dépôt, un retrait ou un transfert,
+ * et contient des informations sur le montant, la date et une description facultative.
  */
 public class Transaction {
 
-    /** Identifiant unique de la transaction (par ex : "TXN001"). */
+    /** Identifiant unique de la transaction (exemple : "TXN001"). */
     private String transactionID;
 
-    /** Type de transaction (par ex : "deposit", "withdraw", "transfer"). */
+    /** Type de transaction (exemple : "deposit", "withdraw", "transfer"). */
     private String type;
 
-    /** Montant impliqué dans la transaction. */
+    /** Montant concerné par la transaction. */
     private double amount;
 
     /** Date et heure exactes de la transaction. */
     private LocalDateTime timestamp;
 
-    /** Description optionnelle de la transaction (ex : "Virement salaire", "Achat crypto"). */
+    /** Description optionnelle de la transaction (exemple : "Virement salaire", "Achat crypto"). */
     private String description;
 
-    // ✅ Nouveau champ pour identifier le compte concerné (optionnel mais utile)
+    /** Identifiant du compte associé à la transaction (facultatif, mais utile pour le suivi). */
     private String accountID;
 
     /**
-     * Constructeur de la classe Transaction.
+     * Constructeur principal de la classe Transaction.
      *
-     * @param transactionID Identifiant unique
-     * @param type Type de transaction ("deposit", "withdraw", "transfer")
-     * @param amount Montant concerné
-     * @param description Description optionnelle
+     * @param transactionID identifiant unique de la transaction
+     * @param type type de transaction ("deposit", "withdraw", "transfer")
+     * @param amount montant concerné
+     * @param description description optionnelle de la transaction
      */
     public Transaction(String transactionID, String type, double amount, String description) {
         this.transactionID = transactionID;
@@ -44,29 +44,63 @@ public class Transaction {
         this.description = description;
     }
 
-    // 🔹 Surcharge utile pour associer un compte à la transaction
+    /**
+     * Constructeur alternatif permettant d’associer un compte à la transaction.
+     *
+     * @param transactionID identifiant unique de la transaction
+     * @param type type de transaction ("deposit", "withdraw", "transfer")
+     * @param amount montant concerné
+     * @param description description optionnelle
+     * @param accountID identifiant du compte concerné
+     */
     public Transaction(String transactionID, String type, double amount, String description, String accountID) {
         this(transactionID, type, amount, description);
         this.accountID = accountID;
     }
 
-    // ------------------------- Getters -------------------------
-    public String getTransactionID() { return transactionID; }
-    public String getType() { return type; }
-    public double getAmount() { return amount; }
-    public LocalDateTime getTimestamp() { return timestamp; }
-    public String getDescription() { return description; }
-    public String getAccountID() { return accountID; }
+    // ===================== Getters =====================
 
-    // ------------------------- Méthodes utilitaires -------------------------
+    public String getTransactionID() {
+        return transactionID;
+    }
 
-    /** Retourne la date/heure de la transaction sous forme lisible. */
+    public String getType() {
+        return type;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getAccountID() {
+        return accountID;
+    }
+
+    // ===================== Méthodes utilitaires =====================
+
+    /**
+     * Retourne la date et l’heure de la transaction au format lisible.
+     *
+     * @return date et heure de la transaction formatées
+     */
     public String getFormattedTimestamp() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         return timestamp.format(formatter);
     }
 
-    /** Fournit une description textuelle complète de la transaction. */
+    /**
+     * Retourne une représentation textuelle complète de la transaction.
+     *
+     * @return une chaîne de caractères décrivant la transaction
+     */
     @Override
     public String toString() {
         return "[" + getFormattedTimestamp() + "] "

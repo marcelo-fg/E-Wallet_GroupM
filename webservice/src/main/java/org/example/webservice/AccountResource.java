@@ -7,8 +7,13 @@ import org.example.model.Account;
 import org.example.model.User;
 import org.example.service.AccountManager;
 import org.example.service.UserManager;
+
 import java.util.List;
 
+/**
+ * Ressource REST pour la gestion des comptes utilisateurs.
+ * Fournit les endpoints CRUD pour créer, lire, mettre à jour et supprimer des comptes.
+ */
 @Path("/accounts")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -17,18 +22,30 @@ public class AccountResource {
     private static final AccountManager accountManager = new AccountManager();
     private static final UserManager userManager = new UserManager();
 
+    /**
+     * Récupère la liste de tous les comptes.
+     * Endpoint : GET /api/accounts
+     */
     @GET
     public Response getAllAccounts() {
         List<Account> accounts = accountManager.getAllAccounts();
         return Response.ok(accounts).build();
     }
 
+    /**
+     * Crée un nouveau compte sans utilisateur associé.
+     * Endpoint : POST /api/accounts
+     */
     @POST
     public Response createAccount(Account account) {
         Account created = accountManager.addAccount(account);
         return Response.status(Response.Status.CREATED).entity(created).build();
     }
 
+    /**
+     * Crée un nouveau compte associé à un utilisateur existant.
+     * Endpoint : POST /api/accounts/user/{userId}
+     */
     @POST
     @Path("/user/{userId}")
     public Response createAccountForUser(@PathParam("userId") int userId, Account account) {
@@ -40,34 +57,56 @@ public class AccountResource {
 
         account.setUser(user);
         user.addAccount(account);
-        accountManager.addAccount(account); // ✅ ajoute aussi à la liste globale
+        accountManager.addAccount(account); // ajoute également à la liste globale
 
         return Response.status(Response.Status.CREATED).entity(account).build();
     }
 
+    /**
+     * Récupère un compte spécifique selon son ID.
+     * Endpoint : GET /api/accounts/{id}
+     */
     @GET
     @Path("/{id}")
     public Response getAccountById(@PathParam("id") int id) {
         Account account = accountManager.getAccountById(id);
-        if (account == null)
-            return Response.status(Response.Status.NOT_FOUND).entity("Compte non trouvé").build();
+        if (account == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("Compte non trouvé").build();
+        }
         return Response.ok(account).build();
     }
 
+    /**
+     * Supprime un compte selon son ID.
+     * Endpoint : DELETE /api/accounts/{id}
+     */
     @DELETE
     @Path("/{id}")
-    public boolean deleteAccount(@PathParam("id") int id) {
-        return accountManager.deleteAccount(id);
+    public Response deleteAccount(@PathParam("id") int id) {
+        boolean deleted = accountManager.deleteAccount(id);
+        if (deleted) {
+            return Response.noContent().build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("Compte non trouvé").build();
+        }
     }
 
     /**
-     * Met à jour les informations d'un utilisateur existant.
-     * Endpoint : PUT /api/users/{id}
+     * Met à jour les informations d’un compte existant.
+     * Endpoint : PUT /api/accounts/{id}
      */
     @PUT
     @Path("/{id}")
-    public boolean updateUser(@PathParam("id") int id, Account newAccount) {
-        boolean result = accountManager.updateAccount(id, newAccount);
-        return result;
+    public Response updateAccount(@PathParam("id") int id, Account newAccount) {
+        boolean updated = accountManager.updateAccount(id, newAccount);
+        if (updated) {
+            return Response.ok()
+                    .entity("Compte mis à jour avec succès").build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("Compte non trouvé").build();
+        }
     }
 }

@@ -2,7 +2,9 @@ package org.example;
 
 import org.example.model.Transaction;
 import org.junit.jupiter.api.Test;
+
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,11 +14,65 @@ public class TransactionTest {
     void testTransactionCreation() {
         Transaction txn = new Transaction("TXN-1", "deposit", 150.0, "Dépôt initial");
 
+        System.out.println("=== Test de création de transaction ===");
+        System.out.println("ID : " + txn.getTransactionID());
+        System.out.println("Type : " + txn.getType());
+        System.out.println("Montant : " + txn.getAmount());
+        System.out.println("Description : " + txn.getDescription());
+        System.out.println("Horodatage : " + txn.getFormattedTimestamp());
+
         assertEquals("TXN-1", txn.getTransactionID());
         assertEquals("deposit", txn.getType());
         assertEquals(150.0, txn.getAmount());
         assertEquals("Dépôt initial", txn.getDescription());
         assertNotNull(txn.getTimestamp());
         assertTrue(txn.getTimestamp().isBefore(LocalDateTime.now().plusSeconds(1)));
+    }
+
+    @Test
+    void testTransactionWithAccountID() {
+        Transaction txn = new Transaction("TXN-2", "withdraw", 75.0, "Retrait guichet", "A001");
+
+        System.out.println("=== Test de transaction avec accountID ===");
+        System.out.println("ID : " + txn.getTransactionID());
+        System.out.println("Compte associé : " + txn.getAccountID());
+        System.out.println("Type : " + txn.getType());
+        System.out.println("Montant : " + txn.getAmount());
+        System.out.println("Description : " + txn.getDescription());
+
+        assertEquals("TXN-2", txn.getTransactionID());
+        assertEquals("withdraw", txn.getType());
+        assertEquals(75.0, txn.getAmount());
+        assertEquals("Retrait guichet", txn.getDescription());
+        assertEquals("A001", txn.getAccountID());
+        assertNotNull(txn.getTimestamp());
+    }
+
+    @Test
+    void testFormattedTimestamp() {
+        Transaction txn = new Transaction("TXN-3", "deposit", 50.0, "Test format date");
+        String formatted = txn.getFormattedTimestamp();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime parsed = LocalDateTime.parse(formatted, formatter);
+
+        System.out.println("=== Test de formatage de la date ===");
+        System.out.println("Horodatage formaté : " + formatted);
+
+        assertNotNull(formatted);
+        assertEquals(parsed.format(formatter), formatted);
+    }
+
+    @Test
+    void testToStringMethod() {
+        Transaction txn = new Transaction("TXN-4", "deposit", 200.0, "Test affichage", "A002");
+        String output = txn.toString();
+
+        System.out.println("=== Test de la méthode toString() ===");
+        System.out.println(output);
+
+        assertTrue(output.contains("TXN-4") || output.contains("A002"));
+        assertTrue(output.contains("DEPOSIT") || output.contains("deposit"));
+        assertTrue(output.contains("200.0"));
+        assertTrue(output.contains("Test affichage"));
     }
 }

@@ -5,57 +5,56 @@ import org.example.model.Account;
 import org.example.model.Portfolio;
 import org.example.model.WealthTracker;
 import org.example.model.Asset;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 /**
- * La classe UserManager est responsable de la gestion des utilisateurs dans l'application.
- * Elle permet d'enregistrer de nouveaux utilisateurs, de gérer la connexion des utilisateurs existants,
- * et d'afficher la liste des utilisateurs enregistrés.
+ * Service responsable de la gestion des utilisateurs et de leurs portefeuilles.
+ * Il permet d’enregistrer, d’authentifier, de modifier et de supprimer des utilisateurs,
+ * ainsi que de calculer leur richesse totale.
  */
 public class UserManager {
 
-    /** Liste des utilisateurs enregistrés */
+    /** Liste globale des utilisateurs enregistrés. */
     private static final List<User> users = new ArrayList<>();
 
-    /** Liste des portefeuilles associés */
+    /** Liste globale des portefeuilles associés aux utilisateurs. */
     private static final List<Portfolio> portfolios = new ArrayList<>();
 
-    /** Constructeur : initialise les listes */
+    /**
+     * Constructeur par défaut.
+     * Initialise la liste des utilisateurs avec des données de démonstration.
+     */
     public UserManager() {
-        // Les listes sont initialisées statiquement
         populateUsers();
     }
 
-    /* Populate for demo */
+    /**
+     * Crée et ajoute des utilisateurs et comptes de démonstration.
+     * Méthode utilisée pour initialiser le service avec des données de test.
+     */
     public void populateUsers() {
-
-        // Premier utilisateur avec compte courant
-        User user1 = new User("1", "alice@example.com", "1234", "Alice", "Demo");
+        // Premier utilisateur avec un compte courant
+        User user1 = new User("1", "test@example.com", "1234", "test", "Demo");
         Account account1 = new Account("A001", "courant", 1200.50);
         account1.setUser(user1);
         user1.addAccount(account1);
 
-        // Deuxième utilisateur avec compte épargne
-        User user2 = new User("2", "bob@example.com", "5678", "Bob", "Test");
-        Account account2 = new Account("A002", "épargne", 3500.00);
-        account2.setUser(user2);
-        user2.addAccount(account2);
-
-        // Ajout des utilisateurs dans la liste globale
+        // Ajout des utilisateurs à la liste
         users.add(user1);
-        users.add(user2);
     }
 
     /**
-     * Enregistre un nouvel utilisateur.
-     * @param userID Identifiant unique de l'utilisateur (String)
-     * @param email Adresse email
-     * @param password Mot de passe
-     * @param firstName Prénom
-     * @param lastName Nom de famille
-     * @return L'utilisateur nouvellement créé
+     * Enregistre un nouvel utilisateur dans le système.
+     *
+     * @param userID identifiant unique de l’utilisateur
+     * @param email adresse e-mail
+     * @param password mot de passe
+     * @param firstName prénom
+     * @param lastName nom de famille
+     * @return l’utilisateur nouvellement créé
      */
     public User registerUser(String userID, String email, String password, String firstName, String lastName) {
         User newUser = new User(userID, email, password, firstName, lastName);
@@ -64,10 +63,11 @@ public class UserManager {
     }
 
     /**
-     * Authentifie un utilisateur par email et mot de passe.
-     * @param email Email fourni
-     * @param password Mot de passe fourni
-     * @return L'utilisateur si la connexion réussit, sinon null
+     * Authentifie un utilisateur via son adresse e-mail et son mot de passe.
+     *
+     * @param email adresse e-mail
+     * @param password mot de passe
+     * @return l’utilisateur si l’authentification réussit, sinon null
      */
     public User login(String email, String password) {
         for (User user : users) {
@@ -76,11 +76,13 @@ public class UserManager {
                 return user;
             }
         }
-        System.out.println("Échec de la connexion : email ou mot de passe invalide.");
+        System.out.println("Échec de la connexion : e-mail ou mot de passe invalide.");
         return null;
     }
 
-    /** Affiche tous les utilisateurs dans la console */
+    /**
+     * Affiche dans la console la liste des utilisateurs enregistrés.
+     */
     @SuppressWarnings("unused")
     public void listUsers() {
         for (User user : users) {
@@ -88,23 +90,41 @@ public class UserManager {
         }
     }
 
-    /** Retourne tous les utilisateurs */
+    /**
+     * Retourne une copie de la liste des utilisateurs.
+     *
+     * @return liste des utilisateurs
+     */
     public List<User> getAllUsers() {
         return new ArrayList<>(users);
     }
 
-    /** Retourne tous les portefeuilles */
+    /**
+     * Retourne la liste des portefeuilles enregistrés.
+     *
+     * @return liste des portefeuilles
+     */
     public List<Portfolio> getAllPortfolios() {
         return new ArrayList<>(portfolios);
     }
 
-    /** Ajoute un portefeuille */
+    /**
+     * Ajoute un portefeuille à la liste globale.
+     *
+     * @param portfolio portefeuille à ajouter
+     * @return le portefeuille ajouté
+     */
     public Portfolio addPortfolio(Portfolio portfolio) {
         portfolios.add(portfolio);
         return portfolio;
     }
 
-    /** Récupère un portefeuille par ID */
+    /**
+     * Recherche un portefeuille par son identifiant.
+     *
+     * @param id identifiant du portefeuille
+     * @return portefeuille correspondant ou null s’il n’existe pas
+     */
     public Portfolio getPortfolioById(int id) {
         for (Portfolio portfolio : portfolios) {
             if (portfolio.getId() == id) {
@@ -114,7 +134,12 @@ public class UserManager {
         return null;
     }
 
-    /** Supprime un portefeuille par ID */
+    /**
+     * Supprime un portefeuille par identifiant.
+     *
+     * @param id identifiant du portefeuille à supprimer
+     * @return true si le portefeuille a été supprimé, sinon false
+     */
     public boolean deletePortfolio(int id) {
         Iterator<Portfolio> iterator = portfolios.iterator();
         while (iterator.hasNext()) {
@@ -127,7 +152,12 @@ public class UserManager {
         return false;
     }
 
-    /** Récupère un utilisateur par ID (comparaison sur String userID) */
+    /**
+     * Recherche un utilisateur par identifiant.
+     *
+     * @param id identifiant numérique (converti en chaîne)
+     * @return utilisateur correspondant ou null s’il n’existe pas
+     */
     public User getUserById(int id) {
         for (User user : users) {
             if (user.getUserID().equals(String.valueOf(id))) {
@@ -137,7 +167,12 @@ public class UserManager {
         return null;
     }
 
-    /** Supprime un utilisateur par ID (comparaison sur String userID) */
+    /**
+     * Supprime un utilisateur par identifiant.
+     *
+     * @param id identifiant de l’utilisateur à supprimer
+     * @return true si la suppression a réussi, sinon false
+     */
     public boolean deleteUser(int id) {
         Iterator<User> iterator = users.iterator();
         while (iterator.hasNext()) {
@@ -150,13 +185,21 @@ public class UserManager {
         return false;
     }
 
-    /** Calcule la richesse totale pour un utilisateur donné */
+    /**
+     * Calcule la richesse totale d’un utilisateur, incluant les actifs
+     * de ses portefeuilles et la valeur de ses comptes.
+     *
+     * @param userId identifiant de l’utilisateur
+     * @return objet WealthTracker contenant la richesse totale
+     */
     public WealthTracker calculateWealthForUser(int userId) {
         User user = getUserById(userId);
         if (user == null) {
             return null;
         }
+
         double totalWealth = 0.0;
+
         for (Portfolio portfolio : portfolios) {
             if (portfolio.getUserID().equals(user.getUserID())) {
                 for (Asset asset : portfolio.getAssets()) {
@@ -164,27 +207,28 @@ public class UserManager {
                 }
             }
         }
+
         return new WealthTracker(userId, totalWealth);
     }
 
-    /** Modifier un utilisateur **/
-
-
+    /**
+     * Met à jour les informations d’un utilisateur existant.
+     * Seuls les champs fournis dans le nouvel objet sont mis à jour.
+     *
+     * @param id identifiant de l’utilisateur à modifier
+     * @param newUser nouvel objet utilisateur contenant les mises à jour
+     * @return true si la mise à jour a réussi, sinon false
+     */
     public boolean updateUser(int id, User newUser) {
-        Iterator<User> iterator = users.iterator();
-        while (iterator.hasNext()) {
-            User user = iterator.next();
+        for (User user : users) {
             if (user.getUserID().equals(String.valueOf(id))) {
-                user.setFirstName(newUser.getFirstName());
-                user.setLastName(newUser.getLastName());
-                user.setEmail(newUser.getEmail());
-                user.setPassword(newUser.getPassword());
-                return  true;
+                if (newUser.getFirstName() != null) user.setFirstName(newUser.getFirstName());
+                if (newUser.getLastName() != null) user.setLastName(newUser.getLastName());
+                if (newUser.getEmail() != null) user.setEmail(newUser.getEmail());
+                if (newUser.getPassword() != null) user.setPassword(newUser.getPassword());
+                return true;
             }
         }
         return false;
     }
-
-
-
 }

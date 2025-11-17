@@ -3,19 +3,36 @@ package org.example.model;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Représente un utilisateur du système avec ses informations personnelles,
+ * ses comptes bancaires et son portefeuille d’investissement.
+ */
 public class User {
-    // Attributs représentant les informations personnelles et les comptes associés à l'utilisateur
-    private String userID;               // Identifiant unique de l'utilisateur
-    private String email;                // Adresse email de l'utilisateur
-    private String password;             // Mot de passe de l'utilisateur
-    private String firstName;            // Prénom de l'utilisateur
-    private String lastName;             // Nom de famille de l'utilisateur
-    private List<Account> accounts;      // Liste des comptes bancaires liés à cet utilisateur
-    private Portfolio portfolio;        // Portefeuille d’investissement de l’utilisateur
+
+    /** Identifiant unique de l’utilisateur. */
+    private String userID;
+
+    /** Adresse e-mail de l’utilisateur. */
+    private String email;
+
+    /** Mot de passe de l’utilisateur. */
+    private String password;
+
+    /** Prénom de l’utilisateur. */
+    private String firstName;
+
+    /** Nom de famille de l’utilisateur. */
+    private String lastName;
+
+    /** Liste des comptes bancaires liés à l’utilisateur. */
+    private List<Account> accounts;
+
+    /** Portefeuille d’investissement associé à l’utilisateur. */
+    private Portfolio portfolio;
 
     /**
-     * Default constructor required for JSON-B deserialization.
-     * Initializes accounts as empty list and portfolio as new Portfolio.
+     * Constructeur par défaut requis pour la désérialisation JSON-B.
+     * Initialise une liste vide de comptes et un nouveau portefeuille.
      */
     public User() {
         this.accounts = new ArrayList<>();
@@ -23,14 +40,13 @@ public class User {
     }
 
     /**
-     * Constructeur de la classe User.
-     * Initialise un nouvel utilisateur avec ses informations personnelles et crée une liste vide de comptes.
+     * Constructeur complet pour initialiser un utilisateur avec ses informations personnelles.
      *
-     * @param userID Identifiant unique de l'utilisateur
-     * @param email Adresse email de l'utilisateur
-     * @param password Mot de passe de l'utilisateur
-     * @param firstName Prénom de l'utilisateur
-     * @param lastName Nom de famille de l'utilisateur
+     * @param userID identifiant unique de l’utilisateur
+     * @param email adresse e-mail de l’utilisateur
+     * @param password mot de passe de l’utilisateur
+     * @param firstName prénom de l’utilisateur
+     * @param lastName nom de famille de l’utilisateur
      */
     public User(String userID, String email, String password, String firstName, String lastName) {
         this.userID = userID;
@@ -42,72 +58,48 @@ public class User {
         this.portfolio = new Portfolio();
     }
 
-    // Getters pour accéder aux informations privées de l'utilisateur
+    // ===================== Getters =====================
 
-    /**
-     * Retourne l'identifiant unique de l'utilisateur.
-     * @return userID
-     */
-    public String getUserID() { return userID; }
-
-    /**
-     * Retourne l'adresse email de l'utilisateur.
-     * @return email
-     */
-    public String getEmail() { return email; }
-
-    /**
-     * Retourne le mot de passe de l'utilisateur.
-     * @return password
-     */
-    public String getPassword() { return password; }
-
-    /**
-     * Retourne le prénom de l'utilisateur.
-     * @return firstName
-     */
-    public String getFirstName() { return firstName; }
-
-    /**
-     * Retourne le nom de famille de l'utilisateur.
-     * @return lastName
-     */
-    public String getLastName() { return lastName; }
-
-    /**
-     * Retourne la liste des comptes associés à l'utilisateur.
-     * @return accounts
-     */
-    public List<Account> getAccounts() { return accounts; }
-
-    // Méthodes principales permettant la gestion des comptes et des informations utilisateur
-
-    /**
-     * Ajoute un compte à la liste des comptes de l'utilisateur.
-     * @param account Le compte à ajouter
-     */
-    public void addAccount(Account account) {
-        accounts.add(account);
+    public String getUserID() {
+        return userID;
     }
 
-    /**
-     * Calcule le solde total en additionnant les soldes de tous les comptes de l'utilisateur.
-     * @return la somme des soldes de tous les comptes
-     */
-    public double getTotalBalance() {
-        double total = 0;
-        for (Account acc : accounts) {
-            total += acc.getBalance();
-        }
-        return total;
+    public String getEmail() {
+        return email;
     }
 
-    public void setPortfolio(Portfolio portfolio) {
-        this.portfolio = portfolio;
+    public String getPassword() {
+        return password;
     }
 
-    public void  setAccounts(List<Account> accounts) {
-        this.accounts = accounts;
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public List<Account> getAccounts() {
+        return accounts;
+    }
+
+    public Portfolio getPortfolio() {
+        return portfolio;
+    }
+
+    // ===================== Setters =====================
+
+    public void setUserID(String userID) {
+        this.userID = userID;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public void setFirstName(String firstName) {
@@ -118,27 +110,43 @@ public class User {
         this.lastName = lastName;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setAccounts(List<Account> accounts) {
+        this.accounts = accounts;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setPortfolio(Portfolio portfolio) {
+        this.portfolio = portfolio;
     }
 
-    public void setUserID(String userID) {
-        this.userID = userID;
-    }
+    // ===================== Méthodes principales =====================
 
-
-
-    public Portfolio getPortfolio() {
-        return portfolio;
-    }
     /**
-     * Retourne une représentation textuelle de l'utilisateur sous la forme:
-     * "User: prénom nom (email)"
-     * @return chaîne descriptive de l'utilisateur
+     * Ajoute un compte à la liste des comptes de l’utilisateur.
+     *
+     * @param account compte à ajouter
+     */
+    public void addAccount(Account account) {
+        accounts.add(account);
+    }
+
+    /**
+     * Calcule le solde total de tous les comptes associés à l’utilisateur.
+     *
+     * @return solde total en CHF
+     */
+    public double getTotalBalance() {
+        double total = 0;
+        for (Account account : accounts) {
+            total += account.getBalance();
+        }
+        return total;
+    }
+
+    /**
+     * Retourne une représentation textuelle de l’utilisateur sous la forme :
+     * "User: prénom nom (email)".
+     *
+     * @return description textuelle de l’utilisateur
      */
     @Override
     public String toString() {
