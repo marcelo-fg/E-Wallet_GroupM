@@ -13,3 +13,4 @@ services:
       - "4848:4848"
     volumes:
       - ./webservice/target/webservice-1.0-SNAPSHOT.war:/opt/payara/appserver/glassfish/domains/domain1/autodeploy/webservice.war
+      - ./webapp/target/webapp-1.0-SNAPSHOT.war:/opt/payara/appserver/glassfish/domains/domain1/autodeploy/webapp.war
