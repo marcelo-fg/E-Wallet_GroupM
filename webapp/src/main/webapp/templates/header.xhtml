@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:ui="jakarta.faces.facelets">
+<ui:composition>
+    <h:panelGroup layout="block" style="background:#1e3a8a;color:white;padding:10px;position:relative;">
+        <h2>E-Wallet – Dashboard</h2>
+
+        <h:form style="position:absolute;top:10px;right:10px;">
+            <h:commandButton value="Déconnexion"
+                             action="#{loginBean.logout}"
+                             style="background:#e11d48;color:white;border:none;padding:6px 12px;"/>
+        </h:form>
+    </h:panelGroup>
+</ui:composition>
+</html>

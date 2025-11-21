@@ -5,7 +5,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.example</groupId>
+    <groupId>org.groupm</groupId>
     <artifactId>E-Wallet_GroupM</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -13,6 +13,7 @@
     <modules>
         <module>backend</module>
         <module>webservice</module>
+        <module>webapp</module>
     </modules>
 
     <properties>

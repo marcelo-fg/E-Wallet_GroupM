@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html">
+
+<h:head>
+    <title>Inscription</title>
+</h:head>
+
+<h:body>
+
+    <h:form>
+
+        <h2>Créer un compte</h2>
+
+        <h:panelGrid columns="2" cellpadding="5">
+
+            <h:outputLabel value="Prénom :" />
+            <h:inputText value="#{registerBean.firstname}" required="true"/>
+
+            <h:outputLabel value="Nom :" />
+            <h:inputText value="#{registerBean.lastname}" required="true"/>
+
+            <h:outputLabel value="Email :" />
+            <h:inputText value="#{registerBean.email}" required="true"/>
+
+            <h:outputLabel value="Mot de passe :" />
+            <h:inputSecret value="#{registerBean.password}" required="true"/>
+
+        </h:panelGrid>
+
+        <br/>
+
+        <h:commandButton value="Créer mon compte" action="#{registerBean.register}"/>
+
+        <br/><br/>
+
+        <h:link outcome="login.xhtml" value="Retour à la connexion" />
+
+    </h:form>
+
+</h:body>
+</html>

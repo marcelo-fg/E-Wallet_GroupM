@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html">
+
+<h:head>
+    <title>Transactions</title>
+</h:head>
+
+<h:body>
+
+    <h2>Effectuer un transfert</h2>
+
+    <h:form>
+        <h:messages globalOnly="true" style="color:red;margin-bottom:10px;"/>
+        <h:panelGrid columns="2">
+
+            <h:outputText value="De :" />
+            <h:inputText value="#{transactionBean.fromAccount}" />
+
+            <h:outputText value="Vers :" />
+            <h:inputText value="#{transactionBean.toAccount}" />
+
+            <h:outputText value="Montant :" />
+            <h:inputText value="#{transactionBean.amount}" />
+
+        </h:panelGrid>
+
+        <br/>
+        <h:commandButton value="Valider" action="#{transactionBean.makeTransfer}"/>
+    </h:form>
+
+    <br/>
+    <h:link outcome="dashboard.xhtml" value="Retour Dashboard"/>
+
+</h:body>
+</html>

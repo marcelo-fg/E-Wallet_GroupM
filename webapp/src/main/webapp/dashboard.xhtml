@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:ui="jakarta.faces.facelets">
+
+<ui:composition template="/templates/layout.xhtml">
+
+    <ui:define name="title">Dashboard</ui:define>
+
+    <ui:define name="content">
+        <h2>#{dashboardBean.welcomeMessage}</h2>
+
+        <ul>
+            <li><h:link outcome="portfolio.xhtml" value="Mon Portefeuille" /></li>
+            <li><h:link outcome="transactions.xhtml" value="Mes Transactions" /></li>
+        </ul>
+    </ui:define>
+
+</ui:composition>
+</html>

@@ -6,13 +6,15 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.example</groupId>
+        <groupId>org.groupm</groupId>
         <artifactId>E-Wallet_GroupM</artifactId>
         <version>1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>webservice</artifactId>
     <packaging>war</packaging>
+    <name>E-Wallet WebService</name>
 
     <dependencies>
         <!-- Jakarta EE Web API -->
@@ -25,7 +27,7 @@
 
         <!-- Backend module -->
         <dependency>
-            <groupId>org.example</groupId>
+            <groupId>org.groupm</groupId>
             <artifactId>backend</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
