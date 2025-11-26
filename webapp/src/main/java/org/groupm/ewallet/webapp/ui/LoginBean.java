@@ -20,7 +20,6 @@ public class LoginBean implements Serializable {
     private WebAppService webAppService;
 
     // Injecter plus tard ton UserManager ou WebAppService
-    // @Inject
     // private AuthenticationService authService;
 
     public String login() {
@@ -33,7 +32,17 @@ public class LoginBean implements Serializable {
             var context = jakarta.faces.context.FacesContext.getCurrentInstance();
             var external = context.getExternalContext();
             HttpSession session = (HttpSession) external.getSession(true);
+
+            // Empêche d'utiliser l'email comme userId
+            if (userId == null || userId.isBlank()) {
+                return "login.xhtml?error=true";
+            }
+
+            // Stocker uniquement le vrai userId backend
             session.setAttribute("userId", userId);
+
+            // Stocker l'email juste pour affichage
+            session.setAttribute("userEmail", email);
 
             return "dashboard.xhtml?faces-redirect=true";
         }

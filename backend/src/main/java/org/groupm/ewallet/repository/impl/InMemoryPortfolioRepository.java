@@ -1,13 +1,11 @@
 package org.groupm.ewallet.repository.impl;
 
-import org.groupm.ewallet.repository.PortfolioRepository;
 import org.groupm.ewallet.model.Portfolio;
+import org.groupm.ewallet.repository.PortfolioRepository;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
-/**
- * Repository mémoire pour Portfolio.
- */
 public class InMemoryPortfolioRepository implements PortfolioRepository {
 
     private final Map<Integer, Portfolio> portfolios = new HashMap<>();
@@ -28,15 +26,14 @@ public class InMemoryPortfolioRepository implements PortfolioRepository {
     }
 
     @Override
-    public Portfolio findByUserId(String userID) {
-        return portfolios.values().stream()
-                .filter(p -> p.getUserID() != null && p.getUserID().equals(userID))
-                .findFirst()
-                .orElse(null);
+    public List<Portfolio> findAll() {
+        return new ArrayList<>(portfolios.values());
     }
 
     @Override
-    public List<Portfolio> findAll() {
-        return new ArrayList<>(portfolios.values());
+    public List<Portfolio> findAllByUserId(String userID) {
+        return portfolios.values().stream()
+                .filter(p -> p.getUserID() != null && p.getUserID().equals(userID))
+                .collect(Collectors.toList());
     }
 }

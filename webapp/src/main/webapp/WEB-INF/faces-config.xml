@@ -5,4 +5,8 @@
         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
                             https://jakarta.ee/xml/ns/jakartaee/web-facesconfig_4_0.xsd"
         version="4.0">
+
+    <!-- Rien de plus n'est nécessaire pour utiliser @Named + CDI -->
+    <!-- Tu peux laisser ce fichier vide de toute autre config pour l’instant. -->
+
 </faces-config>

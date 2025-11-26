@@ -3,44 +3,50 @@ package org.groupm.ewallet.webservice;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
 import org.groupm.ewallet.model.Asset;
 import org.groupm.ewallet.model.Portfolio;
+import org.groupm.ewallet.model.User;
+
 import org.groupm.ewallet.repository.AssetRepository;
 import org.groupm.ewallet.repository.PortfolioRepository;
-import org.groupm.ewallet.webservice.context.BackendContext;
 import org.groupm.ewallet.repository.UserRepository;
-import org.groupm.ewallet.model.User;
+
+import org.groupm.ewallet.webservice.context.BackendContext;
+
+import org.groupm.ewallet.service.connector.DefaultMarketDataConnector;
+import org.groupm.ewallet.service.connector.MarketDataConnector;
+import org.groupm.ewallet.service.connector.MarketDataService;
 
 import java.util.List;
 
-/**
- * Ressource REST responsable de la gestion des actifs financiers.
- * Fournit des endpoints pour consulter et ajouter des actifs (actions, cryptos, ETF, etc.).
- */
 @Path("/assets")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class AssetResource {
 
-    // Repository partagé, singleton du BackendContext
     private static final AssetRepository assetRepository = BackendContext.ASSET_REPO;
     private static final PortfolioRepository portfolioRepository = BackendContext.PORTFOLIO_REPO;
     private static final UserRepository userRepository = BackendContext.USER_REPO;
 
-    /**
-     * Récupère la liste de tous les actifs disponibles.
-     * Endpoint : GET /api/assets
-     */
+    /** MarketDataService instancié proprement */
+    private static final MarketDataService marketService =
+            new MarketDataService(new DefaultMarketDataConnector());
+
+    // ============================================================
+    // GET ALL ASSETS
+    // ============================================================
+
     @GET
     public Response getAllAssets() {
         List<Asset> assets = assetRepository.findAll();
         return Response.ok(assets).build();
     }
 
-    /**
-     * Récupère un actif spécifique à partir de son symbole.
-     * Endpoint : GET /api/assets/{symbol}
-     */
+    // ============================================================
+    // GET ASSET BY SYMBOL
+    // ============================================================
+
     @GET
     @Path("/{symbol}")
     public Response getAssetBySymbol(@PathParam("symbol") String symbol) {
@@ -53,44 +59,62 @@ public class AssetResource {
         return Response.ok(asset).build();
     }
 
-    /**
-     * Ajoute un nouvel actif dans le système.
-     * Endpoint : POST /api/assets
-     */
+    // ============================================================
+    // ADD ASSET (global)
+    // ============================================================
+
     @POST
     public Response addAsset(Asset asset) {
         try {
+
+            applyExternalPrice(asset);
             assetRepository.save(asset);
+
             if (asset.getPortfolioID() != 0) {
                 attachAssetToPortfolio(asset.getPortfolioID(), asset);
             }
+
             return Response.status(Response.Status.CREATED).entity(asset).build();
+
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("Erreur lors de l’ajout de l’actif : " + e.getMessage())
                     .build();
         }
     }
+
+    // ============================================================
+    // GET ASSETS FOR PORTFOLIO
+    // ============================================================
+
     @GET
     @Path("/portfolio/{portfolioId}")
     public Response getAssetsByPortfolio(@PathParam("portfolioId") int portfolioId) {
         Portfolio portfolio = portfolioRepository.findById(portfolioId);
         if (portfolio == null) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity("Portefeuille non trouvé pour l'id : " + portfolioId)
+                    .entity("Portefeuille non trouvé : " + portfolioId)
                     .build();
         }
         return Response.ok(portfolio.getAssets()).build();
     }
+
+    // ============================================================
+    // ADD ASSET TO PORTFOLIO
+    // ============================================================
 
     @POST
     @Path("/portfolio/{portfolioId}")
     public Response addAssetToPortfolio(@PathParam("portfolioId") int portfolioId, Asset asset) {
         try {
             asset.setPortfolioID(portfolioId);
+
+            applyExternalPrice(asset);
             assetRepository.save(asset);
             attachAssetToPortfolio(portfolioId, asset);
+
             return Response.status(Response.Status.CREATED).entity(asset).build();
+
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("Erreur lors de l’ajout de l’actif au portefeuille : " + e.getMessage())
@@ -98,23 +122,55 @@ public class AssetResource {
         }
     }
 
+    // ============================================================
+    // HELPER : GET REAL PRICE FROM API
+    // ============================================================
+
+    private void applyExternalPrice(Asset asset) {
+        if (asset.getType() == null || asset.getSymbol() == null) return;
+
+        try {
+            MarketDataConnector connector = new DefaultMarketDataConnector();
+
+            double priceUsd = "crypto".equalsIgnoreCase(asset.getType())
+                    ? connector.getCryptoPriceUsd(asset.getSymbol())
+                    : connector.getQuotePriceUsd(asset.getSymbol());
+
+            double priceChf = priceUsd * 0.9; // simple conversion si besoin
+            asset.setUnitValue(priceChf);
+
+        } catch (Exception e) {
+            System.err.println("Erreur récupération prix API : " + e.getMessage());
+        }
+    }
+
+    // ============================================================
+    // HELPER : ATTACH ASSET + REFRESH PRICES
+    // ============================================================
+
     private void attachAssetToPortfolio(int portfolioId, Asset asset) {
         Portfolio portfolio = portfolioRepository.findById(portfolioId);
         if (portfolio == null) return;
 
         portfolio.getAssets().add(asset);
 
-        double total = 0.0;
-        for (Asset a : portfolio.getAssets()) {
-            total += a.getTotalValue();
+        // refresh real-time prices
+        try {
+            marketService.refreshPortfolioPricesUsd(portfolio);
+        } catch (Exception e) {
+            System.err.println("Erreur mise à jour prix portefeuille : " + e.getMessage());
         }
-        portfolio.setTotalValue(total);
 
+        // recalc total
+        double total = portfolio.getAssets().stream()
+                .mapToDouble(Asset::getTotalValue)
+                .sum();
+
+        portfolio.setTotalValue(total);
         portfolioRepository.save(portfolio);
+
+        // update user without replacing entire portfolio list
         User user = userRepository.findById(portfolio.getUserID());
-        if (user != null) {
-            user.setPortfolio(portfolio);
-            userRepository.save(user);
-        }
+        if (user != null) userRepository.save(user);
     }
 }

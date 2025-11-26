@@ -4,60 +4,54 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Représente le portefeuille d’investissement d’un utilisateur.
- * Un portefeuille contient plusieurs actifs (actions, cryptomonnaies, etc.)
- * et permet de calculer leur valeur totale.
+ * Représente un portefeuille d’investissement.
+ * Un utilisateur peut avoir plusieurs portefeuilles.
  */
 public class Portfolio {
+
+    /** Générateur simple d'identifiants en mémoire. */
+    private static int NEXT_ID = 1;
 
     /** Identifiant unique du portefeuille. */
     private int id;
 
-    /** Identifiant de l’utilisateur propriétaire du portefeuille. */
+    /** Identifiant de l’utilisateur propriétaire. */
     private String userID;
 
-    /** Liste des actifs détenus dans le portefeuille. */
-    private List<Asset> assets;
+    /** Actifs détenus dans ce portefeuille. */
+    private List<Asset> assets = new ArrayList<>();
 
-    /** Valeur totale du portefeuille. */
+    /** Valeur totale du portefeuille (somme des actifs). */
     private double totalValue;
+
+    // ===================== Constructeurs =====================
 
     /**
      * Constructeur par défaut.
-     * Initialise une liste vide d’actifs.
+     * Génère automatiquement un identifiant unique.
      */
     public Portfolio() {
+        this.id = NEXT_ID++;
         this.assets = new ArrayList<>();
+        this.totalValue = 0.0;
     }
 
     /**
-     * Constructeur initialisant le portefeuille avec un identifiant.
-     *
-     * @param id identifiant unique du portefeuille
+     * Constructeur liant directement le portefeuille à un utilisateur.
+     * @param userID identifiant de l'utilisateur propriétaire
      */
-    public Portfolio(int id) {
-        this.id = id;
-        this.assets = new ArrayList<>();
-    }
-
-    /**
-     * Constructeur complet initialisant le portefeuille avec un identifiant et un identifiant d’utilisateur.
-     *
-     * @param id identifiant unique du portefeuille
-     * @param userID identifiant de l’utilisateur propriétaire
-     */
-    public Portfolio(int id, String userID) {
-        this.id = id;
+    public Portfolio(String userID) {
+        this();
         this.userID = userID;
-        this.assets = new ArrayList<>();
     }
 
-    // ===================== Getters et Setters =====================
+    // ===================== Getters / Setters =====================
 
     public int getId() {
         return id;
     }
 
+    /** Utilisé uniquement si besoin pour restaurer un ID existant. */
     public void setId(int id) {
         this.id = id;
     }
@@ -75,7 +69,8 @@ public class Portfolio {
     }
 
     public void setAssets(List<Asset> assets) {
-        this.assets = assets;
+        this.assets = (assets != null) ? assets : new ArrayList<>();
+        recalculateTotalValue();
     }
 
     public double getTotalValue() {
@@ -88,43 +83,36 @@ public class Portfolio {
 
     // ===================== Gestion des actifs =====================
 
-    /**
-     * Ajoute un actif au portefeuille.
-     *
-     * @param asset actif à ajouter
-     */
+    /** Ajoute un actif au portefeuille et met à jour la valeur totale. */
     public void addAsset(Asset asset) {
-        assets.add(asset);
-        double total = 0.0;
-        for (Asset a : assets) {
-            total += a.getTotalValue();
+        if (asset != null) {
+            assets.add(asset);
+            recalculateTotalValue();
         }
-        this.totalValue = total;
     }
 
-    /**
-     * Supprime un actif du portefeuille en fonction de son nom.
-     * La recherche est insensible à la casse.
-     *
-     * @param assetName nom de l’actif à supprimer
-     */
+    /** Supprime un actif par son nom (insensible à la casse). */
     public void removeAsset(String assetName) {
-        assets.removeIf(a -> a.getAssetName().equalsIgnoreCase(assetName));
+        if (assetName == null) return;
+        assets.removeIf(a -> assetName.equalsIgnoreCase(a.getAssetName()));
+        recalculateTotalValue();
+    }
+
+    /** Recalcule la valeur totale à partir de la liste d’actifs. */
+    public void recalculateTotalValue() {
         double total = 0.0;
-        for (Asset a : assets) {
-            total += a.getTotalValue();
+        for (Asset asset : assets) {
+            total += asset.getTotalValue();
         }
         this.totalValue = total;
     }
-
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("Portfolio (ID: " + id + ", UserID: " + userID + ")\n");
-        for (Asset asset : assets) {
-            sb.append(" - ").append(asset.toString()).append("\n");
-        }
-        sb.append("Valeur totale du portefeuille : ").append(getTotalValue()).append(" CHF");
-        return sb.toString();
+        return "Portfolio{id=" + id +
+                ", userID='" + userID + '\'' +
+                ", assets=" + assets.size() +
+                ", totalValue=" + totalValue +
+                '}';
     }
 }

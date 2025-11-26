@@ -1,23 +1,22 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="jakarta.faces.html"
-      xmlns:ui="jakarta.faces.facelets">
-<h:head>
-    <title><ui:insert name="title">E-Wallet</ui:insert></title>
-</h:head>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:ui="jakarta.faces.facelets">
+    <h:head>
+        <title><ui:insert name="title">E-Wallet</ui:insert></title>
+    </h:head>
 
-<h:body>
+    <h:body>
 
-    <!-- HEADER -->
-    <ui:include src="/templates/header.xhtml"/>
+        <!-- HEADER -->
+        <ui:include src="/templates/header.xhtml"/>
 
-    <!-- CONTENU SPÉCIFIQUE À CHAQUE PAGE -->
-    <h:panelGroup layout="block" style="padding:20px;">
-        <ui:insert name="content"/>
-    </h:panelGroup>
+        <!-- CONTENU SPÉCIFIQUE À CHAQUE PAGE -->
+        <h:panelGroup layout="block" style="padding:20px;">
+            <ui:insert name="content"/>
+        </h:panelGroup>
 
-    <!-- FOOTER -->
-    <ui:include src="/templates/footer.xhtml"/>
+        <!-- FOOTER -->
+        <ui:include src="/templates/footer.xhtml"/>
 
-</h:body>
-</html>
+    </h:body>
+</ui:composition>

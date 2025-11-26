@@ -18,6 +18,7 @@ import java.util.Map;
  * - CoinGecko est utilisé pour les cryptomonnaies.
  * - Alpha Vantage est utilisé pour les actions et les ETF.
  */
+
 public class DefaultMarketDataConnector implements MarketDataConnector {
 
     /** Client HTTP utilisé pour effectuer les requêtes externes. */
@@ -28,6 +29,11 @@ public class DefaultMarketDataConnector implements MarketDataConnector {
 
     /** Clé API d’Alpha Vantage récupérée depuis les variables d’environnement. */
     private final String alphaKey = System.getenv("ALPHA_VANTAGE_API_KEY");
+
+
+    public DefaultMarketDataConnector() {
+        System.out.println("[DEBUG] AlphaVantage API KEY detected = " + alphaKey);
+    }
 
     /** Cache local pour stocker les prix des actifs. */
     private static final Map<String, Double> priceCache = new HashMap<>();
@@ -72,24 +78,37 @@ public class DefaultMarketDataConnector implements MarketDataConnector {
      */
     @Override
     public double getQuotePriceUsd(String symbol) throws Exception {
-        // Vérifie si la donnée est en cache
+
+        // Vérifie le cache
         if (isCached(symbol)) return priceCache.get(symbol);
 
         if (alphaKey == null || alphaKey.isBlank()) {
-            throw new IllegalStateException("La clé API ALPHA_VANTAGE_API_KEY n’est pas définie.");
+            throw new IllegalStateException("ALPHA_VANTAGE_API_KEY manquant");
         }
 
-        String url = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" + symbol + "&apikey=" + alphaKey;
-        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
+        String url =
+                "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" +
+                        symbol +
+                        "&apikey=" + alphaKey;
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .GET()
+                .build();
+
         HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
 
-        JsonNode priceNode = mapper.readTree(response.body()).path("Global Quote").path("05. price");
+        JsonNode root = mapper.readTree(response.body());
+        JsonNode priceNode = root
+                .path("Global Quote")
+                .path("05. price");
 
-        if (priceNode.isMissingNode() || priceNode.asText().isBlank()) {
-            throw new IllegalStateException("Prix indisponible pour le symbole : " + symbol + " (Alpha Vantage)");
+        if (priceNode == null || priceNode.isMissingNode()) {
+            throw new IllegalStateException("Prix introuvable pour " + symbol);
         }
 
         double price = Double.parseDouble(priceNode.asText());
+
         cache(symbol, price);
         return price;
     }

@@ -14,6 +14,17 @@ public class InMemoryUserRepository implements UserRepository {
     // Stockage en mémoire : id -> User
     private final Map<String, User> users = new HashMap<>();
 
+    public InMemoryUserRepository() {
+        User defaultUser = new User(
+                UUID.randomUUID().toString(),
+                "admin@example.com",
+                "admin",
+                "Admin",
+                "User"
+        );
+        save(defaultUser);
+    }
+
     @Override
     public void save(User user) {
         users.put(user.getUserID(), user);

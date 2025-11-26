@@ -1,20 +1,24 @@
 package org.groupm.ewallet.repository;
 
 import org.groupm.ewallet.model.Portfolio;
+import java.util.List;
 
 /**
  * Interface de persistance pour les portefeuilles d’investissement.
  */
 public interface PortfolioRepository {
+
     void save(Portfolio portfolio);
+
     Portfolio findById(int id);
+
     void delete(int id);
 
+    List<Portfolio> findAll();
+
     /**
-     * Récupère le portefeuille associé à un utilisateur.
-     * @param userID identifiant de l’utilisateur
-     * @return portefeuille trouvé ou null
+     * Retourne tous les portefeuilles appartenant à un utilisateur.
+     * @param userID identifiant de l'utilisateur
      */
-    Portfolio findByUserId(String userID);
-    java.util.List<Portfolio> findAll();
+    List<Portfolio> findAllByUserId(String userID);
 }

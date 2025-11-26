@@ -8,6 +8,7 @@ services:
       - SECURE_ADMIN=true
       - ADMIN_USER=admin
       - ADMIN_PASSWORD=admin
+      - FINNHUB_API_KEY=d4jj0upr01qgcb0tj9rgd4jj0upr01qgcb0tj9s0
     ports:
       - "8080:8080"
       - "4848:4848"

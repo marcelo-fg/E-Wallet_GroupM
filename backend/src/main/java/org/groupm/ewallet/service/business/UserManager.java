@@ -1,81 +1,66 @@
 package org.groupm.ewallet.service.business;
 
-import org.groupm.ewallet.model.User;
-import org.groupm.ewallet.model.Portfolio;
-import org.groupm.ewallet.model.WealthTracker;
-import org.groupm.ewallet.model.Asset;
+import org.groupm.ewallet.model.*;
 import org.groupm.ewallet.repository.UserRepository;
 import org.groupm.ewallet.repository.PortfolioRepository;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
- * Service métier de gestion des utilisateurs et portefeuilles.
- * Permet l’enregistrement, l’authentification, la modification, la suppression
- * et le calcul de richesse totale via abstraction repository.
+ * Service métier de gestion des utilisateurs et de leurs portefeuilles d’investissement.
+ * Supporte désormais plusieurs portefeuilles par utilisateur.
  */
 public class UserManager {
 
     private final UserRepository userRepository;
     private final PortfolioRepository portfolioRepository;
 
-    /**
-     * Constructeur avec injection des repositories métiers.
-     * @param userRepository       repository des utilisateurs
-     * @param portfolioRepository  repository des portefeuilles
-     */
-    public UserManager(UserRepository userRepository, PortfolioRepository portfolioRepository) {
+    public UserManager(UserRepository userRepository,
+                       PortfolioRepository portfolioRepository) {
         this.userRepository = userRepository;
         this.portfolioRepository = portfolioRepository;
     }
 
+    // =====================================================================
+    //                              USERS
+    // =====================================================================
+
     /**
      * Enregistre un nouvel utilisateur.
-     * @param user utilisateur à créer (sans mot de passe en clair : à encoder/hacher côté service)
-     * @return utilisateur créé
+     * Génère un identifiant unique si absent.
+     * Ne crée pas de portefeuille automatiquement (multi-portefeuilles).
      */
     public User registerUser(User user) {
-        // Ici, ajoute une gestion pro du mot de passe : hash/encoder avant .save
+
+        if (user.getUserID() == null || user.getUserID().isBlank()) {
+            user.setUserID(UUID.randomUUID().toString());
+        }
+
         userRepository.save(user);
         return user;
     }
 
     /**
-     * Authentifie un utilisateur via son email et son mot de passe.
-     * @param email email utilisateur
-     * @param password mot de passe (idealement hashé)
-     * @return utilisateur si connecté, null sinon
+     * Authentifie un utilisateur selon email + mot de passe.
+     * @return l'utilisateur si OK, sinon null
      */
     public User login(String email, String password) {
         User user = userRepository.findByEmail(email);
-        if (user != null && user.getPassword().equals(password)) { // hash-verif ici en prod
+        if (user != null && user.getPassword().equals(password)) {
             return user;
         }
         return null;
     }
 
-    /**
-     * Retourne tous les utilisateurs enregistrés.
-     * @return liste d’utilisateurs
-     */
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    /**
-     * Recherche un utilisateur par identifiant.
-     * @param userId identifiant (String pour homogénéité)
-     * @return utilisateur ou null
-     */
     public User getUserById(String userId) {
         return userRepository.findById(userId);
     }
 
-    /**
-     * Supprime un utilisateur via son identifiant.
-     * @param userId identifiant
-     * @return true si supprimé, false sinon
-     */
     public boolean deleteUser(String userId) {
         User user = userRepository.findById(userId);
         if (user != null) {
@@ -85,61 +70,65 @@ public class UserManager {
         return false;
     }
 
-    /**
-     * Met à jour les champs d’un utilisateur existant.
-     * Ne modifie que les champs non nuls dans l’objet newUser.
-     * @param userId identifiant à mettre à jour
-     * @param newUser modèle des champs à modifier
-     * @return true si mise à jour réussie
-     */
     public boolean updateUser(String userId, User newUser) {
         User user = userRepository.findById(userId);
         if (user != null) {
             if (newUser.getFirstName() != null) user.setFirstName(newUser.getFirstName());
-            if (newUser.getLastName() != null) user.setLastName(newUser.getLastName());
-            if (newUser.getEmail() != null) user.setEmail(newUser.getEmail());
-            if (newUser.getPassword() != null) user.setPassword(newUser.getPassword()); // encode ici en prod
+            if (newUser.getLastName() != null)  user.setLastName(newUser.getLastName());
+            if (newUser.getEmail() != null)     user.setEmail(newUser.getEmail());
+            if (newUser.getPassword() != null)  user.setPassword(newUser.getPassword());
             userRepository.save(user);
             return true;
         }
         return false;
     }
 
+    // =====================================================================
+    //                              PORTFOLIOS
+    // =====================================================================
+
     /**
-     * Retourne tous les portefeuilles enregistrés.
-     * @return liste portefeuilles
+     * Ajoute un portefeuille ou met à jour un portefeuille existant.
      */
-    public List<Portfolio> getAllPortfolios() {
-        // Si besoin d’une liste complète, expose le repo
-        // Sinon, filtre par utilisateur via repo dédié
-        // portfolioRepository.findByUserId(userId)
-        throw new UnsupportedOperationException("Non implémenté ici, expose via PortfolioManager");
+    public Portfolio addOrUpdatePortfolio(Portfolio portfolio) {
+
+        if (portfolio == null) {
+            throw new IllegalArgumentException("Le portefeuille ne peut pas être null.");
+        }
+
+        // Mise à jour si le portefeuille existe déjà
+        if (portfolio.getId() != 0) {
+            Portfolio existing = portfolioRepository.findById(portfolio.getId());
+            if (existing != null) {
+                portfolioRepository.save(portfolio);
+                return portfolio;
+            }
+        }
+
+        // Sinon → création
+        if (portfolio.getUserID() == null) {
+            throw new IllegalArgumentException("UserID manquant pour ce portefeuille.");
+        }
+
+        portfolioRepository.save(portfolio);
+
+        // Ajouter le portefeuille à l'utilisateur correspondant
+        User user = userRepository.findById(portfolio.getUserID());
+        if (user != null) {
+            user.addPortfolio(portfolio);
+            userRepository.save(user);
+        }
+
+        return portfolio;
     }
 
     /**
-     * Recherche un portefeuille par ID pour un utilisateur.
-     * @param id identifiant portefeuille
-     * @return portefeuille or null
+     * Récupère un portefeuille par son identifiant unique.
      */
     public Portfolio getPortfolioById(int id) {
         return portfolioRepository.findById(id);
     }
 
-    /**
-     * Ajoute/modifie un portefeuille pour un utilisateur donné.
-     * @param portfolio portefeuille à enregistrer
-     * @return portefeuille créé/mis à jour
-     */
-    public Portfolio addOrUpdatePortfolio(Portfolio portfolio) {
-        portfolioRepository.save(portfolio);
-        return portfolio;
-    }
-
-    /**
-     * Supprime un portefeuille par identifiant.
-     * @param id identifiant portefeuille
-     * @return true si suppresssion ok
-     */
     public boolean deletePortfolio(int id) {
         Portfolio portfolio = portfolioRepository.findById(id);
         if (portfolio != null) {
@@ -149,28 +138,29 @@ public class UserManager {
         return false;
     }
 
+    // =====================================================================
+    //                          WEALTH TRACKER
+    // =====================================================================
+
     /**
-     * Calcule la richesse totale pour un utilisateur identifié.
-     * Agrège la valeur de tous les actifs et comptes.
-     * @param userId identifiant du user
-     * @return WealthTracker métier (calculé)
+     * Calcule la richesse totale d'un utilisateur en prenant en compte :
+     * tous ses comptes bancaires
+     * ainsi que la valeur totale de tous ses portefeuilles.
      */
     public WealthTracker calculateWealthForUser(String userId) {
-        User user = userRepository.findById(userId);
-        if (user == null) return null;
-        Portfolio portfolio = portfolioRepository.findByUserId(userId);
 
-        double totalWealth = 0.0;
-        if (portfolio != null) {
-            for (Asset asset : portfolio.getAssets()) {
-                totalWealth += asset.getUnitValue() * asset.getQuantity();
-            }
+        User user = userRepository.findById(userId);
+        if (user == null) {
+            return null;
         }
-        // Ajoute le total des comptes si voulu :
-        totalWealth += user.getTotalBalance();
+
+        List<Portfolio> portfolios = portfolioRepository.findAllByUserId(userId);
+        for (Portfolio p : portfolios) {
+            p.recalculateTotalValue();
+        }
 
         WealthTracker tracker = new WealthTracker(user);
-        tracker.updateWealth(); // Met à jour toutes les données calculables
+        tracker.updateWealth();
         return tracker;
     }
 }
