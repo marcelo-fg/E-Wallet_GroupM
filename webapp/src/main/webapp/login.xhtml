@@ -3,34 +3,56 @@
       xmlns:h="http://xmlns.jcp.org/jsf/html">
 
 <h:head>
-    <title>Connexion</title>
+    <title>Connexion - WealthMate</title>
+
+    <!-- Google Fonts (hors JSF pour éviter cache Payara) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+
+    <!-- CSS local -->
+    <h:outputStylesheet name="css/styles.css" />
 </h:head>
 
-<h:body>
+<h:body style="display:flex; justify-content:center; align-items:center; height:100vh; background: radial-gradient(circle at top, #111217, #0a0b0e);">
 
-    <h:form>
+    <div class="auth-container">
 
-        <h2>Connexion</h2>
+        <h1 class="auth-title premium-title">Connexion</h1>
+        <p class="auth-sub">Accédez à votre espace WealthMate</p>
 
-        <h:panelGrid columns="2" cellpadding="5">
+        <h:form styleClass="auth-form">
 
-            <h:outputLabel value="Email :" />
-            <h:inputText value="#{loginBean.email}" required="true"/>
+            <div class="auth-field">
+                <h:inputText value="#{loginBean.email}" styleClass="input-line" placeholder=" " required="true"/>
+                <label>Email</label>
+            </div>
 
-            <h:outputLabel value="Mot de passe :" />
-            <h:inputSecret value="#{loginBean.password}" required="true"/>
+            <div class="auth-field">
+                <h:inputSecret value="#{loginBean.password}" styleClass="input-line" placeholder=" " required="true"/>
+                <label>Mot de passe</label>
+            </div>
 
-        </h:panelGrid>
+            <h:commandButton
+                    value="Se connecter"
+                    action="#{loginBean.login}"
+                    styleClass="btn-gold auth-btn"
+                    style="margin-top:10px;" />
 
-        <br/>
+            <p class="auth-small" style="margin-top:18px;">
+                Pas encore de compte ?
+                <h:link outcome="register.xhtml" value="Créer un compte"/>
+            </p>
 
-        <h:commandButton value="Se connecter" action="#{loginBean.login}"/>
+        </h:form>
 
-        <br/><br/>
+        <h2 class="hero-title">Gérez votre argent intelligemment</h2>
+        <p class="hero-sub">
+            Suivez vos comptes bancaires, vos portefeuilles d'investissements
+            et votre patrimoine global.
+        </p>
 
-        <h:link outcome="register.xhtml" value="Créer un compte" />
-
-    </h:form>
+    </div>
 
 </h:body>
 </html>

@@ -1,22 +1,37 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:h="jakarta.faces.html"
                 xmlns:ui="jakarta.faces.facelets">
+
     <h:head>
-        <title><ui:insert name="title">E-Wallet</ui:insert></title>
+        <title><ui:insert name="title">E-Wallet GroupM</ui:insert></title>
+        <h:outputStylesheet name="css/styles.css"/>
     </h:head>
 
-    <h:body>
+    <h:body styleClass="layout-body">
 
-        <!-- HEADER -->
-        <ui:include src="/templates/header.xhtml"/>
+        <div class="layout-container">
 
-        <!-- CONTENU SPÉCIFIQUE À CHAQUE PAGE -->
-        <h:panelGroup layout="block" style="padding:20px;">
-            <ui:insert name="content"/>
-        </h:panelGroup>
+            <!-- SIDEBAR PREMIUM -->
+            <aside class="sidebar">
+                <div class="sidebar-logo">
+                    <h2>E‑Wallet</h2>
+                </div>
 
-        <!-- FOOTER -->
-        <ui:include src="/templates/footer.xhtml"/>
+                <nav class="sidebar-menu">
+                    <a href="dashboard.xhtml">Dashboard</a>
+                    <a href="accounts.xhtml">Comptes</a>
+                    <a href="portfolio.xhtml">Portefeuille</a>
+                    <a href="analysis.xhtml">Analyse</a>
+                    <a href="settings.xhtml">Paramètres</a>
+                </nav>
+            </aside>
+
+            <!-- MAIN CONTENT AREA -->
+            <main class="main-content">
+                <ui:insert name="content"/>
+            </main>
+
+        </div>
 
     </h:body>
 </ui:composition>

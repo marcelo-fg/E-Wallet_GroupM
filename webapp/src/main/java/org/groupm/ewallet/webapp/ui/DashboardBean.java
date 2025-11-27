@@ -19,6 +19,7 @@ public class DashboardBean implements Serializable {
 
     private List<String> accounts;   // comptes bancaires
     private double totalWealth;      // richesse totale
+    private double percentageGrowth; // croissance du patrimoine
 
     @Inject
     private WebAppService webAppService;
@@ -37,7 +38,11 @@ public class DashboardBean implements Serializable {
         }
 
         if (userId != null) {
-            this.accounts =webAppService.getAccountsForUser(userId);
+            this.accounts = webAppService.getAccountsForUser(userId);
+
+            // Exemple de valeurs si pas encore connecté à une vraie logique métier
+            this.totalWealth = webAppService.getTotalWealthForUser(userId);
+            this.percentageGrowth = webAppService.getWealthGrowthForUser(userId);
         }
     }
 
@@ -51,5 +56,9 @@ public class DashboardBean implements Serializable {
 
     public double getTotalWealth() {
         return totalWealth;
+    }
+
+    public double getPercentageGrowth() {
+        return percentageGrowth;
     }
 }

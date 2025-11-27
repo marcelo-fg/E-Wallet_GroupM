@@ -12,33 +12,50 @@
             <f:event type="preRenderView" listener="#{dashboardBean.loadDashboard}" />
         </f:metadata>
 
-        <h:panelGroup layout="block" style="margin-bottom:20px;">
-            <h2>#{dashboardBean.welcomeMessage}</h2>
-        </h:panelGroup>
+        <!-- PAGE TITLE -->
+        <div class="page-header">
+            <h1 class="page-title">Tableau de bord</h1>
+            <p class="page-subtitle">Bienvenue, #{dashboardBean.welcomeMessage}</p>
+        </div>
 
-        <h:panelGroup layout="block" style="margin-top:20px;">
-            <h3>Mes comptes bancaires</h3>
+        <!-- GLOBAL WEALTH CARD -->
+        <div class="card wealth-card">
+            <h2 class="card-title">Patrimoine total</h2>
+            <div class="wealth-value">#{dashboardBean.totalWealth} CHF</div>
+            <div class="wealth-change #{dashboardBean.percentageGrowth ge 0 ? 'positive' : 'negative'}">
+                #{dashboardBean.percentageGrowth}%
+            </div>
+        </div>
+
+        <!-- BANK ACCOUNTS SECTION -->
+        <div class="section-block">
+            <h2 class="section-title">Mes comptes bancaires</h2>
 
             <h:panelGroup rendered="#{empty dashboardBean.accounts}">
                 <p>Aucun compte trouvé.</p>
             </h:panelGroup>
 
             <h:panelGroup rendered="#{not empty dashboardBean.accounts}">
-                <ul>
+                <div class="account-list">
                     <ui:repeat value="#{dashboardBean.accounts}" var="acc">
-                        <li>#{acc}</li>
+                        <div class="card account-card">
+                            <h3 class="acc-title">#{acc.name}</h3>
+                            <p class="acc-balance">Solde : #{acc.balance} CHF</p>
+                        </div>
                     </ui:repeat>
-                </ul>
+                </div>
             </h:panelGroup>
-        </h:panelGroup>
+        </div>
 
-        <h:panelGroup layout="block" style="margin-top:30px;">
-            <h3>Navigation</h3>
-            <ul>
-                <li><h:link value="Mon Portefeuille" outcome="portfolio.xhtml"/></li>
-                <li><h:link value="Mes Transactions" outcome="transactions.xhtml"/></li>
-            </ul>
-        </h:panelGroup>
+        <!-- NAVIGATION SHORTCUTS -->
+        <div class="section-block">
+            <h2 class="section-title">Navigation rapide</h2>
+
+            <div class="nav-shortcuts">
+                <h:link outcome="portfolio.xhtml" styleClass="card nav-card">Mon Portefeuille</h:link>
+                <h:link outcome="transactions.xhtml" styleClass="card nav-card">Mes Transactions</h:link>
+            </div>
+        </div>
 
     </ui:define>
 </ui:composition>

@@ -17,7 +17,7 @@ public class InMemoryUserRepository implements UserRepository {
     public InMemoryUserRepository() {
         User defaultUser = new User(
                 UUID.randomUUID().toString(),
-                "admin@example.com",
+                "admin",
                 "admin",
                 "Admin",
                 "User"

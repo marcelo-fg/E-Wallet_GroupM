@@ -442,4 +442,17 @@ public class WebAppService {
             default -> 0.0;
         };
     }
+    // ============================================================
+    // ===============  DASHBOARD METRICS (TEMP MOCK) =============
+    // ============================================================
+
+    public double getTotalWealthForUser(String userId) {
+        // TODO: Replace with real logic (sum of all accounts + total portfolio value)
+        return 423817.00;
+    }
+
+    public double getWealthGrowthForUser(String userId) {
+        // TODO: Replace with real logic (calculate real variation)
+        return 1.93;
+    }
 }
