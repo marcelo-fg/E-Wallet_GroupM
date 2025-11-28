@@ -1,0 +1,20 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:ui="jakarta.faces.facelets"
+                template="/templates/layout.xhtml">
+
+    <ui:define name="title">
+        Profil - WealthMate
+    </ui:define>
+
+    <ui:define name="content">
+
+        <div class="card">
+            <h1>Mon Profil</h1>
+            <p><b>Nom :</b> #{profileBean.username}</p>
+            <p><b>Email :</b> #{profileBean.email}</p>
+        </div>
+
+    </ui:define>
+
+</ui:composition>

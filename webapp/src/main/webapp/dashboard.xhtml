@@ -1,61 +1,86 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:h="jakarta.faces.html"
                 xmlns:ui="jakarta.faces.facelets"
-                xmlns:f="jakarta.faces.core"
                 template="/templates/layout.xhtml">
 
-    <ui:define name="title">Dashboard</ui:define>
+    <ui:define name="pageStyle">
+        <style>
+            body.dashboard-page {
+                background: url("#{resource['images/bg-dashboard.png']}") center/cover no-repeat fixed !important;
+            }
+        </style>
+    </ui:define>
+
+    <ui:define name="title">
+        Dashboard - WealthMate
+    </ui:define>
 
     <ui:define name="content">
 
-        <f:metadata>
-            <f:event type="preRenderView" listener="#{dashboardBean.loadDashboard}" />
-        </f:metadata>
+        <div class="bento-container">
 
-        <!-- PAGE TITLE -->
-        <div class="page-header">
-            <h1 class="page-title">Tableau de bord</h1>
-            <p class="page-subtitle">Bienvenue, #{dashboardBean.welcomeMessage}</p>
-        </div>
+            <!-- Row 1 -->
+            <div class="bento-row">
 
-        <!-- GLOBAL WEALTH CARD -->
-        <div class="card wealth-card">
-            <h2 class="card-title">Patrimoine total</h2>
-            <div class="wealth-value">#{dashboardBean.totalWealth} CHF</div>
-            <div class="wealth-change #{dashboardBean.percentageGrowth ge 0 ? 'positive' : 'negative'}">
-                #{dashboardBean.percentageGrowth}%
+                <!-- INSIGHTS -->
+                <a href="analysis.xhtml" class="bento-box highlight">
+                    <h3>Insights</h3>
+                    <p>Track user behavior</p>
+                </a>
+
+                <!-- OVERVIEW -->
+                <a href="dashboard.xhtml" class="bento-box">
+                    <h3>Overview</h3>
+                    <p>Centralized data view</p>
+                </a>
+
+                <!-- TEAMWORK -->
+                <a href="portfolio.xhtml" class="bento-box tall">
+                    <h3>Teamwork</h3>
+                    <p>Collaborate effectively</p>
+                </a>
+
             </div>
-        </div>
 
-        <!-- BANK ACCOUNTS SECTION -->
-        <div class="section-block">
-            <h2 class="section-title">Mes comptes bancaires</h2>
+            <!-- Row 2 -->
+            <div class="bento-row">
 
-            <h:panelGroup rendered="#{empty dashboardBean.accounts}">
-                <p>Aucun compte trouvé.</p>
-            </h:panelGroup>
+                <!-- EFFICIENCY LARGE -->
+                <a href="accounts.xhtml" class="bento-box wide">
+                    <h3>Efficiency</h3>
+                    <p>Track all your accounts in one place</p>
+                </a>
 
-            <h:panelGroup rendered="#{not empty dashboardBean.accounts}">
-                <div class="account-list">
-                    <ui:repeat value="#{dashboardBean.accounts}" var="acc">
-                        <div class="card account-card">
-                            <h3 class="acc-title">#{acc.name}</h3>
-                            <p class="acc-balance">Solde : #{acc.balance} CHF</p>
-                        </div>
-                    </ui:repeat>
-                </div>
-            </h:panelGroup>
-        </div>
+                <!-- DASHBOARD DETAILS -->
+                <a href="analysis.xhtml" class="bento-box">
+                    <h3>Dashboard</h3>
+                    <p>View insights &amp; performance</p>
+                </a>
 
-        <!-- NAVIGATION SHORTCUTS -->
-        <div class="section-block">
-            <h2 class="section-title">Navigation rapide</h2>
-
-            <div class="nav-shortcuts">
-                <h:link outcome="portfolio.xhtml" styleClass="card nav-card">Mon Portefeuille</h:link>
-                <h:link outcome="transactions.xhtml" styleClass="card nav-card">Mes Transactions</h:link>
             </div>
+
+            <!-- Row 3 -->
+            <div class="bento-row">
+
+                <a href="transactions.xhtml" class="bento-box">
+                    <h3>Automation</h3>
+                    <p>Streamline workflows</p>
+                </a>
+
+                <a href="settings.xhtml" class="bento-box">
+                    <h3>Connectivity</h3>
+                    <p>Integrations &amp; tools</p>
+                </a>
+
+                <a href="security.xhtml" class="bento-box">
+                    <h3>Protection</h3>
+                    <p>Enterprise-grade protection</p>
+                </a>
+
+            </div>
+
         </div>
 
     </ui:define>
+
 </ui:composition>

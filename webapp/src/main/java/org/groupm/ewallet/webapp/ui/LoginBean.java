@@ -79,4 +79,8 @@ public class LoginBean implements Serializable {
     public void setPassword(String password) {
         this.password = password;
     }
+
+    public String getUsername() {
+        return (email != null) ? email : "";
+    }
 }

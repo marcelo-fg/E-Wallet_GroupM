@@ -1,58 +1,66 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://xmlns.jcp.org/jsf/html">
+      xmlns:h="jakarta.faces.html">
 
-<h:head>
-    <title>Connexion - WealthMate</title>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Google Fonts (hors JSF pour éviter cache Payara) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com"/>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <!-- Link CSS -->
+    <link rel="stylesheet" type="text/css"
+          href="#{request.contextPath}/resources/css/styles.css" />
+    <title>WealthMate - Login</title>
+</head>
 
-    <!-- CSS local -->
-    <h:outputStylesheet name="css/styles.css" />
-</h:head>
 
-<h:body style="display:flex; justify-content:center; align-items:center; height:100vh; background: radial-gradient(circle at top, #111217, #0a0b0e);">
+<body>
 
-    <div class="auth-container">
+<div class="container">
 
-        <h1 class="auth-title premium-title">Connexion</h1>
-        <p class="auth-sub">Accédez à votre espace WealthMate</p>
+<div class="card fade-in-up">
 
-        <h:form styleClass="auth-form">
+        <!-- LOGO -->
+        <div class="logo" style="text-align:center;">
+            <img src="resources/images/Logo-W_black.png"
+                 alt="WealthMate Logo"
+                 style="width: 120px; margin-bottom: 5px;" />
+        </div>
 
-            <div class="auth-field">
-                <h:inputText value="#{loginBean.email}" styleClass="input-line" placeholder=" " required="true"/>
-                <label>Email</label>
+        <h1>Welcome Back.</h1>
+
+        <!-- FORM -->
+        <h:form class="form">
+
+            <label>Email Address</label>
+            <h:inputText value="#{loginBean.email}"
+                         styleClass="input"
+                         required="true"
+                         placeholder="Enter your email" />
+
+            <label>Password</label>
+            <h:inputSecret value="#{loginBean.password}"
+                           styleClass="input"
+                           required="true"
+                           placeholder="Enter your password" />
+
+            <div class="forgot">Forgot Password?</div>
+
+            <div style="text-align:center;">
+                <h:commandButton value="Log In"
+                                 action="#{loginBean.login}"
+                                 styleClass="login-btn"
+                                 style="display:inline-block; margin:0 auto;" />
             </div>
-
-            <div class="auth-field">
-                <h:inputSecret value="#{loginBean.password}" styleClass="input-line" placeholder=" " required="true"/>
-                <label>Mot de passe</label>
-            </div>
-
-            <h:commandButton
-                    value="Se connecter"
-                    action="#{loginBean.login}"
-                    styleClass="btn-gold auth-btn"
-                    style="margin-top:10px;" />
-
-            <p class="auth-small" style="margin-top:18px;">
-                Pas encore de compte ?
-                <h:link outcome="register.xhtml" value="Créer un compte"/>
-            </p>
-
         </h:form>
 
-        <h2 class="hero-title">Gérez votre argent intelligemment</h2>
-        <p class="hero-sub">
-            Suivez vos comptes bancaires, vos portefeuilles d'investissements
-            et votre patrimoine global.
+        <p class="footer-text">
+            Don't have an account yet?
+            <a href="register.xhtml">Sign Up</a>
         </p>
 
-    </div>
 
-</h:body>
+    </div> <!-- end of .card -->
+</div> <!-- end of .container -->
+
+</body>
 </html>

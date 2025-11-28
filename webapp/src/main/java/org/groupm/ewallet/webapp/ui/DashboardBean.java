@@ -17,9 +17,31 @@ public class DashboardBean implements Serializable {
     private String userEmail;
     private String username = "Utilisateur";
 
+    public String getUsername() {
+        return username;
+    }
+
     private List<String> accounts;   // comptes bancaires
     private double totalWealth;      // richesse totale
     private double percentageGrowth; // croissance du patrimoine
+
+    private List<Transaction> recentTransactions;
+
+    public static class Transaction {
+        private String date;
+        private String type;
+        private double amount;
+
+        public Transaction(String date, String type, double amount) {
+            this.date = date;
+            this.type = type;
+            this.amount = amount;
+        }
+
+        public String getDate() { return date; }
+        public String getType() { return type; }
+        public double getAmount() { return amount; }
+    }
 
     @Inject
     private WebAppService webAppService;
@@ -60,5 +82,30 @@ public class DashboardBean implements Serializable {
 
     public double getPercentageGrowth() {
         return percentageGrowth;
+    }
+
+    // === Computed properties for dashboard.xhtml ===
+    public double getTotalBalance() {
+        return this.totalWealth;
+    }
+
+    public int getAccountCount() {
+        return (accounts != null) ? accounts.size() : 0;
+    }
+
+    public double getPortfolioValue() {
+        // Placeholder: portfolio value equals totalWealth for now
+        return this.totalWealth;
+    }
+
+    public List<Transaction> getRecentTransactions() {
+        if (recentTransactions == null) {
+            recentTransactions = List.of(
+                    new Transaction("2025-01-01", "Achat café", 4.50),
+                    new Transaction("2025-01-02", "Transfert épargne", 200.00),
+                    new Transaction("2025-01-03", "Retrait ATM", 100.00)
+            );
+        }
+        return recentTransactions;
     }
 }
