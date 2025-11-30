@@ -2,27 +2,27 @@
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
 
-    <!-- Common page head: title + global styles -->
+    <!-- Common page head: application title and global styles -->
     <h:head>
         <title>WealthMate</title>
         <h:outputStylesheet library="css" name="styles.css"/>
     </h:head>
 
-    <!-- Global layout wrapper for all pages using this template -->
+    <!-- Global layout wrapper for all dashboard pages -->
     <h:body styleClass="dashboard-page"
             style="background: url('#{resource['images/bg-dashboard_1.png']}') center/cover no-repeat fixed;">
 
-        <!-- Top Navigation Bar -->
+        <!-- Top Navigation Bar shared by all pages -->
         <nav class="top-nav">
             <div class="nav-left">
-                <!-- Application logo and brand -->
+                <!-- Application logo and brand name -->
                 <img src="#{request.contextPath}/resources/images/Logo-W_color.png"
                      class="app-logo" alt="logo" />
                 <span class="app-title">WealthMate</span>
             </div>
 
             <div class="nav-center">
-                <!-- Main navigation links across the application -->
+                <!-- Main navigation entries across the application -->
                 <a href="dashboard.xhtml">Dashboard</a>
                 <a href="accounts.xhtml">Bank Accounts</a>
                 <a href="portfolio.xhtml">Portfolio</a>
@@ -31,7 +31,7 @@
             </div>
 
             <div class="nav-right">
-                <!-- Logout action: invalidates HTTP session and redirects to login -->
+                <!-- Logout button: invalidates HTTP session and redirects to login page -->
                 <h:form style="display:inline;">
                     <h:commandButton value="Logout"
                                      action="#{loginBean.logout}"
@@ -40,7 +40,7 @@
             </div>
         </nav>
 
-        <!-- Main page content provided by child Facelets -->
+        <!-- Placeholder for page-specific content provided by child templates -->
         <main class="page-content">
             <ui:insert name="content"/>
         </main>

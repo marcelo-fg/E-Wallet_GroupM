@@ -2,9 +2,162 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="jakarta.faces.html">
 <h:head>
-    <meta http-equiv="refresh" content="0;url=login.xhtml"/>
+    <title>WealthMate - Welcome</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+    <!-- On récupère ton CSS existant pour avoir le fond d'écran automatiquement -->
+    <link rel="stylesheet" type="text/css" href="#{request.contextPath}/resources/css/styles.css" />
+
+    <style>
+        /* Surcharges spécifiques pour la page d'accueil */
+
+        /* Un conteneur principal qui centre tout et permet le scroll si besoin */
+        .home-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            color: white;
+            text-align: center;
+            /* Petit filtre sombre pour lisibilité sur l'image de fond héritée */
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        /* La boite de contenu "Glassmorphism" */
+        .hero-card {
+            background: rgba(20, 20, 20, 0.85); /* Fond noir très opaque */
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 60px 40px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        /* Logo */
+        .hero-logo {
+            width: 100px;
+            margin-bottom: 30px;
+        }
+
+        /* Titre principal */
+        h1.main-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #fff, #aaa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.1;
+        }
+
+        /* Sous-titre */
+        p.subtitle {
+            font-size: 1.4rem;
+            color: #ccc;
+            margin-bottom: 50px;
+            font-weight: 300;
+        }
+
+        /* Grille de fonctionnalités (3 colonnes) */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            text-align: left;
+            margin-bottom: 50px;
+        }
+
+        .feature-item h3 {
+            color: #00d2ff; /* Bleu cyan style tech */
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .feature-item p {
+            font-size: 0.95rem;
+            color: #aaa;
+            line-height: 1.5;
+        }
+
+        /* Bouton d'action */
+        .btn-hero {
+            display: inline-block;
+            background: linear-gradient(90deg, #0066ff 0%, #00ccff 100%);
+            color: white;
+            padding: 18px 60px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 10px 30px rgba(0, 102, 255, 0.3);
+        }
+
+        .btn-hero:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 102, 255, 0.5);
+        }
+
+        /* Animation d'apparition */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive mobile */
+        @media (max-width: 768px) {
+            h1.main-title { font-size: 2.5rem; }
+            .features-grid { text-align: center; }
+            .hero-card { padding: 30px 20px; }
+        }
+    </style>
 </h:head>
+
 <h:body>
-    Redirection vers la page de connexion…
+    <!-- Le conteneur global -->
+    <div class="home-container">
+
+        <div class="hero-card">
+            <!-- Logo (même chemin que login.xhtml) -->
+            <img src="resources/images/Logo-W_black.png" alt="WealthMate" class="hero-logo" style="filter: invert(1); opacity: 0.9;" />
+            <!-- Note: j'ai ajouté filter:invert(1) car ton logo semble être noir ("_black"), sur fond noir il faut le rendre blanc -->
+
+            <h1 class="main-title">Your Financial Life.<br/>Simplified.</h1>
+
+            <p class="subtitle">
+                WealthMate is your all-in-one digital wallet. No more switching apps. Just one clean, intuitive interface for everything.
+            </p>
+
+            <!-- Les 3 blocs de texte -->
+            <div class="features-grid">
+                <div class="feature-item">
+                    <h3>All-in-One Place</h3>
+                    <p>Track your balances, manage bank accounts, and monitor investment portfolios in a single, unified view.</p>
+                </div>
+                <div class="feature-item">
+                    <h3>Real-Time Data</h3>
+                    <p>Access real-time market data and watch your growth trends instantly with our modern dashboard.</p>
+                </div>
+                <div class="feature-item">
+                    <h3>Effortless Control</h3>
+                    <p>Designed for clarity and speed. One platform, one experience, complete financial oversight.</p>
+                </div>
+            </div>
+
+            <!-- Bouton Login -->
+            <h:link value="Login" outcome="login" styleClass="btn-hero" />
+
+            <div style="margin-top: 20px; font-size: 0.9rem; color: #666;">
+                Don't have an account? <a href="register.xhtml" style="color:#ccc; text-decoration: underline;">Sign Up</a>
+            </div>
+        </div>
+
+    </div>
 </h:body>
 </html>

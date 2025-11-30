@@ -60,6 +60,30 @@ body.dashboard-page::before {
     z-index: -1;
 }
 
+/* Logout button in top navigation bar */
+.btn-logout {
+    background-color: #e53935;      /* main red color */
+    color: #ffffff;
+    border: none;
+    border-radius: 999px;           /* pill shape */
+    padding: 6px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.35);
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-logout:hover {
+    background-color: #c62828;      /* darker red on hover */
+    transform: translateY(-1px);
+}
+
+.btn-logout:active {
+    transform: translateY(0);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
 /* ==========================================================================
    LOGIN CARD
    ========================================================================== */
