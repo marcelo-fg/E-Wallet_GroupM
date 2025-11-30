@@ -6,7 +6,7 @@
     <ui:define name="pageStyle">
         <style>
             body.dashboard-page {
-                background: url("#{resource['images/bg-dashboard.png']}") center/cover no-repeat fixed !important;
+                background: url("#{request.contextPath}/resources/images/bg-dashboard_1.png") center/cover no-repeat fixed !important;
             }
         </style>
     </ui:define>
@@ -16,71 +16,33 @@
     </ui:define>
 
     <ui:define name="content">
+        <div class="bento-dashboard">
 
-        <div class="bento-container">
-
-            <!-- Row 1 -->
-            <div class="bento-row">
-
-                <!-- INSIGHTS -->
-                <a href="analysis.xhtml" class="bento-box highlight">
-                    <h3>Insights</h3>
-                    <p>Track user behavior</p>
-                </a>
-
-                <!-- OVERVIEW -->
-                <a href="dashboard.xhtml" class="bento-box">
-                    <h3>Overview</h3>
-                    <p>Centralized data view</p>
-                </a>
-
-                <!-- TEAMWORK -->
-                <a href="portfolio.xhtml" class="bento-box tall">
-                    <h3>Teamwork</h3>
-                    <p>Collaborate effectively</p>
-                </a>
-
+            <!-- Colonne gauche : TOTAL WEALTH occupe toute la hauteur -->
+            <div class="bento-box bento-main">
+                <h2>Total Wealth</h2>
+                <p class="bento-description">Overview of your complete financial portfolio</p>
             </div>
 
-            <!-- Row 2 -->
-            <div class="bento-row">
+            <!-- Colonne droite : 3 boxes empilees qui remplissent la hauteur -->
+            <div class="bento-sidebar">
+                <div class="bento-box">
+                    <h3>Accounts</h3>
+                    <p class="bento-description">Manage your bank accounts</p>
+                </div>
 
-                <!-- EFFICIENCY LARGE -->
-                <a href="accounts.xhtml" class="bento-box wide">
-                    <h3>Efficiency</h3>
-                    <p>Track all your accounts in one place</p>
-                </a>
+                <div class="bento-box">
+                    <h3>Favorites Assets</h3>
+                    <p class="bento-description">Your watched investments</p>
+                </div>
 
-                <!-- DASHBOARD DETAILS -->
-                <a href="analysis.xhtml" class="bento-box">
-                    <h3>Dashboard</h3>
-                    <p>View insights &amp; performance</p>
-                </a>
-
-            </div>
-
-            <!-- Row 3 -->
-            <div class="bento-row">
-
-                <a href="transactions.xhtml" class="bento-box">
-                    <h3>Automation</h3>
-                    <p>Streamline workflows</p>
-                </a>
-
-                <a href="settings.xhtml" class="bento-box">
-                    <h3>Connectivity</h3>
-                    <p>Integrations &amp; tools</p>
-                </a>
-
-                <a href="security.xhtml" class="bento-box">
-                    <h3>Protection</h3>
-                    <p>Enterprise-grade protection</p>
-                </a>
-
+                <div class="bento-box">
+                    <h3>Recent Transactions</h3>
+                    <p class="bento-description">Latest activity</p>
+                </div>
             </div>
 
         </div>
 
     </ui:define>
-
 </ui:composition>
