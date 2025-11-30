@@ -11,131 +11,101 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Connecteur de données de marché avec gestion d’un cache local
- * pour limiter les appels aux APIs externes.
- *
- * - CoinGecko est utilisé pour les cryptomonnaies.
- * - Alpha Vantage est utilisé pour les actions et les ETF.
- */
-
 public class DefaultMarketDataConnector implements MarketDataConnector {
 
-    /** Client HTTP utilisé pour effectuer les requêtes externes. */
     private final HttpClient http = HttpClient.newHttpClient();
-
-    /** Outil de conversion JSON pour le traitement des réponses API. */
     private final ObjectMapper mapper = new ObjectMapper();
-
-    /** Clé API d’Alpha Vantage récupérée depuis les variables d’environnement. */
     private final String alphaKey = System.getenv("ALPHA_VANTAGE_API_KEY");
 
-
-    public DefaultMarketDataConnector() {
-        System.out.println("[DEBUG] AlphaVantage API KEY detected = " + alphaKey);
+    // --- AJOUT : Mapping Symbole -> ID CoinGecko ---
+    private static final Map<String, String> CRYPTO_ID_MAP = new HashMap<>();
+    static {
+        CRYPTO_ID_MAP.put("BTC", "bitcoin");
+        CRYPTO_ID_MAP.put("ETH", "ethereum");
+        CRYPTO_ID_MAP.put("SOL", "solana");
+        CRYPTO_ID_MAP.put("XRP", "ripple");
+        CRYPTO_ID_MAP.put("ADA", "cardano");
+        CRYPTO_ID_MAP.put("DOGE", "dogecoin");
+        CRYPTO_ID_MAP.put("DOT", "polkadot");
+        // Ajoutez d'autres cryptos ici si nécessaire
     }
 
-    /** Cache local pour stocker les prix des actifs. */
+    // Cache local
     private static final Map<String, Double> priceCache = new HashMap<>();
-
-    /** Cache local pour stocker les horodatages des valeurs mises en cache. */
     private static final Map<String, Long> timestampCache = new HashMap<>();
-
-    /** Durée de validité du cache (2 minutes). */
     private static final long CACHE_DURATION_MS = 120_000;
 
-    /**
-     * Récupère le prix d'une cryptomonnaie en USD via l’API CoinGecko.
-     * Si la valeur est déjà présente et valide dans le cache, celle-ci est utilisée.
-     *
-     * @param coingeckoId identifiant de la cryptomonnaie sur CoinGecko
-     * @return prix actuel en USD
-     * @throws Exception en cas d’erreur réseau ou de parsing JSON
-     */
-    @Override
-    public double getCryptoPriceUsd(String coingeckoId) throws Exception {
-        // Vérifie si la donnée est en cache
-        if (isCached(coingeckoId)) return priceCache.get(coingeckoId);
-
-        String url = "https://api.coingecko.com/api/v3/simple/price?ids=" + coingeckoId + "&vs_currencies=usd";
-        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
-        HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
-
-        JsonNode root = mapper.readTree(response.body());
-        double price = root.path(coingeckoId).path("usd").asDouble();
-
-        if (price > 0) cache(coingeckoId, price);
-        return price;
+    public DefaultMarketDataConnector() {
+        // Constructeur
     }
 
-    /**
-     * Récupère le prix d’une action ou d’un ETF en USD via l’API Alpha Vantage.
-     * Si la valeur est déjà présente et valide dans le cache, celle-ci est utilisée.
-     *
-     * @param symbol symbole boursier (exemple : "AAPL", "SPY")
-     * @return prix actuel en USD
-     * @throws Exception en cas d’erreur réseau ou de clé API manquante
-     */
+    @Override
+    public double getCryptoPriceUsd(String symbolOrId) throws Exception {
+        // 1. On traduit le symbole (ex: "BTC") en ID API (ex: "bitcoin")
+        String apiId = CRYPTO_ID_MAP.getOrDefault(symbolOrId.toUpperCase(), symbolOrId.toLowerCase());
+
+        // Vérifie si le PRIX est en cache (on utilise le symbole comme clé de cache pour simplifier)
+        if (isCached(apiId)) return priceCache.get(apiId);
+
+        String url = "https://api.coingecko.com/api/v3/simple/price?ids=" + apiId + "&vs_currencies=usd";
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
+            HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
+
+            JsonNode root = mapper.readTree(response.body());
+
+            // On lit le noeud correspondant à l'apiId
+            if (root.has(apiId)) {
+                double price = root.path(apiId).path("usd").asDouble();
+                if (price > 0) {
+                    cache(apiId, price); // On cache avec l'ID API
+                    return price;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur CoinGecko pour " + apiId + ": " + e.getMessage());
+        }
+
+        return 0.0;
+    }
+
     @Override
     public double getQuotePriceUsd(String symbol) throws Exception {
-
         // Vérifie le cache
         if (isCached(symbol)) return priceCache.get(symbol);
 
         if (alphaKey == null || alphaKey.isBlank()) {
-            throw new IllegalStateException("ALPHA_VANTAGE_API_KEY manquant");
+            // Fallback pour éviter de planter si pas de clé : on retourne une valeur fictive ou 0
+            System.err.println("ALPHA_VANTAGE_API_KEY manquant, impossible de récupérer le prix stock pour " + symbol);
+            return 0.0;
         }
 
-        String url =
-                "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" +
-                        symbol +
-                        "&apikey=" + alphaKey;
+        String url = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" + symbol + "&apikey=" + alphaKey;
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .GET()
-                .build();
-
+        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
         HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
 
         JsonNode root = mapper.readTree(response.body());
-        JsonNode priceNode = root
-                .path("Global Quote")
-                .path("05. price");
+        JsonNode priceNode = root.path("Global Quote").path("05. price");
 
-        if (priceNode == null || priceNode.isMissingNode()) {
-            throw new IllegalStateException("Prix introuvable pour " + symbol);
+        if (priceNode != null && !priceNode.isMissingNode()) {
+            double price = Double.parseDouble(priceNode.asText());
+            cache(symbol, price);
+            return price;
         }
 
-        double price = Double.parseDouble(priceNode.asText());
-
-        cache(symbol, price);
-        return price;
+        return 0.0;
     }
 
-    // ===================== Méthodes utilitaires du cache =====================
-
-    /**
-     * Vérifie si un symbole est présent dans le cache et si sa valeur est encore valide.
-     *
-     * @param symbol symbole à vérifier
-     * @return true si le symbole est en cache et valide, sinon false
-     */
     private boolean isCached(String symbol) {
         if (!priceCache.containsKey(symbol)) return false;
         long lastUpdate = timestampCache.getOrDefault(symbol, 0L);
         return Instant.now().toEpochMilli() - lastUpdate < CACHE_DURATION_MS;
     }
 
-    /**
-     * Ajoute ou met à jour un symbole dans le cache.
-     *
-     * @param symbol symbole de l’actif
-     * @param price valeur à stocker en USD
-     */
     private void cache(String symbol, double price) {
         priceCache.put(symbol, price);
         timestampCache.put(symbol, Instant.now().toEpochMilli());
-        System.out.println("Mise en cache : " + symbol + " = " + price + " USD");
     }
 }

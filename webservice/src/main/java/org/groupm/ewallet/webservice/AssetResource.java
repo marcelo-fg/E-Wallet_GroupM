@@ -14,6 +14,7 @@ import org.groupm.ewallet.repository.UserRepository;
 
 import org.groupm.ewallet.webservice.context.BackendContext;
 
+import org.groupm.ewallet.service.connector.CurrencyConverter;
 import org.groupm.ewallet.service.connector.DefaultMarketDataConnector;
 import org.groupm.ewallet.service.connector.MarketDataConnector;
 import org.groupm.ewallet.service.connector.MarketDataService;
@@ -123,24 +124,36 @@ public class AssetResource {
     }
 
     // ============================================================
-    // HELPER : GET REAL PRICE FROM API
+    // HELPER : GET REAL PRICE FROM API (CORRIGÉ)
     // ============================================================
 
     private void applyExternalPrice(Asset asset) {
         if (asset.getType() == null || asset.getSymbol() == null) return;
 
         try {
+            // On instancie le connecteur qui contient maintenant le mapping BTC -> bitcoin
             MarketDataConnector connector = new DefaultMarketDataConnector();
 
-            double priceUsd = "crypto".equalsIgnoreCase(asset.getType())
-                    ? connector.getCryptoPriceUsd(asset.getSymbol())
-                    : connector.getQuotePriceUsd(asset.getSymbol());
+            double priceUsd = 0.0;
 
-            double priceChf = priceUsd * 0.9; // simple conversion si besoin
-            asset.setUnitValue(priceChf);
+            if ("crypto".equalsIgnoreCase(asset.getType())) {
+                priceUsd = connector.getCryptoPriceUsd(asset.getSymbol());
+            } else {
+                priceUsd = connector.getQuotePriceUsd(asset.getSymbol());
+            }
+
+            // CORRECTION : Si l'API renvoie un prix valide (> 0), on met à jour et on convertit.
+            // Sinon (0.0), on GARDE la valeur envoyée par le frontend (ne pas écraser avec 0).
+            if (priceUsd > 0) {
+                double priceChf = CurrencyConverter.usdToChf(priceUsd);
+                asset.setUnitValue(priceChf);
+            } else {
+                System.out.println("API price failed or 0 for " + asset.getSymbol() + ", keeping existing value: " + asset.getUnitValue());
+            }
 
         } catch (Exception e) {
             System.err.println("Erreur récupération prix API : " + e.getMessage());
+            // On ne fait rien, l'asset garde le prix envoyé par le JSF par défaut
         }
     }
 
