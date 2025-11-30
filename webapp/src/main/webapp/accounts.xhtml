@@ -4,231 +4,337 @@
                 xmlns:f="jakarta.faces.core"
                 template="/templates/layout.xhtml">
 
-    <ui:define name="title">Portfolios</ui:define>
+    <!-- Titre de l'onglet navigateur -->
+    <ui:define name="title">Bank Accounts</ui:define>
+
+    <!-- Style spécifique de fond pour la page comptes (optionnel, comme dashboard) -->
+    <ui:define name="pageStyle">
+        <style>
+            body.dashboard-page {
+                background: url("#{request.contextPath}/resources/images/bg-dashboard_1.png") center/cover no-repeat fixed !important;
+            }
+        </style>
+    </ui:define>
 
     <ui:define name="content">
-        <div class="page-content portfolio-page">
+        <!-- Ajout de accounts-page pour scoper le CSS -->
+        <div class="page-content accounts-page">
 
-            <!-- BLOC HAUT : CHOIX / CREATION DU PORTFOLIO -->
-            <div class="portfolio-top-bar card">
-                <h:form id="portfolioTopForm" styleClass="portfolio-top-form">
+            <!-- Grille principale 2 colonnes -->
+            <div class="bento-dashboard">
 
-                    <!-- Nom nouveau portefeuille -->
-                    <div class="form-field">
-                        <h:outputLabel for="newName"
-                                       value="New Portfolio Name"
-                                       styleClass="field-label"/>
-                        <h:inputText id="newName"
-                                     value="#{portfolioBean.portfolioName}"
-                                     styleClass="input-field"
-                                     maxlength="60"/>
-                    </div>
+                <!-- COLONNE GAUCHE : résumé + liste + nouvelle transaction -->
+                <div class="bento-main">
 
-                    <!-- Bouton création -->
-                    <div class="form-actions">
-                        <h:commandButton value="Create Portfolio"
-                                         styleClass="btn-primary"
-                                         action="#{portfolioBean.createPortfolio}">
-                            <f:ajax execute="@form"
-                                    render="portfolioSelectPanel portfolioSelectedPanel assetsPanel"/>
-                        </h:commandButton>
-                    </div>
+                    <!-- Carte : Mes Comptes Bancaires / Total solde -->
+                    <h:panelGroup layout="block" styleClass="bento-box glow-hover">
 
-                    <!-- Sélection portefeuille existant -->
-                    <div class="portfolio-select-inline">
-                        <h:panelGroup id="portfolioSelectPanel">
-                            <h:outputLabel for="portfolioSelect"
-                                           value="Current Portfolio"
-                                           styleClass="field-label"/>
+                        <h2>My Bank Accounts</h2>
+                        <p class="bento-description">
+                            Total Available Balance:
+                        </p>
 
-                            <h:selectOneMenu id="portfolioSelect"
-                                             value="#{portfolioBean.selectedPortfolioId}"
-                                             styleClass="select-field">
-                                <f:ajax listener="#{portfolioBean.loadAssets}"
-                                        render="portfolioSelectedPanel assetsPanel"/>
+                        <!-- Total calculé à partir de la liste des comptes -->
+                        <h3 style="font-size:32px; margin:10px 0 20px 0;">
+                            <h:outputText value="#{accountBean.totalBalance}">
+                                <f:convertNumber maxFractionDigits="2" type="number" />
+                            </h:outputText>
+                            <span>CHF</span>
+                        </h3>
 
-                                <f:selectItem itemValue="" itemLabel="-- None --"/>
-                                <f:selectItems value="#{portfolioBean.portfolioIds}"
-                                               var="pid"
-                                               itemValue="#{pid}"
-                                               itemLabel="Portfolio #{pid}"/>
-                            </h:selectOneMenu>
+                        <!-- Bouton création d’un nouveau compte -->
+                        <h:form id="createAccountForm">
+                            <h:commandButton value="Create New Account"
+                                             styleClass="btn-primary"
+                                             action="#{accountBean.startCreation}">
+                                <f:ajax render="accountTypePanel accountsTable detailsPanel" execute="@form" />
+                            </h:commandButton>
+                        </h:form>
+                    </h:panelGroup>
+
+                    <!-- Carte : Liste de mes comptes -->
+                    <h:panelGroup layout="block" styleClass="bento-box glow-hover" id="accountsTable">
+
+                        <h3>Accounts List</h3>
+                        <p class="bento-description">
+                            Overview of all your bank accounts.
+                        </p>
+
+                        <!-- Sélecteur type + nom de compte (création) -->
+                        <h:panelGroup id="accountTypePanel"
+                                      rendered="#{accountBean.showTypeSelector}">
+                            <h:form id="typeSelectorForm">
+                                <div style="margin-top:16px; display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+
+                                    <!-- Type de compte -->
+                                    <div class="form-field" style="flex:1; min-width:220px;">
+                                        <h:outputLabel value="Account Type" styleClass="field-label" />
+                                        <h:selectOneMenu value="#{accountBean.selectedType}"
+                                                         styleClass="select-field">
+                                            <f:selectItem itemValue="Courant" itemLabel="Current Account" />
+                                            <f:selectItem itemValue="Épargne" itemLabel="Savings Account" />
+                                        </h:selectOneMenu>
+                                    </div>
+
+                                    <!-- Nom du compte -->
+                                    <div class="form-field" style="flex:1; min-width:220px;">
+                                        <h:outputLabel value="Account Name" styleClass="field-label" />
+                                        <h:inputText value="#{accountBean.newAccountName}"
+                                                     styleClass="input-field"
+                                                     maxlength="40" />
+                                    </div>
+
+                                    <!-- Actions création / annulation -->
+                                    <div style="display:flex; gap:8px;">
+                                        <h:commandButton value="Create"
+                                                         styleClass="btn-primary"
+                                                         action="#{accountBean.createAccount}">
+                                            <f:ajax execute="@form"
+                                                    render="accountsTable detailsPanel accountTypePanel" />
+                                        </h:commandButton>
+
+                                        <h:commandButton value="Cancel"
+                                                         styleClass="btn-ghost"
+                                                         action="#{accountBean.cancelCreation}">
+                                            <f:ajax execute="@form"
+                                                    render="accountTypePanel" />
+                                        </h:commandButton>
+                                    </div>
+                                </div>
+                            </h:form>
                         </h:panelGroup>
-                    </div>
 
-                </h:form>
-            </div>
+                        <!-- Table des comptes -->
+                        <h:form id="accountsListForm" style="margin-top:18px; display:block;">
+                            <table style="width:100%; border-collapse:separate; border-spacing:0 6px; font-size:14px;">
+                                <thead>
+                                <tr style="opacity:0.8; text-align:left;">
+                                    <th style="padding:6px 10px;">Account Type</th>
+                                    <th style="padding:6px 10px;">Account Name</th>
+                                    <th style="padding:6px 10px;">Current Balance</th>
+                                    <th style="padding:6px 10px; text-align:right;">Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <ui:repeat value="#{accountBean.accounts}" var="c">
+                                    <tr class="assets-row">
+                                        <td>#{c.type}</td>
+                                        <td>#{empty c.name ? c.number : c.name}</td>
+                                        <td>
+                                            <h:outputText value="#{c.balance}">
+                                                <f:convertNumber maxFractionDigits="2" type="number" />
+                                            </h:outputText>
+                                            <span>CHF</span>
+                                        </td>
+                                        <td style="text-align:right;">
+                                            <!-- Sélectionne le compte -->
+                                            <h:commandButton value="Details"
+                                                             styleClass="btn-secondary"
+                                                             action="#{accountBean.selectAccount(c.id)}">
+                                                <f:ajax execute="@this" render="detailsPanel" />
+                                            </h:commandButton>
+                                        </td>
+                                    </tr>
+                                </ui:repeat>
+                                </tbody>
+                            </table>
+                        </h:form>
 
-            <!-- LAYOUT 2 COLONNES -->
-            <div class="portfolio-layout">
-
-                <!-- COLONNE GAUCHE -->
-                <div class="portfolio-left">
-
-                    <!-- Portfolio sélectionné -->
-                    <h:panelGroup id="portfolioSelectedPanel" layout="block"
-                                  styleClass="card portfolio-selected">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <span>Selected Portfolio</span>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <h:outputText value="Portfolio #{portfolioBean.selectedPortfolioId}"
-                                          rendered="#{not empty portfolioBean.selectedPortfolioId}"/>
-                            <h:outputText value="No portfolio selected"
-                                          rendered="#{empty portfolioBean.selectedPortfolioId}"/>
-                        </div>
                     </h:panelGroup>
 
-                    <!-- Assets du portfolio -->
-                    <h:panelGroup id="assetsPanel" layout="block"
-                                  styleClass="card portfolio-assets-table">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <span>Portfolio Assets</span>
+                    <!-- Nouvelle activité : sous la liste des comptes -->
+                    <h:panelGroup layout="block" styleClass="bento-box glow-hover"
+                                  rendered="#{not empty accountBean.accounts}">
+                        <h3>Add Activity</h3>
+                        <p class="bento-description">
+                            Select an account then add, withdraw or transfer money.
+                        </p>
+
+                        <h:form id="transactionForm" style="margin-top:14px;">
+
+                            <!-- Type d'opération : dépôt / retrait / transfert -->
+                            <div class="form-field">
+                                <h:outputLabel value="Operation Type" styleClass="field-label" />
+                                <h:selectOneMenu value="#{accountBean.operationType}"
+                                                 styleClass="select-field">
+                                    <f:selectItem itemValue="DEPOSIT" itemLabel="Deposit" />
+                                    <f:selectItem itemValue="WITHDRAWAL" itemLabel="Withdrawal" />
+                                    <f:selectItem itemValue="TRANSFER" itemLabel="Transfer" />
+                                    <f:ajax render="accountField transferFields categoryField" />
+                                </h:selectOneMenu>
                             </div>
-                        </div>
-                        <div class="card-body">
-                            <h:panelGroup rendered="#{empty portfolioBean.assets}">
-                                <p class="empty-state">
-                                    No assets in this portfolio.
-                                </p>
+
+                            <!-- Compte cible pour dépôt / retrait -->
+                            <h:panelGroup id="accountField"
+                                          rendered="#{accountBean.operationType ne 'TRANSFER'}">
+                                <div class="form-field">
+                                    <h:outputLabel value="Account" styleClass="field-label" />
+                                    <h:selectOneMenu value="#{accountBean.selectedAccountId}"
+                                                     styleClass="select-field">
+                                        <f:selectItems value="#{accountBean.accounts}"
+                                                       var="acc"
+                                                       itemValue="#{acc.id}"
+                                                       itemLabel="#{empty acc.name ? acc.type.concat(' - ').concat(acc.number) : acc.name}" />
+                                        <f:ajax listener="#{accountBean.selectAccount(accountBean.selectedAccountId)}"
+                                                render="detailsPanel" />
+                                    </h:selectOneMenu>
+                                </div>
                             </h:panelGroup>
 
-                            <h:panelGroup rendered="#{not empty portfolioBean.assets}">
-                                <ul class="assets-list">
-                                    <ui:repeat value="#{portfolioBean.assets}" var="a">
-                                        <li class="assets-row">#{a}</li>
-                                    </ui:repeat>
-                                </ul>
+                            <!-- Champs spécifiques au transfert -->
+                            <h:panelGroup id="transferFields"
+                                          rendered="#{accountBean.operationType eq 'TRANSFER'}">
+                                <div class="form-field">
+                                    <h:outputLabel value="Source Account" styleClass="field-label" />
+                                    <h:selectOneMenu value="#{accountBean.transferSourceAccountId}"
+                                                     styleClass="select-field">
+                                        <f:selectItems value="#{accountBean.accounts}"
+                                                       var="acc"
+                                                       itemValue="#{acc.id}"
+                                                       itemLabel="#{empty acc.name ? acc.type.concat(' - ').concat(acc.number) : acc.name}" />
+                                    </h:selectOneMenu>
+                                </div>
+
+                                <div class="form-field">
+                                    <h:outputLabel value="Target Account" styleClass="field-label" />
+                                    <h:selectOneMenu value="#{accountBean.transferTargetAccountId}"
+                                                     styleClass="select-field">
+                                        <f:selectItems value="#{accountBean.accounts}"
+                                                       var="acc"
+                                                       itemValue="#{acc.id}"
+                                                       itemLabel="#{empty acc.name ? acc.type.concat(' - ').concat(acc.number) : acc.name}" />
+                                    </h:selectOneMenu>
+                                </div>
                             </h:panelGroup>
-                        </div>
+
+                            <!-- Catégorie dynamique selon type -->
+                            <h:panelGroup id="categoryField">
+                                <div class="form-field">
+                                    <h:outputLabel value="Category" styleClass="field-label" />
+                                    <h:selectOneMenu value="#{accountBean.expenseCategory}"
+                                                     styleClass="select-field">
+                                        <f:selectItem itemValue="" itemLabel="-- None / Unknown --" />
+                                        <f:selectItems value="#{accountBean.expenseCategories}" />
+                                    </h:selectOneMenu>
+                                </div>
+                            </h:panelGroup>
+
+                            <!-- Montant -->
+                            <div class="form-field">
+                                <h:outputLabel value="Amount" styleClass="field-label" />
+                                <h:inputText value="#{accountBean.amount}"
+                                             styleClass="input-field">
+                                    <f:convertNumber maxFractionDigits="2" type="number" />
+                                </h:inputText>
+                            </div>
+
+                            <!-- Commentaire -->
+                            <div class="form-field">
+                                <h:outputLabel value="Comment" styleClass="field-label" />
+                                <h:inputTextarea value="#{accountBean.transactionDescription}"
+                                                 styleClass="input-field"
+                                                 rows="2" />
+                            </div>
+
+                            <div style="margin-top:16px;">
+                                <h:commandButton value="Confirm Activity"
+                                                 styleClass="btn-primary full-width"
+                                                 action="#{accountBean.confirmOperation}">
+                                    <f:ajax execute="@form"
+                                            render="detailsPanel accountsTable" />
+                                </h:commandButton>
+                            </div>
+
+                        </h:form>
+                    </h:panelGroup>
+
+                </div>
+
+                <!-- COLONNE DROITE : historique simplifié + détails -->
+                <div class="bento-sidebar" id="detailsPanel">
+
+                    <h:panelGroup layout="block" styleClass="bento-box glow-hover">
+                        <h3>Transaction History</h3>
+                        <p class="bento-description">
+                            Latest operations for the selected account.
+                        </p>
+
+                        <!-- Historique vide -->
+                        <h:panelGroup rendered="#{empty accountBean.selectedAccountTransactions}">
+                            <p style="margin-top:12px; font-size:13px; opacity:0.8;">
+                                No transactions yet.
+                            </p>
+                        </h:panelGroup>
+
+                        <!-- Historique compact -->
+                        <h:panelGroup rendered="#{not empty accountBean.selectedAccountTransactions}">
+                            <table style="width:100%; border-collapse:separate; border-spacing:0 4px; font-size:13px; margin-top:12px;">
+                                <thead>
+                                <tr style="opacity:0.8; text-align:left;">
+                                    <th style="width:10%;">#</th>
+                                    <th style="width:25%;">Date</th>
+                                    <th style="width:35%;">Account</th>
+                                    <th style="width:20%; text-align:right;">Amount</th>
+                                    <th style="width:10%; text-align:right;">Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <ui:repeat value="#{accountBean.selectedAccountTransactions}" var="tx" varStatus="st">
+                                    <tr>
+                                        <td>#{st.index + 1}</td>
+                                        <td>
+                                            <!-- LocalDateTime affiché brut (évite le convertisseur JSF) -->
+                                            <h:outputText value="#{tx.dateTime}" />
+                                        </td>
+                                        <td>
+                                            <h:outputText value="#{accountBean.findAccountById(tx.accountId).name}" />
+                                        </td>
+                                        <td style="text-align:right;">
+                                            <h:outputText value="#{tx.amount}">
+                                                <f:convertNumber maxFractionDigits="2" type="number" />
+                                            </h:outputText>
+                                            <span>CHF</span>
+                                        </td>
+                                        <td style="text-align:right;">
+                                            <h:commandButton value="Details"
+                                                             styleClass="btn-secondary"
+                                                             actionListener="#{accountBean.setSelectedTransaction(tx)}">
+                                                <f:ajax render="transactionDetailsPanel" />
+                                            </h:commandButton>
+                                        </td>
+                                    </tr>
+                                </ui:repeat>
+                                </tbody>
+                            </table>
+                        </h:panelGroup>
+
+                        <!-- Panneau de détails d'une transaction -->
+                        <h:panelGroup id="transactionDetailsPanel"
+                                      layout="block"
+                                      rendered="#{not empty accountBean.selectedTransaction}">
+                            <hr style="margin:16px 0; border:none; border-top:1px solid rgba(255,255,255,0.08);" />
+                            <h4 style="margin:0 0 8px 0;">Transaction Details</h4>
+
+                            <p style="font-size:13px; margin:2px 0;">
+                                <strong>Date and Time:</strong>
+                                <h:outputText value="#{accountBean.selectedTransaction.dateTime}" />
+                            </p>
+                            <p style="font-size:13px; margin:2px 0;">
+                                <strong>Type:</strong>
+                                #{accountBean.selectedTransaction.type}
+                            </p>
+                            <p style="font-size:13px; margin:2px 0;">
+                                <strong>Category:</strong>
+                                #{accountBean.selectedTransaction.category}
+                            </p>
+                            <p style="font-size:13px; margin:2px 0;">
+                                <strong>Comment:</strong>
+                                #{accountBean.selectedTransaction.description}
+                            </p>
+                        </h:panelGroup>
                     </h:panelGroup>
                 </div>
 
-                <!-- COLONNE DROITE -->
-                <div class="portfolio-right">
-
-                    <!-- Ajouter un actif (API) -->
-                    <h:form id="apiForm" styleClass="card portfolio-add-api">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <span>Add Asset (from Market)</span>
-                            </div>
-                        </div>
-
-                        <div class="card-body form-grid">
-                            <div class="form-field">
-                                <h:outputLabel for="typeSelect" value="Asset Type" styleClass="field-label"/>
-                                <h:selectOneMenu id="typeSelect"
-                                                 value="#{portfolioBean.selectedType}"
-                                                 styleClass="select-field">
-                                    <f:ajax listener="#{portfolioBean.loadAssetsFromApi}"
-                                            render="assetSelect priceField"/>
-                                    <f:selectItem itemValue="" itemLabel="-- Select --"/>
-                                    <f:selectItem itemValue="crypto" itemLabel="Crypto"/>
-                                    <f:selectItem itemValue="stock" itemLabel="Stock"/>
-                                    <f:selectItem itemValue="etf" itemLabel="ETF"/>
-                                </h:selectOneMenu>
-                            </div>
-
-                            <div class="form-field">
-                                <h:outputLabel for="assetSelect" value="Choose Asset" styleClass="field-label"/>
-                                <h:selectOneMenu id="assetSelect"
-                                                 value="#{portfolioBean.selectedExternalAsset}"
-                                                 styleClass="select-field">
-                                    <f:ajax listener="#{portfolioBean.loadPriceForSelectedAsset}"
-                                            render="priceField"/>
-                                    <f:selectItems value="#{portfolioBean.availableAssets}"
-                                                   var="a"
-                                                   itemValue="#{a.symbol}"
-                                                   itemLabel="#{a.name} (#{a.symbol})"/>
-                                </h:selectOneMenu>
-                            </div>
-
-                            <div class="form-field">
-                                <h:outputLabel for="priceField" value="Price (USD)" styleClass="field-label"/>
-                                <h:outputText id="priceField"
-                                              styleClass="readonly-field"
-                                              value="#{portfolioBean.marketUnitPrice}">
-                                    <f:convertNumber maxFractionDigits="4"/>
-                                </h:outputText>
-                            </div>
-
-                            <div class="form-field">
-                                <h:outputLabel value="Quantity" styleClass="field-label"/>
-                                <h:inputText value="#{portfolioBean.assetQuantity}"
-                                             styleClass="input-field"/>
-                            </div>
-                        </div>
-
-                        <div class="card-footer">
-                            <h:commandButton value="Add to Portfolio"
-                                             styleClass="btn-primary full-width"
-                                             action="#{portfolioBean.addAssetFromApi}">
-                                <f:ajax execute="@form"
-                                        render="assetsPanel portfolioSelectedPanel"/>
-                            </h:commandButton>
-                        </div>
-                    </h:form>
-
-                    <!-- Création personnalisée -->
-                    <h:form id="customAssetForm" styleClass="card portfolio-custom-asset">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <span>Add Custom Asset</span>
-                            </div>
-                        </div>
-
-                        <div class="card-body form-grid">
-                            <div class="form-field">
-                                <h:outputLabel value="Name" styleClass="field-label"/>
-                                <h:inputText value="#{portfolioBean.assetName}"
-                                             styleClass="input-field"/>
-                            </div>
-
-                            <div class="form-field">
-                                <h:outputLabel value="Symbol" styleClass="field-label"/>
-                                <h:inputText value="#{portfolioBean.assetSymbol}"
-                                             styleClass="input-field"/>
-                            </div>
-
-                            <div class="form-field">
-                                <h:outputLabel value="Type" styleClass="field-label"/>
-                                <h:selectOneMenu value="#{portfolioBean.assetType}"
-                                                 styleClass="select-field">
-                                    <f:selectItem itemValue="crypto" itemLabel="Crypto"/>
-                                    <f:selectItem itemValue="stock" itemLabel="Stock"/>
-                                    <f:selectItem itemValue="etf" itemLabel="ETF"/>
-                                    <f:selectItem itemValue="other" itemLabel="Other"/>
-                                </h:selectOneMenu>
-                            </div>
-
-                            <div class="form-field">
-                                <h:outputLabel value="Quantity" styleClass="field-label"/>
-                                <h:inputText value="#{portfolioBean.assetQuantity}"
-                                             styleClass="input-field"/>
-                            </div>
-
-                            <div class="form-field">
-                                <h:outputLabel value="Unit Value" styleClass="field-label"/>
-                                <h:inputText value="#{portfolioBean.assetUnitValue}"
-                                             styleClass="input-field"/>
-                            </div>
-                        </div>
-
-                        <div class="card-footer">
-                            <h:commandButton value="Add Custom Asset"
-                                             styleClass="btn-secondary full-width"
-                                             action="#{portfolioBean.addCustomAsset}">
-                                <f:ajax execute="@form"
-                                        render="assetsPanel portfolioSelectedPanel"/>
-                            </h:commandButton>
-                        </div>
-                    </h:form>
-
-                </div>
             </div>
         </div>
     </ui:define>
