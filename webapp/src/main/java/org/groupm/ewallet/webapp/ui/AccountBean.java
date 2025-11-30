@@ -3,13 +3,13 @@ package org.groupm.ewallet.webapp.ui;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.groupm.ewallet.webapp.service.WebAppService;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-@Named
+import org.groupm.ewallet.webapp.service.WebAppService;
+
+@Named("accountBean")
 @SessionScoped
 public class AccountBean implements Serializable {
 
@@ -18,23 +18,22 @@ public class AccountBean implements Serializable {
 
     // UI state
     private boolean showTypeSelector = false;
-    private String selectedType;
+    private String selectedType = "";
 
-    // Selected account for details page
+    // Deposit
+    private double depositAmount = 0.0;
+
+    // The account currently viewed
     private AccountDTO selectedAccount;
 
-    // List of accounts displayed in accounts.xhtml
-    private List<AccountDTO> accounts = new ArrayList<>();
-
-    // DTO class used by the WebApp
+    // ---------------------------------------------------------
+    // DTO
+    // ---------------------------------------------------------
     public static class AccountDTO {
-
-        private String id;
-        private String type;
-        private String number;
-        private double balance;
-
-        public AccountDTO() {}
+        private String id;        // String !
+        private String type;      // String
+        private String number;    // String (same as id)
+        private double balance;   // double
 
         public AccountDTO(String id, String type, String number, double balance) {
             this.id = id;
@@ -43,87 +42,68 @@ public class AccountBean implements Serializable {
             this.balance = balance;
         }
 
-        public String getId() {
-            return id;
-        }
+        public String getId() { return id; }
+        public String getType() { return type; }
+        public String getNumber() { return number; }
+        public double getBalance() { return balance; }
 
-        public void setId(String id) {
-            this.id = id;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public void setType(String type) {
-            this.type = type;
-        }
-
-        public String getNumber() {
-            return number;
-        }
-
-        public void setNumber(String number) {
-            this.number = number;
-        }
-
-        public double getBalance() {
-            return balance;
-        }
-
-        public void setBalance(double balance) {
-            this.balance = balance;
-        }
+        public void setBalance(double balance) { this.balance = balance; }
     }
 
-    // Load accounts from service
-    private void refreshAccounts() {
-        accounts = new ArrayList<>();
-        for (var acc : service.getAccounts()) {
-            accounts.add(
-                    new AccountDTO(
-                            acc.getId(),
-                            acc.getType(),
-                            acc.getNumber(),
-                            acc.getBalance()
-                    )
-            );
-        }
-    }
-
-    public List<AccountDTO> getAccounts() {
-        refreshAccounts();
-        return accounts;
-    }
-
-    // UI logic
-    public boolean isShowTypeSelector() {
-        return showTypeSelector;
-    }
+    // ---------------------------------------------------------
+    // ACCOUNT CREATION
+    // ---------------------------------------------------------
 
     public void startCreation() {
         showTypeSelector = true;
     }
 
-    public void cancelCreation() {
-        showTypeSelector = false;
-        selectedType = null;
-    }
-
-    public void createAccount() {
-        if (selectedType == null) return;
+    public String createAccount() {
+        if (selectedType == null || selectedType.isBlank()) {
+            return null;
+        }
 
         service.createAccount(selectedType);
 
-        selectedType = null;
         showTypeSelector = false;
-        refreshAccounts();
+        selectedType = "";
+
+        return "accounts.xhtml?faces-redirect=true";
     }
 
+    // ---------------------------------------------------------
+    // LOAD LIST
+    // ---------------------------------------------------------
+
+    private List<AccountDTO> convert(List<WebAppService.LocalAccount> list) {
+        List<AccountDTO> res = new ArrayList<>();
+
+        for (var acc : list) {
+            res.add(
+                    new AccountDTO(
+                            acc.getId(),
+                            acc.getType(),
+                            acc.getNumber(),   // String
+                            acc.getBalance()
+                    )
+            );
+        }
+
+        return res;
+    }
+
+    public List<AccountDTO> getAccounts() {
+        return convert(service.getAccounts());
+    }
+
+    // ---------------------------------------------------------
+    // OPEN DETAILS
+    // ---------------------------------------------------------
+
     public String openDetails(String id) {
-        var acc = service.getAccountById(id);
-        if (acc == null)
-            return "accounts.xhtml?faces-redirect=true";
+
+        WebAppService.LocalAccount acc = service.getAccountById(id);
+        if (acc == null) return null;
 
         selectedAccount = new AccountDTO(
                 acc.getId(),
@@ -135,12 +115,48 @@ public class AccountBean implements Serializable {
         return "accountDetails.xhtml?faces-redirect=true";
     }
 
+    // ---------------------------------------------------------
+    // DEPOSIT
+    // ---------------------------------------------------------
+
+    public String deposit() {
+
+        if (selectedAccount == null) return null;
+
+        boolean ok = service.depositToAccount(selectedAccount.getId(), depositAmount);
+
+        if (ok) {
+            selectedAccount.setBalance(selectedAccount.getBalance() + depositAmount);
+        }
+
+        depositAmount = 0.0;
+
+        return "accountDetails.xhtml?faces-redirect=true";
+    }
+
+    // ---------------------------------------------------------
+    // GETTERS / SETTERS
+    // ---------------------------------------------------------
+
     public AccountDTO getSelectedAccount() {
         return selectedAccount;
     }
 
-    // Deposit logic
-    private double depositAmount;
+    public boolean isShowTypeSelector() {
+        return showTypeSelector;
+    }
+
+    public void setShowTypeSelector(boolean showTypeSelector) {
+        this.showTypeSelector = showTypeSelector;
+    }
+
+    public String getSelectedType() {
+        return selectedType;
+    }
+
+    public void setSelectedType(String selectedType) {
+        this.selectedType = selectedType;
+    }
 
     public double getDepositAmount() {
         return depositAmount;
@@ -148,26 +164,5 @@ public class AccountBean implements Serializable {
 
     public void setDepositAmount(double depositAmount) {
         this.depositAmount = depositAmount;
-    }
-
-    public void deposit() {
-        if (selectedAccount == null) return;
-
-        service.depositToAccount(selectedAccount.getId(), depositAmount);
-
-        // reload updated balance
-        var acc = service.getAccountById(selectedAccount.getId());
-        selectedAccount.setBalance(acc.getBalance());
-
-        depositAmount = 0.0;
-    }
-
-    // Getter & setter for selectedType
-    public String getSelectedType() {
-        return selectedType;
-    }
-
-    public void setSelectedType(String selectedType) {
-        this.selectedType = selectedType;
     }
 }
