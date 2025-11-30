@@ -2,38 +2,45 @@
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
 
+    <!-- Common page head: title + global styles -->
     <h:head>
         <title>WealthMate</title>
         <h:outputStylesheet library="css" name="styles.css"/>
     </h:head>
 
+    <!-- Global layout wrapper for all pages using this template -->
     <h:body styleClass="dashboard-page"
             style="background: url('#{resource['images/bg-dashboard_1.png']}') center/cover no-repeat fixed;">
 
         <!-- Top Navigation Bar -->
         <nav class="top-nav">
             <div class="nav-left">
+                <!-- Application logo and brand -->
                 <img src="#{request.contextPath}/resources/images/Logo-W_color.png"
                      class="app-logo" alt="logo" />
                 <span class="app-title">WealthMate</span>
             </div>
 
             <div class="nav-center">
+                <!-- Main navigation links across the application -->
                 <a href="dashboard.xhtml">Dashboard</a>
-                <a href="accounts.xhtml">Comptes</a>
-                <a href="portfolio.xhtml">Portefeuille</a>
-                <a href="analysis.xhtml">Analyse</a>
+                <a href="accounts.xhtml">Bank Accounts</a>
+                <a href="portfolio.xhtml">Portfolio</a>
                 <a href="transactions.xhtml">Transactions</a>
+                <a href="totalwealth.xhtml">Total Wealth</a>
             </div>
 
             <div class="nav-right">
-                <a href="profile.xhtml" class="profile-btn">
-                    #{loginBean.email != null ? loginBean.email.substring(0,1).toUpperCase() : 'U'}
-                </a>
+                <!-- Logout action: invalidates HTTP session and redirects to login -->
+                <h:form style="display:inline;">
+                    <h:commandButton value="Logout"
+                                     action="#{loginBean.logout}"
+                                     styleClass="btn-logout" />
+                </h:form>
             </div>
         </nav>
 
-        <!-- Page Content -->
+        <!-- Main page content provided by child Facelets -->
         <main class="page-content">
             <ui:insert name="content"/>
         </main>

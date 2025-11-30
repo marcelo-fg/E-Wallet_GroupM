@@ -30,107 +30,51 @@
                             Unified view of all your operations across bank accounts and portfolios.
                         </p>
 
-                        <h:form id="txForm" style="margin-top:16px; display:block;">
-
-                            <!-- Filters bar -->
-                            <div style="display:flex; flex-wrap:wrap; gap:14px; margin-bottom:14px; align-items:flex-end;">
-
-                                <!-- Source type filter -->
-                                <div class="form-field" style="min-width:180px;">
-                                    <h:outputLabel value="Source type" styleClass="field-label" />
-                                    <h:selectOneMenu value="#{transactionBean.filterSourceType}"
-                                                     styleClass="select-field">
-                                        <f:selectItem itemValue="ALL" itemLabel="All" />
-                                        <f:selectItem itemValue="ACCOUNT" itemLabel="Bank accounts" />
-                                        <f:selectItem itemValue="PORTFOLIO" itemLabel="Portfolios" />
-                                        <f:ajax render="txTable" execute="@this" />
-                                    </h:selectOneMenu>
-                                </div>
-
-                                <!-- Accounts filter (multi-select) -->
-                                <div class="form-field" style="min-width:260px; flex:1;">
-                                    <h:outputLabel value="Accounts" styleClass="field-label" />
-                                    <h:selectManyListbox value="#{transactionBean.selectedAccountIds}"
-                                                         styleClass="select-field"
-                                                         size="4">
-                                        <f:selectItems value="#{transactionBean.allAccounts}"
-                                                       var="acc"
-                                                       itemValue="#{acc.id}"
-                                                       itemLabel="#{empty acc.name ? acc.type.concat(' - ').concat(acc.number) : acc.name}" />
-                                        <f:ajax render="txTable" execute="@this" />
-                                    </h:selectManyListbox>
-                                </div>
-
-                                <!-- Portfolios filter (multi-select) -->
-                                <div class="form-field" style="min-width:260px; flex:1;">
-                                    <h:outputLabel value="Portfolios" styleClass="field-label" />
-                                    <h:selectManyListbox value="#{transactionBean.selectedPortfolioIds}"
-                                                         styleClass="select-field"
-                                                         size="4">
-                                        <f:selectItems value="#{transactionBean.allPortfolioIds}"
-                                                       var="pid"
-                                                       itemValue="#{pid}"
-                                                       itemLabel="Portfolio ##{pid}" />
-                                        <f:ajax render="txTable" execute="@this" />
-                                    </h:selectManyListbox>
-                                </div>
-
-                                <!-- Reset filters button -->
-                                <div class="form-field" style="min-width:140px;">
-                                    <h:commandButton value="Reset filters"
-                                                     styleClass="primary-button"
-                                                     actionListener="#{transactionBean.resetFilters}">
-                                        <f:ajax render="txForm:txTable txForm" execute="@this" />
-                                    </h:commandButton>
-                                </div>
-                            </div>
-
-                            <!-- Unified transactions table -->
-                            <h:panelGroup id="txTable" layout="block" style="margin-top:6px;">
-                                <table style="width:100%; border-collapse:separate; border-spacing:0 6px; font-size:13px;">
-                                    <thead>
-                                    <tr style="opacity:0.8; text-align:left;">
-                                        <th style="width:4%;">#</th>
-                                        <th style="width:10%;">Type</th>
-                                        <th style="width:16%;">Source</th>
-                                        <th style="width:18%;">Date / Time</th>
-                                        <th style="width:12%;">Category</th>
-                                        <th>Description</th>
-                                        <th style="width:10%; text-align:right;">Amount</th>
+                        <!-- Unified transactions table -->
+                        <div style="margin-top:20px;">
+                            <table style="width:100%; border-collapse:separate; border-spacing:0 6px; font-size:13px;">
+                                <thead>
+                                <tr style="opacity:0.8; text-align:left;">
+                                    <th style="width:4%;">#</th>
+                                    <th style="width:10%;">Type</th>
+                                    <th style="width:16%;">Source</th>
+                                    <th style="width:18%;">Date / Time</th>
+                                    <th style="width:12%;">Category</th>
+                                    <th>Description</th>
+                                    <th style="width:10%; text-align:right;">Amount</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <ui:repeat value="#{transactionBean.allTransactions}" var="t" varStatus="st">
+                                    <tr class="assets-row">
+                                        <td>#{st.index + 1}</td>
+                                        <td>
+                                            #{t.source eq 'ACCOUNT' ? 'Account' : 'Portfolio'}
+                                        </td>
+                                        <td>#{t.sourceLabel}</td>
+                                        <td>#{t.dateTime}</td>
+                                        <td>#{t.category}</td>
+                                        <td>#{t.description}</td>
+                                        <td style="text-align:right;">
+                                            <h:outputText value="#{t.amount}">
+                                                <f:convertNumber maxFractionDigits="2" type="number" />
+                                            </h:outputText>
+                                            <span> CHF</span>
+                                        </td>
                                     </tr>
-                                    </thead>
-                                    <tbody>
-                                    <ui:repeat value="#{transactionBean.filteredTransactions}" var="t" varStatus="st">
-                                        <tr class="assets-row">
-                                            <td>#{st.index + 1}</td>
-                                            <td>
-                                                #{t.source eq 'ACCOUNT' ? 'Account' : 'Portfolio'}
-                                            </td>
-                                            <td>#{t.sourceLabel}</td>
-                                            <td>#{t.dateTime}</td>
-                                            <td>#{t.category}</td>
-                                            <td>#{t.description}</td>
-                                            <td style="text-align:right;">
-                                                <h:outputText value="#{t.amount}">
-                                                    <f:convertNumber maxFractionDigits="2" type="number" />
-                                                </h:outputText>
-                                                <span>CHF</span>
-                                            </td>
-                                        </tr>
-                                    </ui:repeat>
+                                </ui:repeat>
 
-                                    <h:panelGroup rendered="#{empty transactionBean.filteredTransactions}">
-                                        <tr>
-                                            <td colspan="7" style="padding:8px 10px; opacity:0.75;">
-                                                No transaction matches the current filters.
-                                            </td>
-                                        </tr>
-                                    </h:panelGroup>
-                                    </tbody>
-                                </table>
-                            </h:panelGroup>
+                                <h:panelGroup rendered="#{empty transactionBean.allTransactions}">
+                                    <tr>
+                                        <td colspan="7" style="padding:8px 10px; opacity:0.75;">
+                                            No transactions recorded yet.
+                                        </td>
+                                    </tr>
+                                </h:panelGroup>
+                                </tbody>
+                            </table>
+                        </div>
 
-                        </h:form>
                     </h:panelGroup>
 
                 </div>

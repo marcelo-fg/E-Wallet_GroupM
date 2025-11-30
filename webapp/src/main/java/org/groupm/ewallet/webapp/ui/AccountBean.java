@@ -12,17 +12,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Bean de présentation pour la gestion des comptes bancaires.
+ * Presentation bean for managing bank accounts.
  *
- * Responsabilités principales :
- * - Exposer la liste des comptes à la couche JSF (lecture seule via DTO).
- * - Orchestrer la création de comptes (type + nom, appel service).
- * - Gérer la sélection d’un compte courant pour l’affichage des détails.
- * - Piloter les opérations de dépôt / retrait / transfert.
+ * Main responsibilities:
+ * - Expose the list of accounts to the JSF layer (read-only via DTO).
+ * - Orchestrate account creation (type + name, service invocation).
+ * - Manage the currently selected account for details and history display.
+ * - Drive deposit / withdrawal / transfer operations.
  *
- * Portée session :
- * - Le bean vit pendant toute la session HTTP de l’utilisateur.
- * - Doit rester léger (pas d’objets trop volumineux) et être sérialisable.
+ * Session scope:
+ * - The bean lives for the whole HTTP session of the user.
+ * - Must remain lightweight (no heavy objects) and be serializable.
  */
 @Named
 @SessionScoped
@@ -33,45 +33,45 @@ public class AccountBean implements Serializable {
     @Inject
     private WebAppService service;
 
-    // Etat UI : affichage du sélecteur de type lors de la création d'un compte
+    // UI state: display the type selector when creating a new account
     private boolean showTypeSelector = false;
 
-    // Type du compte à créer (par ex. "Courant", "Épargne")
+    // Type of the account to create (e.g. "Checking", "Savings")
     private String selectedType;
 
-    // Nom libre donné au compte lors de la création
+    // Free name given to the account at creation time
     private String newAccountName;
 
-    // Compte actuellement sélectionné côté UI (détail, historique)
+    // Account currently selected on the UI (details, history)
     private AccountDTO selectedAccount;
 
-    // Id du compte sélectionné pour les opérations DEPOSIT / WITHDRAWAL
+    // Id of the account selected for DEPOSIT / WITHDRAWAL operations
     private String selectedAccountId;
 
-    // Liste des comptes affichés dans accounts.xhtml
+    // List of accounts displayed in accounts.xhtml
     private List<AccountDTO> accounts = new ArrayList<>();
 
-    // Champs pour les opérations (dépôt / retrait / transfert)
-    private double amount;                 // Montant saisi par l'utilisateur
-    private String transactionDescription; // Description libre de l'opération
-    private String expenseCategory;        // Catégorie (dépense / entrée / transfert)
+    // Fields used for operations (deposit / withdrawal / transfer)
+    private double amount;                 // Amount entered by the user
+    private String transactionDescription; // Free description of the operation
+    private String expenseCategory;        // Category (expense / income / transfer)
 
     /**
-     * Type d'opération choisie dans l'UI : "DEPOSIT", "WITHDRAWAL" ou "TRANSFER".
-     * Par défaut, on propose un dépôt pour simplifier l’usage.
+     * Operation type chosen in the UI: "DEPOSIT", "WITHDRAWAL" or "TRANSFER".
+     * By default, a deposit is proposed to simplify the usage.
      */
     private String operationType = "DEPOSIT";
 
-    // Identifiants utilisés uniquement pour l'activité de transfert
+    // Identifiers used only for transfer operations
     private String transferSourceAccountId;
     private String transferTargetAccountId;
 
-    // Transaction sélectionnée pour l’affichage détaillé dans l’historique
+    // Transaction selected for detailed display in the history
     private WebAppService.LocalTransaction selectedTransaction;
 
     /**
-     * DTO simplifié utilisé uniquement par la couche web.
-     * On évite d'exposer directement les entités du domaine.
+     * Simplified DTO used only by the web layer.
+     * Avoid exposing domain entities directly.
      */
     public static class AccountDTO {
 
@@ -82,7 +82,7 @@ public class AccountBean implements Serializable {
         private double balance;
 
         public AccountDTO() {
-            // Constructeur par défaut requis par certaines libs / outils
+            // Default constructor required by some libs / tools
         }
 
         public AccountDTO(String id, String type, String number, String name, double balance) {
@@ -135,12 +135,12 @@ public class AccountBean implements Serializable {
     }
 
     /* ==========================================================
-       Accès aux listes / données de base
+       Access to lists / base data
        ========================================================== */
 
     /**
-     * Recharge la liste des comptes depuis le service métier.
-     * Méthode interne pour centraliser la logique de mapping DTO.
+     * Reload the list of accounts from the business service.
+     * Internal method to centralize DTO mapping logic.
      */
     private void refreshAccounts() {
         List<AccountDTO> result = new ArrayList<>();
@@ -157,15 +157,15 @@ public class AccountBean implements Serializable {
     }
 
     /**
-     * Accesseur utilisé par la page JSF.
-     * Recharge à chaque appel pour rester à jour.
+     * Accessor used by the JSF page.
+     * Reloads on each call to stay up to date.
      */
     public List<AccountDTO> getAccounts() {
         refreshAccounts();
         return accounts;
     }
 
-    // Retourne le solde total de tous les comptes
+    // Returns the total balance of all accounts
     public double getTotalBalance() {
         double total = 0.0;
         for (AccountDTO acc : getAccounts()) {
@@ -175,7 +175,7 @@ public class AccountBean implements Serializable {
     }
 
     /* ==========================================================
-       Gestion de la création de compte
+       Account creation management
        ========================================================== */
 
     public boolean isShowTypeSelector() {
@@ -195,8 +195,8 @@ public class AccountBean implements Serializable {
     public void createAccount() {
         if (selectedType == null || selectedType.isBlank()) {
             addGlobalMessage(FacesMessage.SEVERITY_WARN,
-                    "Type de compte manquant",
-                    "Veuillez sélectionner un type de compte avant de créer.");
+                    "Missing account type",
+                    "Please select an account type before creating.");
             return;
         }
 
@@ -208,8 +208,8 @@ public class AccountBean implements Serializable {
         refreshAccounts();
 
         addGlobalMessage(FacesMessage.SEVERITY_INFO,
-                "Compte créé",
-                "Le nouveau compte a été créé avec succès.");
+                "Account created",
+                "The new account has been created successfully.");
     }
 
     public String getSelectedType() {
@@ -229,7 +229,7 @@ public class AccountBean implements Serializable {
     }
 
     /* ==========================================================
-       Sélection d'un compte pour affichage des détails
+       Account selection for details display
        ========================================================== */
 
     public void selectAccount(String id) {
@@ -238,8 +238,8 @@ public class AccountBean implements Serializable {
             selectedAccount = null;
             selectedAccountId = null;
             addGlobalMessage(FacesMessage.SEVERITY_WARN,
-                    "Compte introuvable",
-                    "Le compte demandé n'existe pas ou plus.");
+                    "Account not found",
+                    "The requested account does not exist anymore.");
             return;
         }
 
@@ -253,7 +253,7 @@ public class AccountBean implements Serializable {
                 acc.getBalance()
         );
 
-        // On réinitialise le formulaire d'opérations à chaque sélection
+        // Reset the operations form whenever an account is selected
         resetOperationForm();
     }
 
@@ -270,7 +270,7 @@ public class AccountBean implements Serializable {
     }
 
     /* ==========================================================
-       Opérations : dépôt / retrait / transfert
+       Operations: deposit / withdrawal / transfer
        ========================================================== */
 
     public double getAmount() {
@@ -298,26 +298,26 @@ public class AccountBean implements Serializable {
     }
 
     private static final List<String> DEPOSIT_CATEGORIES = List.of(
-            "Dépôt cash",
-            "Salaire",
-            "Dividendes",
-            "Remboursement",
-            "Autre"
+            "Cash deposit",
+            "Salary",
+            "Dividends",
+            "Refund",
+            "Other"
     );
 
     private static final List<String> WITHDRAWAL_CATEGORIES = List.of(
-            "Loisirs",
-            "Ménage",
-            "Loyer",
-            "Assurance",
-            "Abonnements",
-            "Autre"
+            "Leisure",
+            "Household",
+            "Rent",
+            "Insurance",
+            "Subscriptions",
+            "Other"
     );
 
     private static final List<String> TRANSFER_CATEGORIES = List.of(
-            "Virement interne",
-            "Réallocation épargne",
-            "Autre"
+            "Internal transfer",
+            "Savings reallocation",
+            "Other"
     );
 
     public List<String> getExpenseCategories() {
@@ -366,13 +366,13 @@ public class AccountBean implements Serializable {
     }
 
     /**
-     * Effectue l'opération choisie (dépôt / retrait / transfert) puis recharge soldes + historique.
+     * Performs the selected operation (deposit / withdrawal / transfer) then reloads balances and history.
      */
     public void confirmOperation() {
         if (amount <= 0) {
             addGlobalMessage(FacesMessage.SEVERITY_WARN,
-                    "Montant invalide",
-                    "Le montant doit être strictement positif.");
+                    "Invalid amount",
+                    "The amount must be strictly positive.");
             return;
         }
 
@@ -381,8 +381,8 @@ public class AccountBean implements Serializable {
         if ("DEPOSIT".equalsIgnoreCase(operationType)) {
             if (selectedAccountId == null || selectedAccountId.isBlank()) {
                 addGlobalMessage(FacesMessage.SEVERITY_WARN,
-                        "Aucun compte sélectionné",
-                        "Veuillez choisir un compte avant d'effectuer un dépôt.");
+                        "No account selected",
+                        "Please choose an account before making a deposit.");
                 return;
             }
             ok = service.depositToAccount(selectedAccountId, amount);
@@ -390,8 +390,8 @@ public class AccountBean implements Serializable {
         } else if ("WITHDRAWAL".equalsIgnoreCase(operationType)) {
             if (selectedAccountId == null || selectedAccountId.isBlank()) {
                 addGlobalMessage(FacesMessage.SEVERITY_WARN,
-                        "Aucun compte sélectionné",
-                        "Veuillez choisir un compte avant d'effectuer un retrait.");
+                        "No account selected",
+                        "Please choose an account before making a withdrawal.");
                 return;
             }
             ok = service.withdrawFromAccount(
@@ -405,14 +405,14 @@ public class AccountBean implements Serializable {
             if (transferSourceAccountId == null || transferTargetAccountId == null
                     || transferSourceAccountId.isBlank() || transferTargetAccountId.isBlank()) {
                 addGlobalMessage(FacesMessage.SEVERITY_WARN,
-                        "Transfert incomplet",
-                        "Veuillez sélectionner un compte source et un compte destinataire.");
+                        "Incomplete transfer",
+                        "Please select both a source and a target account.");
                 return;
             }
             if (transferSourceAccountId.equals(transferTargetAccountId)) {
                 addGlobalMessage(FacesMessage.SEVERITY_WARN,
-                        "Transfert invalide",
-                        "Les comptes source et destinataire doivent être différents.");
+                        "Invalid transfer",
+                        "Source and target accounts must be different.");
                 return;
             }
 
@@ -427,8 +427,8 @@ public class AccountBean implements Serializable {
 
         if (!ok) {
             addGlobalMessage(FacesMessage.SEVERITY_ERROR,
-                    "Opération refusée",
-                    "L'opération n'a pas pu être effectuée. Vérifiez le solde ou les paramètres.");
+                    "Operation rejected",
+                    "The operation could not be completed. Check the balance or parameters.");
             return;
         }
 
@@ -449,8 +449,8 @@ public class AccountBean implements Serializable {
         resetOperationForm();
 
         addGlobalMessage(FacesMessage.SEVERITY_INFO,
-                "Opération enregistrée",
-                "La transaction a été enregistrée avec succès.");
+                "Operation recorded",
+                "The transaction has been recorded successfully.");
     }
 
     public List<WebAppService.LocalTransaction> getSelectedAccountTransactions() {
@@ -461,12 +461,12 @@ public class AccountBean implements Serializable {
     }
 
     /* ==========================================================
-       Utilitaires internes
+       Internal utilities
        ========================================================== */
 
     /**
-     * Recherche un DTO de compte par identifiant.
-     * Utilisé notamment pour afficher le nom de compte dans l’historique.
+     * Find an account DTO by identifier.
+     * Used mainly to display the account name in the history.
      */
     public AccountDTO findAccountById(String id) {
         for (AccountDTO dto : getAccounts()) {
@@ -495,7 +495,7 @@ public class AccountBean implements Serializable {
         this.operationType = "DEPOSIT";
         this.transferSourceAccountId = null;
         this.transferTargetAccountId = null;
-        // On ne touche pas à selectedAccountId ni selectedTransaction
+        // Do not touch selectedAccountId nor selectedTransaction
     }
 
     private void addGlobalMessage(FacesMessage.Severity severity, String summary, String detail) {
