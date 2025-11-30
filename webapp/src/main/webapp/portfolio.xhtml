@@ -7,134 +7,242 @@
     <ui:define name="title">Portefeuilles</ui:define>
 
     <ui:define name="content">
+        <div class="page-content portfolio-page">
 
-        <h2>Mes portefeuilles</h2>
+            <!-- En-tete compact -->
+            <div class="portfolio-header">
+                <h:form id="createPortfolioForm" styleClass="portfolio-create-form">
+                    <h2>Mes portefeuilles</h2>
 
-        <!-- CRÉER UN PORTEFEUILLE -->
-        <h:form id="createPortfolioForm">
-            <h:commandButton value="Créer un nouveau portefeuille"
-                             action="#{portfolioBean.createPortfolio}" />
-        </h:form>
+                    <div class="form-field">
+                        <h:outputLabel for="newName" value="Nom du nouveau portefeuille" styleClass="field-label"/>
+                        <h:inputText id="newName"
+                                     value="#{portfolioBean.newPortfolioName}"
+                                     styleClass="input-field"
+                                     maxlength="60"/>
+                    </div>
 
-        <!-- SELECTION DU PORTEFEUILLE -->
-        <h:form id="selectPortfolioForm" style="margin-top:20px;">
-            <h:outputLabel for="portfolioSelect" value="Sélectionnez un portefeuille :" />
+                    <h:commandButton value="Créer un portefeuille"
+                                     styleClass="btn-primary"
+                                     action="#{portfolioBean.createPortfolio}">
+                        <f:ajax execute="@form"
+                                render="selectPortfolioForm overviewPanel assetsPanel"/>
+                    </h:commandButton>
+                </h:form>
 
-            <h:selectOneMenu id="portfolioSelect"
-                             value="#{portfolioBean.selectedPortfolioId}">
-                <f:ajax listener="#{portfolioBean.loadAssets}"
-                        render="assetsPanel" />
-                <f:selectItem itemValue="" itemLabel="-- Aucun --" />
-                <f:selectItems value="#{portfolioBean.portfolioIds}"
-                               var="pid"
-                               itemValue="#{pid}"
-                               itemLabel="Portefeuille # #{pid}" />
-            </h:selectOneMenu>
+                <h:form id="selectPortfolioForm" styleClass="portfolio-select-form">
+                    <h:outputLabel for="portfolioSelect"
+                                   value="Portefeuille courant"
+                                   styleClass="field-label"/>
 
-        </h:form>
+                    <h:selectOneMenu id="portfolioSelect"
+                                     value="#{portfolioBean.selectedPortfolioId}"
+                                     styleClass="select-field">
+                        <f:ajax listener="#{portfolioBean.loadAssets}"
+                                render="overviewPanel assetsPanel"/>
+                        <f:selectItem itemValue="" itemLabel="-- Aucun --" />
+                        <!-- Affiche le nom du portefeuille plutot que 'Portefeuille #id' -->
+                        <f:selectItems value="#{portfolioBean.portfolioIds}"
+                                       var="pid"
+                                       itemValue="#{pid}"
+                                       itemLabel="#{portfolioBean.portfolioNames[portfolioBean.portfolioIds.indexOf(pid)]}" />
+                    </h:selectOneMenu>
+                </h:form>
+            </div>
 
-        <!-- LISTE DES ACTIFS -->
-        <h:panelGroup id="assetsPanel" style="margin-top:20px;">
-            <h3>Actifs du portefeuille</h3>
+            <!-- Layout principal 2 colonnes -->
+            <div class="portfolio-layout">
 
-            <h:panelGroup rendered="#{empty portfolioBean.assets}">
-                <h:outputText value="Aucun actif." />
-            </h:panelGroup>
+                <!-- Colonne gauche : aperçu + tableau -->
+                <div class="portfolio-left">
 
-            <h:panelGroup rendered="#{not empty portfolioBean.assets}">
-                <ul>
-                    <ui:repeat value="#{portfolioBean.assets}" var="a">
-                        <li>#{a}</li>
-                    </ui:repeat>
-                </ul>
-            </h:panelGroup>
-        </h:panelGroup>
+                    <!-- Aperçu du portefeuille -->
+                    <h:panelGroup id="overviewPanel" layout="block"
+                                  styleClass="card portfolio-overview">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span class="status-dot"></span>
+                                <span>Aperçu du portefeuille</span>
+                                <h:outputText value=" : #{portfolioBean.currentPortfolioName}"
+                                              rendered="#{not empty portfolioBean.currentPortfolioName}"/>
+                            </div>
+                        </div>
 
-        <!-- AJOUT VIA API EXTERNE -->
-        <h:form id="apiForm" style="margin-top:40px;">
-            <h3>Ajouter depuis le marché (API)</h3>
+                        <div class="portfolio-overview-body">
+                            <div class="overview-metric">
+                                <span class="overview-amount">$24,567.89</span>
+                                <span class="overview-delta">+123.45 (0.51%) Aujourd'hui</span>
+                            </div>
+                            <div class="overview-chart-placeholder">
+                                Graphique de performance (à intégrer)
+                            </div>
+                        </div>
+                    </h:panelGroup>
 
-            <h:panelGrid columns="2" columnClasses="label,value">
+                    <!-- Tableau des actifs -->
+                    <h:panelGroup id="assetsPanel" layout="block"
+                                  styleClass="card portfolio-assets-table">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span class="status-dot green"></span>
+                                <span>Actifs du portefeuille</span>
+                            </div>
+                        </div>
 
-                <!-- TYPE -->
-                <h:outputLabel for="typeSelect" value="Type :" />
-                <h:selectOneMenu id="typeSelect"
-                                 value="#{portfolioBean.selectedType}">
-                    <f:ajax listener="#{portfolioBean.loadAssetsFromApi}"
-                            render="assetSelect priceField" />
-                    <f:selectItem itemValue="" itemLabel="-- Choisir --" />
-                    <f:selectItem itemValue="crypto" itemLabel="Crypto" />
-                    <f:selectItem itemValue="stock" itemLabel="Action" />
-                    <f:selectItem itemValue="etf" itemLabel="ETF" />
-                </h:selectOneMenu>
+                        <h:panelGroup rendered="#{empty portfolioBean.assets}">
+                            <p class="empty-state">Aucun actif dans ce portefeuille.</p>
+                        </h:panelGroup>
 
-                <!-- ACTIF -->
-                <h:outputLabel for="assetSelect" value="Actif :" />
-                <h:selectOneMenu id="assetSelect"
-                                 value="#{portfolioBean.selectedExternalAsset}">
-                    <f:ajax listener="#{portfolioBean.loadPriceForSelectedAsset}"
-                            render="priceField" />
-                    <f:selectItems value="#{portfolioBean.availableAssets}"
-                                   var="a"
-                                   itemValue="#{a.symbol}"
-                                   itemLabel="#{a.name} (#{a.symbol})" />
-                </h:selectOneMenu>
+                        <h:panelGroup rendered="#{not empty portfolioBean.assets}">
+                            <ul class="assets-list">
+                                <ui:repeat value="#{portfolioBean.assets}" var="a">
+                                    <li class="assets-row">#{a}</li>
+                                </ui:repeat>
+                            </ul>
+                        </h:panelGroup>
+                    </h:panelGroup>
+                </div>
 
-                <!-- PRIX -->
-                <h:outputLabel for="priceField" value="Prix (USD) :" />
-                <h:outputText id="priceField" value="#{portfolioBean.marketUnitPrice}">
-                    <f:convertNumber maxFractionDigits="4" />
-                </h:outputText>
+                <!-- Colonne droite : ajout via API + custom asset -->
+                <div class="portfolio-right">
 
-                <!-- QUANTITÉ -->
-                <h:outputLabel value="Quantité :" />
-                <h:inputText value="#{portfolioBean.assetQuantity}" />
+                    <!-- Ajouter un actif (API) -->
+                    <h:form id="apiForm" styleClass="card portfolio-add-api">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span class="status-icon plus">+</span>
+                                <span>Ajouter un actif</span>
+                            </div>
+                        </div>
 
-            </h:panelGrid>
+                        <div class="card-body form-grid">
+                            <!-- TYPE -->
+                            <div class="form-field">
+                                <label for="typeSelect" class="field-label">Type</label>
+                                <h:selectOneMenu id="typeSelect"
+                                                 value="#{portfolioBean.selectedType}"
+                                                 styleClass="select-field">
+                                    <f:ajax listener="#{portfolioBean.loadAssetsFromApi}"
+                                            render="assetSelect priceField"/>
+                                    <f:selectItem itemValue="" itemLabel="-- Choisir --"/>
+                                    <f:selectItem itemValue="crypto" itemLabel="Crypto"/>
+                                    <f:selectItem itemValue="stock" itemLabel="Action"/>
+                                    <f:selectItem itemValue="etf" itemLabel="ETF"/>
+                                </h:selectOneMenu>
+                            </div>
 
-            <h:commandButton value="Ajouter"
-                             action="#{portfolioBean.addAssetFromApi}" />
-        </h:form>
+                            <!-- ACTIF -->
+                            <div class="form-field">
+                                <label for="assetSelect" class="field-label">Actif</label>
+                                <h:selectOneMenu id="assetSelect"
+                                                 value="#{portfolioBean.selectedExternalAsset}"
+                                                 styleClass="select-field">
+                                    <f:ajax listener="#{portfolioBean.loadPriceForSelectedAsset}"
+                                            render="priceField"/>
+                                    <f:selectItems value="#{portfolioBean.availableAssets}"
+                                                   var="a"
+                                                   itemValue="#{a.symbol}"
+                                                   itemLabel="#{a.name} (#{a.symbol})"/>
+                                </h:selectOneMenu>
+                            </div>
 
-        <!-- BOUTON POUR CRÉER UN ACTIF MANUEL SI NON TROUVÉ -->
-        <h:form id="customButtonForm" style="margin-top:20px;">
-            <h:commandButton value="Créer un actif personnalisé"
-                             action="#{portfolioBean.toggleCustomAssetForm}"
-                             style="margin-bottom:10px;" />
-        </h:form>
+                            <!-- PRIX -->
+                            <div class="form-field">
+                                <label for="priceField" class="field-label">Prix (USD)</label>
+                                <h:outputText id="priceField"
+                                              styleClass="readonly-field"
+                                              value="#{portfolioBean.marketUnitPrice}">
+                                    <f:convertNumber maxFractionDigits="4"/>
+                                </h:outputText>
+                            </div>
 
-        <!-- FORMULAIRE CUSTOM ACTIF -->
-        <h:form id="customAssetForm" rendered="#{portfolioBean.showCustomAssetForm}" style="margin-top:10px;">
-            <h3>Créer un actif personnalisé</h3>
+                            <!-- QUANTITÉ -->
+                            <div class="form-field">
+                                <label class="field-label">Quantité</label>
+                                <h:inputText value="#{portfolioBean.assetQuantity}"
+                                             styleClass="input-field"/>
+                            </div>
+                        </div>
 
-            <h:panelGrid columns="2" style="row-gap:8px;">
+                        <div class="card-footer">
+                            <h:commandButton value="Ajouter au portefeuille"
+                                             styleClass="btn-primary full-width"
+                                             action="#{portfolioBean.addAssetFromApi}">
+                                <f:ajax execute="@form"
+                                        render="assetsPanel overviewPanel"/>
+                            </h:commandButton>
+                        </div>
+                    </h:form>
 
-                <h:outputLabel value="Nom :" />
-                <h:inputText value="#{portfolioBean.assetName}" />
+                    <!-- Créer un actif personnalisé -->
+                    <h:form id="customAssetForm"
+                            rendered="#{portfolioBean.showCustomAssetForm}"
+                            styleClass="card portfolio-custom-asset">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span class="status-icon pen">&#9998;</span>
+                                <span>Créer un actif personnalisé</span>
+                            </div>
+                        </div>
 
-                <h:outputLabel value="Symbole :" />
-                <h:inputText value="#{portfolioBean.assetSymbol}" />
+                        <div class="card-body form-grid">
+                            <div class="form-field">
+                                <label class="field-label">Nom</label>
+                                <h:inputText value="#{portfolioBean.assetName}"
+                                             styleClass="input-field"/>
+                            </div>
 
-                <h:outputLabel value="Type :" />
-                <h:selectOneMenu value="#{portfolioBean.assetType}">
-                    <f:selectItem itemValue="crypto" itemLabel="Crypto" />
-                    <f:selectItem itemValue="stock" itemLabel="Action" />
-                    <f:selectItem itemValue="etf" itemLabel="ETF" />
-                    <f:selectItem itemValue="other" itemLabel="Autre" />
-                </h:selectOneMenu>
+                            <div class="form-field">
+                                <label class="field-label">Symbole</label>
+                                <h:inputText value="#{portfolioBean.assetSymbol}"
+                                             styleClass="input-field"/>
+                            </div>
 
-                <h:outputLabel value="Quantité :" />
-                <h:inputText value="#{portfolioBean.assetQuantity}" />
+                            <div class="form-field">
+                                <label class="field-label">Type</label>
+                                <h:selectOneMenu value="#{portfolioBean.assetType}"
+                                                 styleClass="select-field">
+                                    <f:selectItem itemValue="crypto" itemLabel="Crypto"/>
+                                    <f:selectItem itemValue="stock" itemLabel="Action"/>
+                                    <f:selectItem itemValue="etf" itemLabel="ETF"/>
+                                    <f:selectItem itemValue="other" itemLabel="Autre"/>
+                                </h:selectOneMenu>
+                            </div>
 
-                <h:outputLabel value="Valeur unitaire :" />
-                <h:inputText value="#{portfolioBean.assetUnitValue}" />
-            </h:panelGrid>
+                            <div class="form-field">
+                                <label class="field-label">Quantité</label>
+                                <h:inputText value="#{portfolioBean.assetQuantity}"
+                                             styleClass="input-field"/>
+                            </div>
 
-            <h:commandButton value="Ajouter l'actif personnalisé"
-                             action="#{portfolioBean.addCustomAsset}"
-                             style="margin-top:10px;" />
+                            <div class="form-field">
+                                <label class="field-label">Valeur unitaire</label>
+                                <h:inputText value="#{portfolioBean.assetUnitValue}"
+                                             styleClass="input-field"/>
+                            </div>
+                        </div>
 
-        </h:form>
+                        <div class="card-footer">
+                            <h:commandButton value="Ajouter l'actif personnalisé"
+                                             styleClass="btn-secondary full-width"
+                                             action="#{portfolioBean.addCustomAsset}">
+                                <f:ajax execute="@form"
+                                        render="assetsPanel overviewPanel customAssetForm customButtonForm"/>
+                            </h:commandButton>
+                        </div>
+                    </h:form>
 
+                    <!-- Bouton pour afficher/masquer le formulaire custom -->
+                    <h:form id="customButtonForm" styleClass="portfolio-toggle-custom">
+                        <h:commandButton value="#{portfolioBean.showCustomAssetForm ? 'Fermer le formulaire personnalisé' : 'Créer un actif personnalisé'}"
+                                         styleClass="btn-ghost full-width"
+                                         action="#{portfolioBean.toggleCustomAssetForm}">
+                            <f:ajax render="customAssetForm customButtonForm"/>
+                        </h:commandButton>
+                    </h:form>
+
+                </div>
+            </div>
+        </div>
     </ui:define>
 </ui:composition>

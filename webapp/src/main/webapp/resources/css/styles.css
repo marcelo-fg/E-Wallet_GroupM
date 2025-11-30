@@ -298,3 +298,312 @@ input::placeholder {
         min-height: 300px;
     }
 }
+
+/* ==========================================================================
+   PORTFOLIO PAGE
+   ========================================================================== */
+
+.page-content.portfolio-page {
+    min-height: calc(100vh - 80px);  /* occupe l'écran sous la top-nav */
+    max-height: calc(100vh - 80px);
+    overflow: hidden;                /* pas de scroll global sur desktop */
+}
+
+.portfolio-page {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* En-tete */
+.portfolio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+}
+
+.portfolio-select-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Layout global 2 colonnes occupant toute la hauteur */
+.portfolio-layout {
+    display: grid;
+    grid-template-columns: 3fr 1.3fr;  /* grande colonne gauche, plus petite droite */
+    gap: 20px;
+    height: calc(100vh - 160px);       /* ajuste en fonction de la hauteur réelle du header */
+    align-items: stretch;
+}
+
+/* Colonne gauche : aperçu + tableau */
+.portfolio-left {
+    display: grid;
+    grid-template-rows: 1.1fr 0.9fr;   /* haut : aperçu, bas : actifs */
+    gap: 16px;
+}
+
+/* Colonne droite : ajout API + custom + bouton */
+.portfolio-right {
+    display: grid;
+    grid-template-rows: 1.1fr 0.9fr 0.4fr;
+    gap: 16px;
+}
+
+/* Cartes generiques */
+.card {
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(18px);
+    border-radius: 18px;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: white;
+    box-sizing: border-box;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.card-footer {
+    margin-top: 16px;
+}
+
+/* Status / icones */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #a855ff;
+}
+
+.status-dot.green {
+    background: #22c55e;
+}
+
+.status-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: 14px;
+}
+
+.status-icon.plus {
+    background: #22c55e;
+}
+
+.status-icon.pen {
+    background: #0ea5e9;
+}
+
+/* Aperçu portefeuille (colonne gauche, haut) */
+.portfolio-overview {
+    height: 100%;
+}
+
+.portfolio-overview-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.overview-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.overview-amount {
+    font-size: 32px;
+    font-weight: 600;
+    color: #4ade80;
+}
+
+.overview-delta {
+    font-size: 14px;
+    color: #4ade80;
+    opacity: 0.9;
+}
+
+.overview-chart-placeholder {
+    height: 160px;
+    border-radius: 12px;
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+/* Tableau des actifs (colonne gauche, bas) */
+.portfolio-assets-table {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.portfolio-assets-table .card-header {
+    margin-bottom: 10px;
+}
+
+.assets-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+    overflow-y: auto; /* seule zone scrollable si beaucoup de lignes */
+}
+
+.assets-row {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    margin-bottom: 6px;
+}
+
+.empty-state {
+    opacity: 0.8;
+    font-size: 14px;
+}
+
+/* Formulaires colonne droite */
+.portfolio-add-api,
+.portfolio-custom-asset {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.portfolio-add-api .card-body,
+.portfolio-custom-asset .card-body {
+    flex: 1;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px 16px;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.field-label {
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+.input-field,
+.select-field {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.35);
+    color: white;
+    font-family: inherit;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.input-field:focus,
+.select-field:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.8);
+}
+
+.readonly-field {
+    display: inline-block;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 14px;
+}
+
+/* Boutons */
+.btn-primary {
+    background: linear-gradient(90deg, #0062ff, #13d6b1);
+    border: none;
+    border-radius: 12px;
+    padding: 10px 18px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.12);
+    border: none;
+    border-radius: 12px;
+    padding: 10px 18px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-ghost {
+    background: transparent;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 10px 18px;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.full-width {
+    width: 100%;
+}
+
+/* Bouton pour toggler le formulaire custom */
+.portfolio-toggle-custom {
+    align-self: stretch;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .page-content.portfolio-page {
+        min-height: auto;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .portfolio-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .portfolio-left,
+    .portfolio-right {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+}
+

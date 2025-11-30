@@ -8,7 +8,6 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.json.Json;
-
 import org.groupm.ewallet.webapp.connector.ExternalAsset;
 
 import java.io.StringReader;
@@ -21,7 +20,7 @@ public class WebAppService {
     private static final String BASE_URL = "http://localhost:8080/webservice/api";
 
     // ============================================================
-    // LOGIN
+    // =============== LOGIN ======================================
     // ============================================================
 
     public String login(String email, String password) {
@@ -35,14 +34,19 @@ public class WebAppService {
 
             Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(payload));
 
-            if (response.getStatus() != 200)
+            if (response.getStatus() != 200) {
                 return null;
+            }
 
             String json = response.readEntity(String.class);
             var obj = Json.createReader(new StringReader(json)).readObject();
 
-            if (obj.containsKey("userID")) return obj.getString("userID");
-            if (obj.containsKey("id")) return obj.get("id").toString();
+            if (obj.containsKey("userID")) {
+                return obj.getString("userID");
+            }
+            if (obj.containsKey("id")) {
+                return obj.get("id").toString();
+            }
 
             return null;
 
@@ -53,7 +57,7 @@ public class WebAppService {
     }
 
     // ============================================================
-    // REGISTER
+    // =============== REGISTER ===================================
     // ============================================================
 
     public boolean registerUser(String firstname, String lastname, String email, String password) {
@@ -76,7 +80,7 @@ public class WebAppService {
     }
 
     // ============================================================
-    // GET USER ACCOUNTS (BACKEND)
+    // =============== GET USER ACCOUNTS ==========================
     // ============================================================
 
     public List<String> getAccountsForUser(String userId) {
@@ -86,7 +90,9 @@ public class WebAppService {
 
             Response res = target.request(MediaType.APPLICATION_JSON_TYPE).get();
 
-            if (res.getStatus() != 200) return List.of();
+            if (res.getStatus() != 200) {
+                return List.of();
+            }
 
             String json = res.readEntity(String.class);
 
@@ -110,7 +116,7 @@ public class WebAppService {
     }
 
     // ============================================================
-    // TRANSFERS
+    // =============== MAKE TRANSFER ===============================
     // ============================================================
 
     public boolean makeTransfer(String fromAccount, String toAccount, double amount) {
@@ -138,7 +144,7 @@ public class WebAppService {
     }
 
     // ============================================================
-    // PORTFOLIOS
+    // =============== PORTFOLIOS =================================
     // ============================================================
 
     public List<Integer> getPortfoliosForUser(String userId) {
@@ -147,7 +153,9 @@ public class WebAppService {
             WebTarget target = client.target(BASE_URL + "/portfolios");
             Response res = target.request(MediaType.APPLICATION_JSON).get();
 
-            if (res.getStatus() != 200) return List.of();
+            if (res.getStatus() != 200) {
+                return List.of();
+            }
 
             String json = res.readEntity(String.class);
             var arr = Json.createReader(new StringReader(json)).readArray();
@@ -169,16 +177,31 @@ public class WebAppService {
         }
     }
 
+    /**
+     * Creation d'un portefeuille sans nom explicite (comportement historique).
+     */
     public boolean createPortfolioForUser(String userId) {
+        return createPortfolioForUser(userId, "Nouveau portefeuille");
+    }
+
+    /**
+     * Creation d'un portefeuille avec nom fourni par l'utilisateur.
+     * Payload JSON : { "userID": "...", "name": "..." }
+     */
+    public boolean createPortfolioForUser(String userId, String portfolioName) {
         try (Client client = ClientBuilder.newClient()) {
 
             WebTarget target = client.target(BASE_URL + "/portfolios");
 
             String payload = """
-                {"userID":"%s"}
-            """.formatted(userId);
+                {
+                  "userID":"%s",
+                  "name":"%s"
+                }
+            """.formatted(userId, portfolioName);
 
-            Response res = target.request(MediaType.APPLICATION_JSON).post(Entity.json(payload));
+            Response res = target.request(MediaType.APPLICATION_JSON)
+                    .post(Entity.json(payload));
 
             return res.getStatus() == 200 || res.getStatus() == 201;
 
@@ -189,7 +212,7 @@ public class WebAppService {
     }
 
     // ============================================================
-    // PORTFOLIO ASSETS
+    // =============== PORTFOLIO ASSETS ===========================
     // ============================================================
 
     public List<String> getAssetsForPortfolio(int portfolioId) {
@@ -198,7 +221,9 @@ public class WebAppService {
             WebTarget target = client.target(BASE_URL + "/assets/portfolio/" + portfolioId);
             Response res = target.request(MediaType.APPLICATION_JSON).get();
 
-            if (res.getStatus() != 200) return List.of();
+            if (res.getStatus() != 200) {
+                return List.of();
+            }
 
             String json = res.readEntity(String.class);
             var arr = Json.createReader(new StringReader(json)).readArray();
@@ -257,11 +282,12 @@ public class WebAppService {
     }
 
     // ============================================================
-    // MARKET DATA
+    // ===============  EXTERNAL MARKET DATA ======================
     // ============================================================
 
     private static final String FINNHUB_KEY = System.getenv("FINNHUB_API_KEY");
 
+    // -------- LISTER LES CRYPTO --------
     private List<ExternalAsset> loadCryptoAssets() {
         try {
             Client client = ClientBuilder.newClient();
@@ -290,10 +316,11 @@ public class WebAppService {
         }
     }
 
+    // -------- LISTER LES ACTIONS (US MARKET) --------
     private List<ExternalAsset> loadStockAssets() {
         try {
             if (FINNHUB_KEY == null || FINNHUB_KEY.isBlank()) {
-                System.err.println("FINNHUB_API_KEY missing!");
+                System.err.println("FINNHUB_API_KEY manquant !");
                 return List.of();
             }
 
@@ -325,17 +352,17 @@ public class WebAppService {
         }
     }
 
+    // -------- LISTER DES ETF (US) --------
     private List<ExternalAsset> loadEtfAssets() {
         try {
             if (FINNHUB_KEY == null || FINNHUB_KEY.isBlank()) {
-                System.err.println("FINNHUB_API_KEY missing!");
+                System.err.println("FINNHUB_API_KEY manquant !");
                 return List.of();
             }
 
             Client client = ClientBuilder.newClient();
 
-            String url =
-                    "https://finnhub.io/api/v1/stock/symbol?exchange=US&token=" + FINNHUB_KEY;
+            String url = "https://finnhub.io/api/v1/stock/symbol?exchange=US&token=" + FINNHUB_KEY;
             WebTarget target = client.target(url);
 
             String json = target.request(MediaType.APPLICATION_JSON).get(String.class);
@@ -357,10 +384,12 @@ public class WebAppService {
                         lower.contains("trust") ||
                         lower.contains("index") ||
                         lower.contains("bond")) {
+
                     etfs.add(new ExternalAsset(name, symbol, symbol));
                 }
             }
 
+            System.out.println("ETF trouvés = " + etfs.size());
             return etfs;
 
         } catch (Exception e) {
@@ -369,6 +398,7 @@ public class WebAppService {
         }
     }
 
+    // -------- PRIX CRYPTO --------
     private double getCryptoPrice(String apiId) {
         try {
             Client client = ClientBuilder.newClient();
@@ -391,9 +421,12 @@ public class WebAppService {
         return 0.0;
     }
 
+    // -------- PRIX ACTION / ETF --------
     private double getStockEtfPrice(String symbol) {
 
-        if (FINNHUB_KEY == null) return 0.0;
+        if (FINNHUB_KEY == null) {
+            return 0.0;
+        }
 
         try {
             String url = "https://finnhub.io/api/v1/quote?symbol=" +
@@ -409,7 +442,8 @@ public class WebAppService {
             if (obj.containsKey("c")) {
                 try {
                     return obj.isNull("c") ? 0.0 : obj.getJsonNumber("c").doubleValue();
-                } catch (Exception ignore) {}
+                } catch (Exception ignore) {
+                }
             }
 
         } catch (Exception e) {
@@ -419,6 +453,7 @@ public class WebAppService {
         return 0.0;
     }
 
+    // -------- ROUTEUR --------
     public List<ExternalAsset> loadAssetsFromApi(String type) {
         return switch (type.toLowerCase()) {
             case "crypto" -> loadCryptoAssets();
@@ -437,82 +472,16 @@ public class WebAppService {
     }
 
     // ============================================================
-    // DASHBOARD MOCK
+    // ===============  DASHBOARD METRICS (TEMP MOCK) =============
     // ============================================================
 
     public double getTotalWealthForUser(String userId) {
+        // TODO: Replace with real logic (sum of all accounts + total portfolio value)
         return 423817.00;
     }
 
     public double getWealthGrowthForUser(String userId) {
+        // TODO: Replace with real logic (calculate real variation)
         return 1.93;
     }
-
-    // ============================================================
-    // ACCOUNTS (LOCAL MOCK)
-    // ============================================================
-
-    public static class LocalAccount {
-        private String id;
-        private String type;
-        private double balance;
-
-        public LocalAccount(String id, String type, double balance) {
-            this.id = id;
-            this.type = type;
-            this.balance = balance;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public double getBalance() {
-            return balance;
-        }
-
-        public String getNumber() {
-            return id;
-        }
-
-        public void setBalance(double balance) {
-            this.balance = balance;
-        }
-    }
-
-    private final List<LocalAccount> localAccounts = new ArrayList<>();
-
-    public List<LocalAccount> getAccounts() {
-        return localAccounts;
-    }
-
-    public LocalAccount createAccount(String type) {
-
-        String nextId = String.valueOf(localAccounts.size() + 1);
-
-        LocalAccount acc = new LocalAccount(nextId, type, 0.0);
-        localAccounts.add(acc);
-
-        return acc;
-    }
-
-    public LocalAccount getAccountById(String id) {
-        return localAccounts.stream()
-                .filter(a -> a.getId().equals(id))
-                .findFirst()
-                .orElse(null);
-    }
-
-    public boolean depositToAccount(String id, double amount) {
-        LocalAccount acc = getAccountById(id);
-        if (acc == null) return false;
-
-        acc.setBalance(acc.getBalance() + amount);
-        return true;
-    }
-
 }
