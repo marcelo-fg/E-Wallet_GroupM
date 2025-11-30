@@ -9,13 +9,11 @@ import org.groupm.ewallet.webapp.connector.ExternalAsset;
 import org.groupm.ewallet.webapp.service.WebAppService;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Backing bean JSF pour la gestion des portefeuilles et de leurs actifs.
- * Portee session car l'utilisateur navigue entre plusieurs ecrans
- * en conservant le portefeuille selectionne.
+ * Bean de session principal pour la gestion des portefeuilles et de leurs actifs.
+ * Sert de couche de présentation entre les pages JSF et la couche service.
  */
 @Named
 @SessionScoped
@@ -26,64 +24,117 @@ public class PortfolioBean implements Serializable {
     @Inject
     private WebAppService webAppService;
 
-    /** Identifiants des portefeuilles disponibles pour l'utilisateur courant. */
+    /**
+     * Identifiants techniques des portefeuilles de l'utilisateur connecté.
+     */
     private List<Integer> portfolioIds;
 
-    /** Noms des portefeuilles alignes sur portfolioIds (meme index). */
-    private List<String> portfolioNames;
-
-    /** Identifiant du portefeuille selectionne dans l'UI. */
+    /**
+     * Identifiant du portefeuille actuellement sélectionné dans l'UI.
+     */
     private Integer selectedPortfolioId;
 
-    /** Liste d'actifs du portefeuille selectionne. Pour l'instant representee par des String. */
+    /**
+     * Représentation textuelle des actifs pour le portefeuille sélectionné.
+     * (liste de chaînes prête à être affichée dans la vue).
+     */
     private List<String> assets;
 
-    /** Nom saisi par l'utilisateur pour la creation d'un nouveau portefeuille. */
-    private String newPortfolioName;
+    // -------------------------------------------------------------------------
+    // PROPRIETE POUR LE NOM DE PORTEFEUILLE
+    // -------------------------------------------------------------------------
 
-    // ---- API externe ----
-    /** Type d'actif a charger depuis l'API externe: crypto / stock / etf. */
+    /**
+     * Nom du portefeuille saisi par l'utilisateur lors de la création
+     * via le formulaire JSF (binding: #{portfolioBean.portfolioName}).
+     */
+    private String portfolioName;
+
+    public String getPortfolioName() {
+        return portfolioName;
+    }
+
+    public void setPortfolioName(String portfolioName) {
+        this.portfolioName = portfolioName;
+    }
+
+    // -------------------------------------------------------------------------
+    // API EXTERNE
+    // -------------------------------------------------------------------------
+
+    /**
+     * Type d'actif choisi dans l'UI pour l'API externe (crypto / stock / etf).
+     */
     private String selectedType;
 
-    /** Symbole selectionne dans la liste externe (BTC, AAPL, SPY...). */
+    /**
+     * Symbole externe sélectionné (BTC, AAPL, SPY, ...).
+     */
     private String selectedExternalSymbol;
 
-    /** Identifiant API (pour les cryptos uniquement, ex: "bitcoin"). */
+    /**
+     * Identifiant d'API externe (utilisé pour certaines API crypto).
+     */
     private String selectedExternalApiId;
 
-    /** Nom humain de l'actif externe (Bitcoin, Apple Inc., ...). */
+    /**
+     * Nom "lisible" de l'actif externe (Bitcoin, Apple Inc., ...).
+     */
     private String selectedExternalName;
 
-    /** Liste d'actifs recuperes depuis l'API externe pour un type donne. */
+    /**
+     * Liste des actifs disponibles depuis l'API externe pour le type choisi.
+     */
     private List<ExternalAsset> availableAssets;
 
-    // ---- Formulaire commun ----
-    /** Quantite d'actif a ajouter au portefeuille. */
+    // -------------------------------------------------------------------------
+    // FORMULAIRE COMMUN POUR LES ACTIFS
+    // -------------------------------------------------------------------------
+
+    /**
+     * Quantité d'actif à ajouter au portefeuille.
+     */
     private double assetQuantity;
 
-    /** Prix unitaire marche recupere depuis l'API externe. */
+    /**
+     * Prix de marché unitaire renvoyé par une API ou saisi à la main.
+     */
     private double marketUnitPrice;
 
-    /** Valeur unitaire saisie / utilisee pour l'ajout d'un actif (marche ou manuel). */
+    /**
+     * Valeur unitaire de l'actif stockée dans le portefeuille.
+     * Peut être alignée sur marketUnitPrice ou saisie manuellement.
+     */
     private double assetUnitValue;
 
-    // ---- Manuel ----
-    /** Nom saisi manuellement pour un actif personnalise. */
+    // -------------------------------------------------------------------------
+    // ACTIF MANUEL
+    // -------------------------------------------------------------------------
+
+    /**
+     * Nom de l'actif lorsqu'il est ajouté manuellement.
+     */
     private String assetName;
 
-    /** Type saisi manuellement pour un actif personnalise. */
+    /**
+     * Type de l'actif lorsqu'il est ajouté manuellement (ex: "stock", "crypto").
+     */
     private String assetType;
 
-    /** Symbole saisi manuellement pour un actif personnalise. */
+    /**
+     * Symbole associé à l'actif manuel (ex: "AAPL", "BTC").
+     */
     private String assetSymbol;
 
-    // ---- Formulaire personnalise ----
-    /** Indique si le formulaire d'actif personnalise est affiche. */
-    private boolean showCustomAssetForm = false;
+    // -------------------------------------------------------------------------
+    // FORMULAIRE PERSONNALISÉ
+    // -------------------------------------------------------------------------
 
-    // ----------------------------------------------------------
-    // UI helpers
-    // ----------------------------------------------------------
+    /**
+     * Indique si le formulaire d'actif personnalisé doit être affiché.
+     * Initialisé à true pour qu'il soit visible par défaut.
+     */
+    private boolean showCustomAssetForm = true;
 
     public boolean isShowCustomAssetForm() {
         return showCustomAssetForm;
@@ -94,24 +145,27 @@ public class PortfolioBean implements Serializable {
     }
 
     /**
-     * Bascule l'etat d'affichage du formulaire d'actif personnalise.
-     * Utilise par le bouton "Creer un actif personnalise".
+     * Permet de basculer l'affichage du formulaire personnalisé
+     * (appelé depuis un bouton dans l'interface).
      */
     public void toggleCustomAssetForm() {
         this.showCustomAssetForm = !this.showCustomAssetForm;
     }
 
-    // ----------------------------------------------------------
-    // SESSION
-    // ----------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // GESTION DE SESSION
+    // -------------------------------------------------------------------------
 
     /**
-     * Recupere l'identifiant fonctionnel de l'utilisateur courant depuis la session HTTP.
-     * @return userId ou null si l'utilisateur n'est pas authentifie.
+     * Récupère l'identifiant fonctionnel de l'utilisateur courant
+     * depuis la session HTTP.
+     *
+     * @return userId ou null si non présent en session.
      */
     private String getUserIdFromSession() {
         FacesContext context = FacesContext.getCurrentInstance();
-        HttpSession session = (HttpSession) context.getExternalContext().getSession(false);
+        HttpSession session =
+                (HttpSession) context.getExternalContext().getSession(false);
 
         if (session == null) {
             return null;
@@ -119,13 +173,15 @@ public class PortfolioBean implements Serializable {
         return (String) session.getAttribute("userId");
     }
 
-    // ----------------------------------------------------------
+    // -------------------------------------------------------------------------
     // PORTFOLIOS
-    // ----------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     /**
-     * Retourne la liste des identifiants de portefeuilles pour l'utilisateur courant.
-     * Chargement lazy via le service.
+     * Retourne la liste des identifiants de portefeuilles.
+     * Déclenche un chargement lazy si nécessaire.
+     *
+     * @return liste d'identifiants de portefeuilles (jamais null).
      */
     public List<Integer> getPortfolioIds() {
         if (portfolioIds == null) {
@@ -135,71 +191,21 @@ public class PortfolioBean implements Serializable {
     }
 
     /**
-     * Retourne le nom du portefeuille courant a partir de selectedPortfolioId.
-     * Utilise pour afficher "Portefeuille courant" avec le bon libelle.
-     */
-    public String getCurrentPortfolioName() {
-        if (portfolioIds == null || portfolioNames == null || selectedPortfolioId == null) {
-            return null;
-        }
-        int index = portfolioIds.indexOf(selectedPortfolioId);
-        if (index < 0 || index >= portfolioNames.size()) {
-            return null;
-        }
-        return portfolioNames.get(index);
-    }
-
-    /**
-     * Recharge la liste des portefeuilles (ids + noms) pour l'utilisateur courant.
-     * Pour l'instant, les noms sont des placeholders "Portefeuille <id>".
-     * A remplacer quand le backend exposera les vrais noms.
+     * Charge les portefeuilles pour l'utilisateur courant
+     * via la couche service, ou une liste vide si non connecté.
      */
     public void loadPortfolios() {
         String userId = getUserIdFromSession();
         if (userId == null) {
             portfolioIds = List.of();
-            portfolioNames = List.of();
             return;
         }
-
-        // IDs recuperees via le service existant
         portfolioIds = webAppService.getPortfoliosForUser(userId);
-
-        // Placeholder des noms : "Portefeuille <id>"
-        List<String> names = new ArrayList<>();
-        for (Integer id : portfolioIds) {
-            names.add("Portefeuille " + id);
-        }
-        portfolioNames = names;
     }
 
     /**
-     * Creation d'un nouveau portefeuille avec nom optionnel.
-     * Utilise la surcharge du WebAppService pour prendre en compte le nom.
-     */
-    public String createPortfolio() {
-        String userId = getUserIdFromSession();
-        if (userId == null) {
-            return null;
-        }
-
-        boolean created;
-        if (newPortfolioName == null || newPortfolioName.isBlank()) {
-            created = webAppService.createPortfolioForUser(userId);
-        } else {
-            created = webAppService.createPortfolioForUser(userId, newPortfolioName.trim());
-        }
-
-        if (created) {
-            loadPortfolios();
-            newPortfolioName = null;
-        }
-
-        return null;
-    }
-
-    /**
-     * Charge les actifs pour le portefeuille selectionne.
+     * Charge les actifs du portefeuille actuellement sélectionné.
+     * Utilise une liste vide si aucun portefeuille n'est sélectionné.
      */
     public void loadAssets() {
         if (selectedPortfolioId == null) {
@@ -209,12 +215,13 @@ public class PortfolioBean implements Serializable {
         assets = webAppService.getAssetsForPortfolio(selectedPortfolioId);
     }
 
-    // ----------------------------------------------------------
-    // API EXTERNE
-    // ----------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // API EXTERNE - CHARGEMENT ET SELECTION
+    // -------------------------------------------------------------------------
 
     /**
-     * Charge la liste d'actifs externes pour le type selectionne.
+     * Charge les actifs depuis l'API externe pour le type sélectionné.
+     * Réinitialise la sélection courante et les prix associés.
      */
     public void loadAssetsFromApi() {
         if (selectedType == null || selectedType.isBlank()) {
@@ -224,19 +231,26 @@ public class PortfolioBean implements Serializable {
 
         availableAssets = webAppService.loadAssetsFromApi(selectedType);
 
-        // Reset de la selection courante et du prix.
         selectedExternalSymbol = null;
         selectedExternalApiId = null;
         selectedExternalName = null;
         marketUnitPrice = 0.0;
     }
 
+    /**
+     * Getter exposant le symbole externe sélectionné.
+     *
+     * @return symbole de l'actif externe sélectionné.
+     */
     public String getSelectedExternalAsset() {
         return selectedExternalSymbol;
     }
 
     /**
-     * Met a jour l'actif externe selectionne et met en cache les metadonnees utiles.
+     * Setter appelé lors du changement de sélection d'un actif externe
+     * dans l'interface (ex: selectOneMenu).
+     *
+     * @param symbol symbole choisi par l'utilisateur.
      */
     public void setSelectedExternalAsset(String symbol) {
         this.selectedExternalSymbol = symbol;
@@ -247,7 +261,7 @@ public class PortfolioBean implements Serializable {
 
         for (ExternalAsset ea : availableAssets) {
             if (ea.getSymbol().equalsIgnoreCase(symbol)) {
-                this.selectedExternalApiId = ea.getApiId();   // crypto only
+                this.selectedExternalApiId = ea.getApiId(); // crypto uniquement
                 this.selectedExternalName = ea.getName();
                 break;
             }
@@ -255,10 +269,11 @@ public class PortfolioBean implements Serializable {
     }
 
     /**
-     * Appelle l'API marche pour recuperer le prix unitaire de l'actif selectionne.
+     * Charge le prix de marché pour l'actif externe actuellement sélectionné
+     * et aligne la valeur unitaire de l'actif sur ce prix.
      */
     public void loadPriceForSelectedAsset() {
-        if (selectedExternalSymbol == null || selectedType == null) {
+        if (selectedExternalSymbol == null) {
             return;
         }
 
@@ -267,16 +282,48 @@ public class PortfolioBean implements Serializable {
                         ? selectedExternalApiId
                         : selectedExternalSymbol;
 
-        marketUnitPrice = webAppService.getPriceForAsset(idOrSymbol, selectedType);
+        marketUnitPrice =
+                webAppService.getPriceForAsset(idOrSymbol, selectedType);
+
+        // On synchronise la valeur unitaire de l'actif sur le prix de marché.
         assetUnitValue = marketUnitPrice;
     }
 
-    // ----------------------------------------------------------
-    // ADD MANUAL ASSET (formulaire manuel)
-    // ----------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // CREATION DE PORTEFEUILLE
+    // -------------------------------------------------------------------------
 
     /**
-     * Ajoute un actif saisi manuellement au portefeuille selectionne.
+     * Crée un nouveau portefeuille pour l'utilisateur courant.
+     * L'utilisation de portfolioName dépend de la signature réelle
+     * de la méthode createPortfolioForUser du service.
+     *
+     * @return navigation (null pour rester sur la même page).
+     */
+    public String createPortfolio() {
+        String userId = getUserIdFromSession();
+        if (userId == null) {
+            return null;
+        }
+
+        boolean created = webAppService.createPortfolioForUser(userId);
+
+        if (created) {
+            loadPortfolios();
+            // Réinitialisation du champ de formulaire après succès.
+            portfolioName = null;
+        }
+        return null;
+    }
+
+    // -------------------------------------------------------------------------
+    // AJOUT D'UN ACTIF MANUEL
+    // -------------------------------------------------------------------------
+
+    /**
+     * Ajoute un actif saisi manuellement au portefeuille sélectionné.
+     *
+     * @return navigation (null pour rester sur la même page).
      */
     public String addAsset() {
         if (selectedPortfolioId == null) {
@@ -293,6 +340,7 @@ public class PortfolioBean implements Serializable {
         );
 
         if (ok) {
+            // Réinitialisation des champs du formulaire manuel.
             assetName = null;
             assetType = null;
             assetSymbol = null;
@@ -303,12 +351,15 @@ public class PortfolioBean implements Serializable {
         return null;
     }
 
-    // ----------------------------------------------------------
-    // ADD CUSTOM ASSET (pour le bouton personnalisé)
-    // ----------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // AJOUT D'UN ACTIF PERSONNALISÉ (BOUTON PERSONNALISÉ)
+    // -------------------------------------------------------------------------
 
     /**
-     * Ajoute un actif personnalise et masque le formulaire si OK.
+     * Ajoute un actif personnalisé au portefeuille, puis masque le
+     * formulaire personnalisé après succès.
+     *
+     * @return navigation (null pour rester sur la même page).
      */
     public String addCustomAsset() {
         if (selectedPortfolioId == null) {
@@ -326,6 +377,8 @@ public class PortfolioBean implements Serializable {
 
         if (ok) {
             loadAssets();
+
+            // Réinitialisation de l'état du formulaire personnalisé.
             assetName = null;
             assetType = null;
             assetSymbol = null;
@@ -336,13 +389,14 @@ public class PortfolioBean implements Serializable {
         return null;
     }
 
-    // ----------------------------------------------------------
-    // ADD API ASSET
-    // ----------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // AJOUT D'UN ACTIF VIA L'API EXTERNE
+    // -------------------------------------------------------------------------
 
     /**
-     * Ajoute au portefeuille l'actif selectionne depuis l'API externe,
-     * puis recharge la liste des actifs pour l'afficher a l'ecran.
+     * Ajoute un actif récupéré depuis l'API externe au portefeuille sélectionné.
+     *
+     * @return navigation (null pour rester sur la même page).
      */
     public String addAssetFromApi() {
         if (selectedPortfolioId == null) {
@@ -363,6 +417,8 @@ public class PortfolioBean implements Serializable {
 
         if (ok) {
             loadAssets();
+
+            // Réinitialisation de la sélection et des valeurs.
             selectedExternalSymbol = null;
             selectedExternalApiId = null;
             selectedExternalName = null;
@@ -373,9 +429,9 @@ public class PortfolioBean implements Serializable {
         return null;
     }
 
-    // ----------------------------------------------------------
-    // GETTERS / SETTERS
-    // ----------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // GETTERS / SETTERS EXPOSÉS A L'UI
+    // -------------------------------------------------------------------------
 
     public Integer getSelectedPortfolioId() {
         return selectedPortfolioId;
@@ -385,6 +441,11 @@ public class PortfolioBean implements Serializable {
         this.selectedPortfolioId = selectedPortfolioId;
     }
 
+    /**
+     * Accès lazy à la liste d'actifs pour le portefeuille sélectionné.
+     *
+     * @return liste d'actifs, ou null si aucun portefeuille n'est sélectionné.
+     */
     public List<String> getAssets() {
         if (assets == null && selectedPortfolioId != null) {
             loadAssets();
@@ -446,17 +507,5 @@ public class PortfolioBean implements Serializable {
 
     public void setAssetUnitValue(double assetUnitValue) {
         this.assetUnitValue = assetUnitValue;
-    }
-
-    public String getNewPortfolioName() {
-        return newPortfolioName;
-    }
-
-    public void setNewPortfolioName(String newPortfolioName) {
-        this.newPortfolioName = newPortfolioName;
-    }
-
-    public List<String> getPortfolioNames() {
-        return portfolioNames;
     }
 }

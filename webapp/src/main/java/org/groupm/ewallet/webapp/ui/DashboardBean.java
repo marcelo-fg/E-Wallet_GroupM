@@ -97,15 +97,4 @@ public class DashboardBean implements Serializable {
         // Placeholder: portfolio value equals totalWealth for now
         return this.totalWealth;
     }
-
-    public List<Transaction> getRecentTransactions() {
-        if (recentTransactions == null) {
-            recentTransactions = List.of(
-                    new Transaction("2025-01-01", "Achat café", 4.50),
-                    new Transaction("2025-01-02", "Transfert épargne", 200.00),
-                    new Transaction("2025-01-03", "Retrait ATM", 100.00)
-            );
-        }
-        return recentTransactions;
-    }
 }

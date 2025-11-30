@@ -11,6 +11,16 @@ body {
     position: relative;
 }
 
+/* Effet hover identique aux bento-box pour toutes les cards */
+.card {
+    transition: 0.25s ease;
+}
+
+.card:hover {
+    border-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 22px rgba(255, 255, 255, 0.35);
+}
+
 /* ==========================================================================
    LOGIN / REGISTER PAGE
    ========================================================================== */
@@ -34,7 +44,6 @@ body:not(.dashboard-page)::before {
 
 /* ==========================================================================
    DASHBOARD PAGE
-   Background image is defined in the XHTML file via EL expression
    ========================================================================== */
 
 body.dashboard-page {
@@ -51,7 +60,6 @@ body.dashboard-page::before {
     z-index: -1;
 }
 
-
 /* ==========================================================================
    LOGIN CARD
    ========================================================================== */
@@ -61,10 +69,14 @@ body.dashboard-page::before {
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 0 24px;
+    box-sizing: border-box;
 }
 
+/* Carte login centrée et de taille raisonnable */
 .card {
-    width: 500px;
+    width: 480px;
+    max-width: 95%;
     padding: 45px 40px;
     background: rgba(0, 0, 0, 0.48);
     border-radius: 22px;
@@ -218,10 +230,10 @@ input::placeholder {
     display: grid;
     grid-template-columns: 7fr 3fr;
     gap: 25px;
-    height: calc(100vh - 160px); /* occupe presque tout l'ecran sous la top‑bar */
+    height: calc(100vh - 160px);
 }
 
-/* Style commun a toutes les bento box */
+/* Style commun à toutes les bento box (dashboard/portfolio) */
 .bento-box {
     background: rgba(0, 0, 0, 0.35);
     backdrop-filter: blur(18px);
@@ -233,19 +245,17 @@ input::placeholder {
     box-sizing: border-box;
 }
 
-
 .bento-box:hover {
     border-color: rgba(255, 255, 255, 0.9);
     box-shadow: 0 0 22px rgba(255, 255, 255, 0.35);
 }
-
 
 /* Colonne gauche : une seule box qui prend toute la hauteur */
 .bento-main {
     height: 100%;
 }
 
-/* Colonne droite : 3 boxes empilees qui se partagent la hauteur */
+/* Colonne droite : 3 boxes empilées */
 .bento-sidebar {
     display: flex;
     flex-direction: column;
@@ -254,7 +264,7 @@ input::placeholder {
 }
 
 .bento-sidebar .bento-box {
-    flex: 1; /* chaque box prend 1/3 de la hauteur disponible */
+    flex: 1;
 }
 
 /* Titres / textes */
@@ -304,60 +314,80 @@ input::placeholder {
    ========================================================================== */
 
 .page-content.portfolio-page {
-    min-height: calc(100vh - 80px);  /* occupe l'écran sous la top-nav */
-    max-height: calc(100vh - 80px);
-    overflow: hidden;                /* pas de scroll global sur desktop */
+    padding: 4px 0 0 0;
+    min-height: calc(100vh - 60px);
+    box-sizing: border-box;
 }
 
 .portfolio-page {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 8px;
+    width: 100%;
 }
 
-/* En-tete */
-.portfolio-header {
+/* BARRE HAUTE : CHOIX / CREATION DU PORTFOLIO */
+
+.portfolio-top-bar {
+    width: 100%;
+    padding: 10px 20px;
+    box-sizing: border-box;
+}
+
+.portfolio-top-form {
     display: flex;
-    justify-content: space-between;
     align-items: flex-end;
-    gap: 20px;
+    gap: 16px;
+    width: 100%;
 }
 
-.portfolio-select-form {
+.portfolio-top-form .form-field {
+    flex: 1;
+}
+
+.portfolio-top-form .form-actions {
+    flex-shrink: 0;
+}
+
+.portfolio-select-inline {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
+    align-items: flex-end;
+    gap: 8px;
 }
 
-/* Layout global 2 colonnes occupant toute la hauteur */
+/* LAYOUT 2 COLONNES */
+
 .portfolio-layout {
     display: grid;
-    grid-template-columns: 3fr 1.3fr;  /* grande colonne gauche, plus petite droite */
-    gap: 20px;
-    height: calc(100vh - 160px);       /* ajuste en fonction de la hauteur réelle du header */
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    height: calc(100vh - 60px - 110px);
     align-items: stretch;
+    box-sizing: border-box;
 }
 
-/* Colonne gauche : aperçu + tableau */
-.portfolio-left {
-    display: grid;
-    grid-template-rows: 1.1fr 0.9fr;   /* haut : aperçu, bas : actifs */
-    gap: 16px;
-}
-
-/* Colonne droite : ajout API + custom + bouton */
+.portfolio-left,
 .portfolio-right {
-    display: grid;
-    grid-template-rows: 1.1fr 0.9fr 0.4fr;
-    gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
 }
 
-/* Cartes generiques */
+.portfolio-right {
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+/* CARTES GENERIQUES PORTFOLIO */
+
 .card {
+    width: 100%;
     background: rgba(0, 0, 0, 0.35);
     backdrop-filter: blur(18px);
-    border-radius: 18px;
-    padding: 24px;
+    border-radius: 16px;
+    padding: 14px 16px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     color: white;
     box-sizing: border-box;
@@ -367,7 +397,7 @@ input::placeholder {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
 }
 
 .card-title {
@@ -380,14 +410,15 @@ input::placeholder {
 .card-body {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 10px;
 }
 
 .card-footer {
-    margin-top: 16px;
+    margin-top: 10px;
 }
 
 /* Status / icones */
+
 .status-dot {
     width: 8px;
     height: 8px;
@@ -417,71 +448,37 @@ input::placeholder {
     background: #0ea5e9;
 }
 
-/* Aperçu portefeuille (colonne gauche, haut) */
-.portfolio-overview {
-    height: 100%;
+/* COLONNE GAUCHE : PORTFOLIO + ASSETS */
+
+.portfolio-selected {
+    min-height: 64px;
 }
 
-.portfolio-overview-body {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.overview-metric {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.overview-amount {
-    font-size: 32px;
-    font-weight: 600;
-    color: #4ade80;
-}
-
-.overview-delta {
-    font-size: 14px;
-    color: #4ade80;
-    opacity: 0.9;
-}
-
-.overview-chart-placeholder {
-    height: 160px;
-    border-radius: 12px;
-    border: 1px dashed rgba(255, 255, 255, 0.15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    opacity: 0.7;
-}
-
-/* Tableau des actifs (colonne gauche, bas) */
 .portfolio-assets-table {
-    height: 100%;
+    flex: 1;
     display: flex;
     flex-direction: column;
 }
 
 .portfolio-assets-table .card-header {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .assets-list {
+    flex: 1;
+    overflow-y: auto;
     list-style: none;
     margin: 0;
     padding: 0;
-    flex: 1;
-    overflow-y: auto; /* seule zone scrollable si beaucoup de lignes */
 }
 
 .assets-row {
-    padding: 10px 12px;
+    padding: 8px 10px;
     border-radius: 10px;
     background: rgba(0, 0, 0, 0.35);
     border: 1px solid rgba(255, 255, 255, 0.04);
     margin-bottom: 6px;
+    font-size: 14px;
 }
 
 .empty-state {
@@ -489,23 +486,32 @@ input::placeholder {
     font-size: 14px;
 }
 
-/* Formulaires colonne droite */
+/* COLONNE DROITE : FORMULAIRES */
+
 .portfolio-add-api,
 .portfolio-custom-asset {
-    height: 100%;
     display: flex;
     flex-direction: column;
 }
 
 .portfolio-add-api .card-body,
 .portfolio-custom-asset .card-body {
-    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
+
+.portfolio-custom-asset {
+    margin-top: 8px;
+    margin-bottom: 16px;
+}
+
+/* Grille de formulaire */
 
 .form-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 10px 16px;
+    gap: 8px 14px;
 }
 
 .form-field {
@@ -519,10 +525,12 @@ input::placeholder {
     opacity: 0.8;
 }
 
+/* INPUTS / SELECTS PORTFOLIO */
+
 .input-field,
 .select-field {
     width: 100%;
-    padding: 10px 12px;
+    padding: 8px 10px;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(0, 0, 0, 0.35);
@@ -540,18 +548,20 @@ input::placeholder {
 
 .readonly-field {
     display: inline-block;
-    padding: 10px 12px;
+    width: 100%;
+    padding: 8px 10px;
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.06);
     font-size: 14px;
 }
 
-/* Boutons */
+/* BOUTONS PORTFOLIO */
+
 .btn-primary {
     background: linear-gradient(90deg, #0062ff, #13d6b1);
     border: none;
     border-radius: 12px;
-    padding: 10px 18px;
+    padding: 8px 18px;
     color: white;
     font-weight: 600;
     cursor: pointer;
@@ -561,7 +571,7 @@ input::placeholder {
     background: rgba(255, 255, 255, 0.12);
     border: none;
     border-radius: 12px;
-    padding: 10px 18px;
+    padding: 8px 18px;
     color: white;
     font-weight: 600;
     cursor: pointer;
@@ -571,7 +581,7 @@ input::placeholder {
     background: transparent;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.25);
-    padding: 10px 18px;
+    padding: 8px 18px;
     color: white;
     font-weight: 500;
     cursor: pointer;
@@ -581,17 +591,12 @@ input::placeholder {
     width: 100%;
 }
 
-/* Bouton pour toggler le formulaire custom */
-.portfolio-toggle-custom {
-    align-self: stretch;
-}
+/* RESPONSIVE PORTFOLIO */
 
-/* Responsive */
 @media (max-width: 1100px) {
     .page-content.portfolio-page {
+        padding-top: 12px;
         min-height: auto;
-        max-height: none;
-        overflow: visible;
     }
 
     .portfolio-layout {
@@ -601,9 +606,196 @@ input::placeholder {
 
     .portfolio-left,
     .portfolio-right {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
+        gap: 12px;
+    }
+
+    .portfolio-right {
+        overflow-y: visible;
+        padding-right: 0;
     }
 }
 
+/* ==========================================================
+   Section Comptes
+   Mise en page 2 colonnes + cartes + tableaux
+   (scopée à .accounts-page pour ne pas casser les autres pages)
+   ========================================================== */
+
+/* Mise en page générale de la page comptes */
+.accounts-page {
+    padding: 24px 32px;
+}
+
+/* Grille principale : colonne gauche (2/3) + colonne droite (1/3) */
+.accounts-page .bento-dashboard {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+/* Colonne gauche (cartes principales) */
+.accounts-page .bento-main {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Colonne droite (historique) */
+.accounts-page .bento-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Cartes type "glass" pour comptes */
+.accounts-page .bento-box {
+    background: rgba(0, 0, 0, 0.55);
+    border-radius: 18px;
+    padding: 20px 22px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+/* Effet glow sur les cartes de comptes (contour blanc) */
+.accounts-page .bento-box.glow-hover {
+    transition: box-shadow 0.18s ease-out, transform 0.18s ease-out, border-color 0.18s ease-out;
+}
+
+.accounts-page .bento-box.glow-hover:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.55);
+    box-shadow:
+            0 26px 70px rgba(0, 0, 0, 0.95),
+            0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+/* Titre + sous-titre des cartes comptes */
+.accounts-page .bento-box h2,
+.accounts-page .bento-box h3 {
+    margin: 0;
+}
+
+.accounts-page .bento-description {
+    margin-top: 4px;
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+/* Boutons comptes */
+.accounts-page .btn-primary {
+    background: linear-gradient(90deg, #007bff, #00e0c6);
+    border: none;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, opacity 0.1s;
+}
+
+.accounts-page .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+}
+
+.accounts-page .btn-primary.full-width {
+    width: 100%;
+    text-align: center;
+}
+
+.accounts-page .btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    color: #ffffff;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.1s ease-out, opacity 0.1s;
+}
+
+.accounts-page .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+/* Bouton "ghost" pour comptes */
+.accounts-page .btn-ghost {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.1s ease-out, border-color 0.1s ease-out;
+}
+
+.accounts-page .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.45);
+}
+
+/* Champs de formulaire comptes */
+.accounts-page .form-field {
+    margin-bottom: 10px;
+}
+
+.accounts-page .field-label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 4px;
+    opacity: 0.9;
+}
+
+.accounts-page .select-field,
+.accounts-page .input-field {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(0, 0, 0, 0.45);
+    color: #ffffff;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.accounts-page .select-field:focus,
+.accounts-page .input-field:focus,
+.accounts-page .input-field:focus-visible {
+    border-color: #00e0c6;
+}
+
+/* Tableau des comptes / historique */
+.accounts-page .assets-row {
+    background: rgba(0, 0, 0, 0.55);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: background 0.12s ease-out, transform 0.08s ease-out;
+}
+
+.accounts-page .assets-row td {
+    padding: 8px 10px;
+}
+
+.accounts-page tbody .assets-row:hover {
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateY(-1px);
+}
+
+/* Tableaux généraux dans les cartes comptes */
+.accounts-page .bento-box table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 6px;
+    font-size: 13px;
+}
+
+.accounts-page .bento-box thead th {
+    font-weight: 500;
+    opacity: 0.8;
+    padding: 6px 10px;
+}

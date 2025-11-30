@@ -9,88 +9,90 @@
     <ui:define name="content">
         <div class="page-content portfolio-page">
 
-            <!-- En-tete compact -->
-            <div class="portfolio-header">
-                <h:form id="createPortfolioForm" styleClass="portfolio-create-form">
-                    <h2>Mes portefeuilles</h2>
+            <!-- BLOC HAUT : CHOIX / CREATION DU PORTFOLIO -->
+            <!-- La barre haute est une vraie card, donc même hover que les bento-box -->
+            <div class="portfolio-top-bar card">
+                <h:form id="portfolioTopForm" styleClass="portfolio-top-form">
 
+                    <!-- Nom nouveau portefeuille -->
                     <div class="form-field">
-                        <h:outputLabel for="newName" value="Nom du nouveau portefeuille" styleClass="field-label"/>
+                        <h:outputLabel for="newName"
+                                       value="Nom du nouveau portefeuille"
+                                       styleClass="field-label"/>
                         <h:inputText id="newName"
-                                     value="#{portfolioBean.newPortfolioName}"
+                                     value="#{portfolioBean.portfolioName}"
                                      styleClass="input-field"
                                      maxlength="60"/>
                     </div>
 
-                    <h:commandButton value="Créer un portefeuille"
-                                     styleClass="btn-primary"
-                                     action="#{portfolioBean.createPortfolio}">
-                        <f:ajax execute="@form"
-                                render="selectPortfolioForm overviewPanel assetsPanel"/>
-                    </h:commandButton>
-                </h:form>
+                    <!-- Bouton création -->
+                    <div class="form-actions">
+                        <h:commandButton value="Créer un portefeuille"
+                                         styleClass="btn-primary"
+                                         action="#{portfolioBean.createPortfolio}">
+                            <f:ajax execute="@form"
+                                    render="portfolioSelectPanel portfolioSelectedPanel assetsPanel"/>
+                        </h:commandButton>
+                    </div>
 
-                <h:form id="selectPortfolioForm" styleClass="portfolio-select-form">
-                    <h:outputLabel for="portfolioSelect"
-                                   value="Portefeuille courant"
-                                   styleClass="field-label"/>
+                    <!-- Sélection portefeuille existant -->
+                    <div id="portfolioSelectPanel" class="portfolio-select-inline">
+                        <h:outputLabel for="portfolioSelect"
+                                       value="Portefeuille courant"
+                                       styleClass="field-label"/>
 
-                    <h:selectOneMenu id="portfolioSelect"
-                                     value="#{portfolioBean.selectedPortfolioId}"
-                                     styleClass="select-field">
-                        <f:ajax listener="#{portfolioBean.loadAssets}"
-                                render="overviewPanel assetsPanel"/>
-                        <f:selectItem itemValue="" itemLabel="-- Aucun --" />
-                        <!-- Affiche le nom du portefeuille plutot que 'Portefeuille #id' -->
-                        <f:selectItems value="#{portfolioBean.portfolioIds}"
-                                       var="pid"
-                                       itemValue="#{pid}"
-                                       itemLabel="#{portfolioBean.portfolioNames[portfolioBean.portfolioIds.indexOf(pid)]}" />
-                    </h:selectOneMenu>
+                        <h:selectOneMenu id="portfolioSelect"
+                                         value="#{portfolioBean.selectedPortfolioId}"
+                                         styleClass="select-field">
+                            <f:ajax listener="#{portfolioBean.loadAssets}"
+                                    render="portfolioSelectedPanel assetsPanel"/>
+
+                            <f:selectItem itemValue="" itemLabel="-- Aucun --"/>
+                            <f:selectItems value="#{portfolioBean.portfolioIds}"
+                                           var="pid"
+                                           itemValue="#{pid}"
+                                           itemLabel="Portefeuille #{pid}"/>
+                        </h:selectOneMenu>
+                    </div>
+
                 </h:form>
             </div>
 
-            <!-- Layout principal 2 colonnes -->
+            <!-- LAYOUT 2 COLONNES COMME LA MAQUETTE -->
             <div class="portfolio-layout">
 
-                <!-- Colonne gauche : aperçu + tableau -->
+                <!-- COLONNE GAUCHE : PORTFOLIO SELECTIONNE + ASSETS -->
                 <div class="portfolio-left">
 
-                    <!-- Aperçu du portefeuille -->
-                    <h:panelGroup id="overviewPanel" layout="block"
-                                  styleClass="card portfolio-overview">
+                    <!-- Portfolio sélectionné : card => même hover que bento-box -->
+                    <h:panelGroup id="portfolioSelectedPanel" layout="block"
+                                  styleClass="card portfolio-selected">
                         <div class="card-header">
                             <div class="card-title">
-                                <span class="status-dot"></span>
-                                <span>Aperçu du portefeuille</span>
-                                <h:outputText value=" : #{portfolioBean.currentPortfolioName}"
-                                              rendered="#{not empty portfolioBean.currentPortfolioName}"/>
+                                <span>Portfolio sélectionné</span>
                             </div>
                         </div>
-
-                        <div class="portfolio-overview-body">
-                            <div class="overview-metric">
-                                <span class="overview-amount">$24,567.89</span>
-                                <span class="overview-delta">+123.45 (0.51%) Aujourd'hui</span>
-                            </div>
-                            <div class="overview-chart-placeholder">
-                                Graphique de performance (à intégrer)
-                            </div>
+                        <div class="card-body">
+                            <h:outputText value="Portefeuille #{portfolioBean.selectedPortfolioId}"
+                                          rendered="#{not empty portfolioBean.selectedPortfolioId}"/>
+                            <h:outputText value="Aucun portefeuille sélectionné"
+                                          rendered="#{empty portfolioBean.selectedPortfolioId}"/>
                         </div>
                     </h:panelGroup>
 
-                    <!-- Tableau des actifs -->
+                    <!-- Assets du portfolio : card => même hover -->
                     <h:panelGroup id="assetsPanel" layout="block"
                                   styleClass="card portfolio-assets-table">
                         <div class="card-header">
                             <div class="card-title">
-                                <span class="status-dot green"></span>
-                                <span>Actifs du portefeuille</span>
+                                <span>Assets du portfolio</span>
                             </div>
                         </div>
 
                         <h:panelGroup rendered="#{empty portfolioBean.assets}">
-                            <p class="empty-state">Aucun actif dans ce portefeuille.</p>
+                            <p class="empty-state">
+                                Aucun actif dans ce portefeuille.
+                            </p>
                         </h:panelGroup>
 
                         <h:panelGroup rendered="#{not empty portfolioBean.assets}">
@@ -103,22 +105,21 @@
                     </h:panelGroup>
                 </div>
 
-                <!-- Colonne droite : ajout via API + custom asset -->
+                <!-- COLONNE DROITE : AJOUT VIA API + CREATION PERSONNALISEE -->
                 <div class="portfolio-right">
 
-                    <!-- Ajouter un actif (API) -->
+                    <!-- Ajouter un actif (API) : card => même hover que bento-box -->
                     <h:form id="apiForm" styleClass="card portfolio-add-api">
                         <div class="card-header">
                             <div class="card-title">
-                                <span class="status-icon plus">+</span>
                                 <span>Ajouter un actif</span>
                             </div>
                         </div>
 
                         <div class="card-body form-grid">
-                            <!-- TYPE -->
+                            <!-- Choix type actif -->
                             <div class="form-field">
-                                <label for="typeSelect" class="field-label">Type</label>
+                                <label for="typeSelect" class="field-label">Choix type actif</label>
                                 <h:selectOneMenu id="typeSelect"
                                                  value="#{portfolioBean.selectedType}"
                                                  styleClass="select-field">
@@ -131,9 +132,9 @@
                                 </h:selectOneMenu>
                             </div>
 
-                            <!-- ACTIF -->
+                            <!-- Choix actif -->
                             <div class="form-field">
-                                <label for="assetSelect" class="field-label">Actif</label>
+                                <label for="assetSelect" class="field-label">Choix actif</label>
                                 <h:selectOneMenu id="assetSelect"
                                                  value="#{portfolioBean.selectedExternalAsset}"
                                                  styleClass="select-field">
@@ -146,9 +147,9 @@
                                 </h:selectOneMenu>
                             </div>
 
-                            <!-- PRIX -->
+                            <!-- Prix actif -->
                             <div class="form-field">
-                                <label for="priceField" class="field-label">Prix (USD)</label>
+                                <label for="priceField" class="field-label">Prix actif (USD)</label>
                                 <h:outputText id="priceField"
                                               styleClass="readonly-field"
                                               value="#{portfolioBean.marketUnitPrice}">
@@ -156,7 +157,7 @@
                                 </h:outputText>
                             </div>
 
-                            <!-- QUANTITÉ -->
+                            <!-- Quantité -->
                             <div class="form-field">
                                 <label class="field-label">Quantité</label>
                                 <h:inputText value="#{portfolioBean.assetQuantity}"
@@ -165,23 +166,20 @@
                         </div>
 
                         <div class="card-footer">
-                            <h:commandButton value="Ajouter au portefeuille"
+                            <h:commandButton value="Ajouter au portfolio"
                                              styleClass="btn-primary full-width"
                                              action="#{portfolioBean.addAssetFromApi}">
                                 <f:ajax execute="@form"
-                                        render="assetsPanel overviewPanel"/>
+                                        render="assetsPanel portfolioSelectedPanel"/>
                             </h:commandButton>
                         </div>
                     </h:form>
 
-                    <!-- Créer un actif personnalisé -->
-                    <h:form id="customAssetForm"
-                            rendered="#{portfolioBean.showCustomAssetForm}"
-                            styleClass="card portfolio-custom-asset">
+                    <!-- Création personnalisée d'un actif : card => même hover -->
+                    <h:form id="customAssetForm" styleClass="card portfolio-custom-asset">
                         <div class="card-header">
                             <div class="card-title">
-                                <span class="status-icon pen">&#9998;</span>
-                                <span>Créer un actif personnalisé</span>
+                                <span>Création personnalisée d'un actif</span>
                             </div>
                         </div>
 
@@ -227,18 +225,9 @@
                                              styleClass="btn-secondary full-width"
                                              action="#{portfolioBean.addCustomAsset}">
                                 <f:ajax execute="@form"
-                                        render="assetsPanel overviewPanel customAssetForm customButtonForm"/>
+                                        render="assetsPanel portfolioSelectedPanel"/>
                             </h:commandButton>
                         </div>
-                    </h:form>
-
-                    <!-- Bouton pour afficher/masquer le formulaire custom -->
-                    <h:form id="customButtonForm" styleClass="portfolio-toggle-custom">
-                        <h:commandButton value="#{portfolioBean.showCustomAssetForm ? 'Fermer le formulaire personnalisé' : 'Créer un actif personnalisé'}"
-                                         styleClass="btn-ghost full-width"
-                                         action="#{portfolioBean.toggleCustomAssetForm}">
-                            <f:ajax render="customAssetForm customButtonForm"/>
-                        </h:commandButton>
                     </h:form>
 
                 </div>

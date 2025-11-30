@@ -11,16 +11,25 @@ import jakarta.json.Json;
 import org.groupm.ewallet.webapp.connector.ExternalAsset;
 
 import java.io.StringReader;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Central application service.
+ * - Talks to the backend REST API (users, portfolios, assets, etc.).
+ * - Provides in-memory mocks for bank accounts and transactions.
+ *
+ * Note: for accounts and transactions everything is currently in memory
+ * to keep the UI prototype simple.
+ */
 @ApplicationScoped
 public class WebAppService {
 
     private static final String BASE_URL = "http://localhost:8080/webservice/api";
 
     // ============================================================
-    // =============== LOGIN ======================================
+    // LOGIN
     // ============================================================
 
     public String login(String email, String password) {
@@ -57,7 +66,7 @@ public class WebAppService {
     }
 
     // ============================================================
-    // =============== REGISTER ===================================
+    // REGISTER
     // ============================================================
 
     public boolean registerUser(String firstname, String lastname, String email, String password) {
@@ -80,7 +89,7 @@ public class WebAppService {
     }
 
     // ============================================================
-    // =============== GET USER ACCOUNTS ==========================
+    // GET USER ACCOUNTS (BACKEND)
     // ============================================================
 
     public List<String> getAccountsForUser(String userId) {
@@ -116,7 +125,7 @@ public class WebAppService {
     }
 
     // ============================================================
-    // =============== MAKE TRANSFER ===============================
+    // TRANSFERS (BACKEND)
     // ============================================================
 
     public boolean makeTransfer(String fromAccount, String toAccount, double amount) {
@@ -144,7 +153,7 @@ public class WebAppService {
     }
 
     // ============================================================
-    // =============== PORTFOLIOS =================================
+    // PORTFOLIOS
     // ============================================================
 
     public List<Integer> getPortfoliosForUser(String userId) {
@@ -177,31 +186,16 @@ public class WebAppService {
         }
     }
 
-    /**
-     * Creation d'un portefeuille sans nom explicite (comportement historique).
-     */
     public boolean createPortfolioForUser(String userId) {
-        return createPortfolioForUser(userId, "Nouveau portefeuille");
-    }
-
-    /**
-     * Creation d'un portefeuille avec nom fourni par l'utilisateur.
-     * Payload JSON : { "userID": "...", "name": "..." }
-     */
-    public boolean createPortfolioForUser(String userId, String portfolioName) {
         try (Client client = ClientBuilder.newClient()) {
 
             WebTarget target = client.target(BASE_URL + "/portfolios");
 
             String payload = """
-                {
-                  "userID":"%s",
-                  "name":"%s"
-                }
-            """.formatted(userId, portfolioName);
+                {"userID":"%s"}
+            """.formatted(userId);
 
-            Response res = target.request(MediaType.APPLICATION_JSON)
-                    .post(Entity.json(payload));
+            Response res = target.request(MediaType.APPLICATION_JSON).post(Entity.json(payload));
 
             return res.getStatus() == 200 || res.getStatus() == 201;
 
@@ -212,7 +206,7 @@ public class WebAppService {
     }
 
     // ============================================================
-    // =============== PORTFOLIO ASSETS ===========================
+    // PORTFOLIO ASSETS
     // ============================================================
 
     public List<String> getAssetsForPortfolio(int portfolioId) {
@@ -282,12 +276,11 @@ public class WebAppService {
     }
 
     // ============================================================
-    // ===============  EXTERNAL MARKET DATA ======================
+    // MARKET DATA
     // ============================================================
 
     private static final String FINNHUB_KEY = System.getenv("FINNHUB_API_KEY");
 
-    // -------- LISTER LES CRYPTO --------
     private List<ExternalAsset> loadCryptoAssets() {
         try {
             Client client = ClientBuilder.newClient();
@@ -316,11 +309,10 @@ public class WebAppService {
         }
     }
 
-    // -------- LISTER LES ACTIONS (US MARKET) --------
     private List<ExternalAsset> loadStockAssets() {
         try {
             if (FINNHUB_KEY == null || FINNHUB_KEY.isBlank()) {
-                System.err.println("FINNHUB_API_KEY manquant !");
+                System.err.println("FINNHUB_API_KEY missing!");
                 return List.of();
             }
 
@@ -352,17 +344,17 @@ public class WebAppService {
         }
     }
 
-    // -------- LISTER DES ETF (US) --------
     private List<ExternalAsset> loadEtfAssets() {
         try {
             if (FINNHUB_KEY == null || FINNHUB_KEY.isBlank()) {
-                System.err.println("FINNHUB_API_KEY manquant !");
+                System.err.println("FINNHUB_API_KEY missing!");
                 return List.of();
             }
 
             Client client = ClientBuilder.newClient();
 
-            String url = "https://finnhub.io/api/v1/stock/symbol?exchange=US&token=" + FINNHUB_KEY;
+            String url =
+                    "https://finnhub.io/api/v1/stock/symbol?exchange=US&token=" + FINNHUB_KEY;
             WebTarget target = client.target(url);
 
             String json = target.request(MediaType.APPLICATION_JSON).get(String.class);
@@ -376,7 +368,9 @@ public class WebAppService {
 
                 String symbol = o.getString("symbol", null);
                 String name = o.getString("description", "");
-                if (symbol == null || name.isBlank()) continue;
+                if (symbol == null || name.isBlank()) {
+                    continue;
+                }
 
                 String lower = name.toLowerCase();
                 if (lower.contains("etf") ||
@@ -384,12 +378,10 @@ public class WebAppService {
                         lower.contains("trust") ||
                         lower.contains("index") ||
                         lower.contains("bond")) {
-
                     etfs.add(new ExternalAsset(name, symbol, symbol));
                 }
             }
 
-            System.out.println("ETF trouvés = " + etfs.size());
             return etfs;
 
         } catch (Exception e) {
@@ -398,7 +390,6 @@ public class WebAppService {
         }
     }
 
-    // -------- PRIX CRYPTO --------
     private double getCryptoPrice(String apiId) {
         try {
             Client client = ClientBuilder.newClient();
@@ -421,7 +412,6 @@ public class WebAppService {
         return 0.0;
     }
 
-    // -------- PRIX ACTION / ETF --------
     private double getStockEtfPrice(String symbol) {
 
         if (FINNHUB_KEY == null) {
@@ -443,6 +433,7 @@ public class WebAppService {
                 try {
                     return obj.isNull("c") ? 0.0 : obj.getJsonNumber("c").doubleValue();
                 } catch (Exception ignore) {
+                    // ignore parsing issues
                 }
             }
 
@@ -453,7 +444,6 @@ public class WebAppService {
         return 0.0;
     }
 
-    // -------- ROUTEUR --------
     public List<ExternalAsset> loadAssetsFromApi(String type) {
         return switch (type.toLowerCase()) {
             case "crypto" -> loadCryptoAssets();
@@ -472,16 +462,298 @@ public class WebAppService {
     }
 
     // ============================================================
-    // ===============  DASHBOARD METRICS (TEMP MOCK) =============
+    // DASHBOARD MOCK
     // ============================================================
 
     public double getTotalWealthForUser(String userId) {
-        // TODO: Replace with real logic (sum of all accounts + total portfolio value)
-        return 423817.00;
+        return 423_817.00;
     }
 
     public double getWealthGrowthForUser(String userId) {
-        // TODO: Replace with real logic (calculate real variation)
         return 1.93;
+    }
+
+    // ============================================================
+    // ACCOUNTS (LOCAL MOCK) + TRANSACTIONS
+    // ============================================================
+
+    public static class LocalAccount {
+        private final String id;
+        private final String type;
+        private final String name;
+        private double balance;
+
+        public LocalAccount(String id, String type, String name, double balance) {
+            this.id = id;
+            this.type = type;
+            this.name = name;
+            this.balance = balance;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public double getBalance() {
+            return balance;
+        }
+
+        public String getNumber() {
+            return id;
+        }
+
+        public void setBalance(double balance) {
+            this.balance = balance;
+        }
+    }
+
+    public static class LocalTransaction {
+        private final String accountId;
+        private final LocalDateTime dateTime;
+        private final double amount;
+        private final String type;
+        private final String category;
+        private final String description;
+
+        public LocalTransaction(String accountId,
+                                LocalDateTime dateTime,
+                                double amount,
+                                String type,
+                                String category,
+                                String description) {
+            this.accountId = accountId;
+            this.dateTime = dateTime;
+            this.amount = amount;
+            this.type = type;
+            this.category = category;
+            this.description = description;
+        }
+
+        public String getAccountId() {
+            return accountId;
+        }
+
+        public LocalDateTime getDateTime() {
+            return dateTime;
+        }
+
+        public double getAmount() {
+            return amount;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getCategory() {
+            return category;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+    }
+
+    private final List<LocalAccount> localAccounts = new ArrayList<>();
+    private final List<LocalTransaction> localTransactions = new ArrayList<>();
+
+    public List<LocalAccount> getAccounts() {
+        return localAccounts;
+    }
+
+    public LocalAccount createAccount(String type, String name) {
+        String nextId = String.valueOf(localAccounts.size() + 1);
+        LocalAccount acc = new LocalAccount(nextId, type, name, 0.0);
+        localAccounts.add(acc);
+        return acc;
+    }
+
+    public LocalAccount createAccount(String type) {
+        return createAccount(type, null);
+    }
+
+    public LocalAccount getAccountById(String id) {
+        return localAccounts.stream()
+                .filter(a -> a.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public boolean depositToAccount(String id, double amount) {
+        LocalAccount acc = getAccountById(id);
+        if (acc == null || amount <= 0) {
+            return false;
+        }
+
+        acc.setBalance(acc.getBalance() + amount);
+
+        localTransactions.add(new LocalTransaction(
+                id,
+                LocalDateTime.now(),
+                amount,
+                "DEPOSIT",
+                null,
+                "Deposit"
+        ));
+
+        return true;
+    }
+
+    public boolean withdrawFromAccount(String id,
+                                       double amount,
+                                       String category,
+                                       String description) {
+
+        LocalAccount acc = getAccountById(id);
+        if (acc == null || amount <= 0) {
+            return false;
+        }
+
+        double newBalance = acc.getBalance() - amount;
+        if (newBalance < 0) {
+            return false;
+        }
+
+        acc.setBalance(newBalance);
+
+        localTransactions.add(new LocalTransaction(
+                id,
+                LocalDateTime.now(),
+                -amount,
+                "WITHDRAWAL",
+                category,
+                description
+        ));
+
+        return true;
+    }
+
+    public boolean transferBetweenAccounts(String fromAccountId,
+                                           String toAccountId,
+                                           double amount,
+                                           String category,
+                                           String description) {
+
+        if (fromAccountId == null || toAccountId == null ||
+                fromAccountId.equals(toAccountId) || amount <= 0) {
+            return false;
+        }
+
+        boolean withdrawalOk = withdrawFromAccount(fromAccountId, amount, category, description);
+        if (!withdrawalOk) {
+            return false;
+        }
+
+        boolean depositOk = depositToAccount(toAccountId, amount);
+        return depositOk;
+    }
+
+    public List<LocalTransaction> getTransactionsForAccount(String accountId) {
+        List<LocalTransaction> result = new ArrayList<>();
+        for (LocalTransaction tx : localTransactions) {
+            if (tx.getAccountId().equals(accountId)) {
+                result.add(tx);
+            }
+        }
+        return result;
+    }
+
+    public List<LocalTransaction> getTransactionsForPortfolio(int portfolioId) {
+        return List.of();
+    }
+
+    // ============================================================
+    // UNIFIED TRANSACTIONS FOR GLOBAL VIEW
+    // ============================================================
+
+    public static class UnifiedTransaction {
+        private final String source;
+        private final String sourceId;
+        private final String sourceLabel;
+        private final LocalDateTime dateTime;
+        private final double amount;
+        private final String type;
+        private final String category;
+        private final String description;
+
+        public UnifiedTransaction(String source,
+                                  String sourceId,
+                                  String sourceLabel,
+                                  LocalDateTime dateTime,
+                                  double amount,
+                                  String type,
+                                  String category,
+                                  String description) {
+            this.source = source;
+            this.sourceId = sourceId;
+            this.sourceLabel = sourceLabel;
+            this.dateTime = dateTime;
+            this.amount = amount;
+            this.type = type;
+            this.category = category;
+            this.description = description;
+        }
+
+        public String getSource() {
+            return source;
+        }
+
+        public String getSourceId() {
+            return sourceId;
+        }
+
+        public String getSourceLabel() {
+            return sourceLabel;
+        }
+
+        public LocalDateTime getDateTime() {
+            return dateTime;
+        }
+
+        public double getAmount() {
+            return amount;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getCategory() {
+            return category;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+    }
+
+    public List<UnifiedTransaction> getAllUnifiedTransactions() {
+        List<UnifiedTransaction> list = new ArrayList<>();
+        for (LocalTransaction tx : localTransactions) {
+            LocalAccount acc = getAccountById(tx.getAccountId());
+            String label = (acc != null && acc.getName() != null && !acc.getName().isBlank())
+                    ? acc.getName()
+                    : (acc != null ? acc.getType() + " " + acc.getId() : tx.getAccountId());
+
+            list.add(new UnifiedTransaction(
+                    "ACCOUNT",
+                    tx.getAccountId(),
+                    label,
+                    tx.getDateTime(),
+                    tx.getAmount(),
+                    tx.getType(),
+                    tx.getCategory(),
+                    tx.getDescription()
+            ));
+        }
+        return list;
     }
 }
