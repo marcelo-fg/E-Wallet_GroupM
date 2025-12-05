@@ -70,9 +70,8 @@ public class TransactionTest {
         System.out.println("=== Test de la méthode toString() ===");
         System.out.println(output);
 
-        assertTrue(output.contains("TXN-4") || output.contains("A002"));
+        // New toString format: [TIMESTAMP] TYPE | Montant: AMOUNT
         assertTrue(output.contains("DEPOSIT") || output.contains("deposit"));
         assertTrue(output.contains("200.0"));
-        assertTrue(output.contains("Test affichage"));
     }
 }

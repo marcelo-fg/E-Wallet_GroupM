@@ -1,44 +1,42 @@
 package org.groupm.ewallet.model;
 
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Modèle représentant un compte bancaire utilisateur.
- * Ce modèle ne contient aucune logique métier.
- * Toute la gestion de dépôts, retraits et transactions est effectuée dans
- * AccountManager.
  */
+@Entity
+@Table(name = "accounts")
 public class Account {
 
     /** Identifiant unique du compte. */
+    @Id
+    @Column(name = "account_id")
     private String accountID;
 
     /** Identifiant de l'utilisateur propriétaire du compte. */
+    @Column(name = "user_id", insertable = false, updatable = false)
     private String userID;
 
     /** Type du compte (ex : "épargne", "courant"). */
     private String type;
 
-    /** Nom personnalisé du compte (ex: "Mes économies"). */
-    private String name;
-
     /** Solde actuel du compte. */
     private double balance;
 
     /** Liste des transactions associées à ce compte. */
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinColumn(name = "account_id")
     private List<Transaction> transactions;
 
-    /**
-     * Constructeur par défaut requis pour la désérialisation JSON-B/Jackson.
-     */
+    // ===================== Constructeurs =====================
+
     public Account() {
         this.transactions = new ArrayList<>();
     }
 
-    /**
-     * Constructeur avec paramètres principaux (sans userID).
-     */
     public Account(String accountID, String type, double balance) {
         this.accountID = accountID;
         this.type = type;
@@ -46,9 +44,6 @@ public class Account {
         this.transactions = new ArrayList<>();
     }
 
-    /**
-     * Constructeur avec userID.
-     */
     public Account(String accountID, String userID, String type, double balance) {
         this.accountID = accountID;
         this.userID = userID;
@@ -59,58 +54,21 @@ public class Account {
 
     // ===================== Getters et Setters =====================
 
-    public String getAccountID() {
-        return accountID;
-    }
+    public String getAccountID() { return accountID; }
+    public void setAccountID(String accountID) { this.accountID = accountID; }
 
-    public void setAccountID(String accountID) {
-        this.accountID = accountID;
-    }
+    public String getUserID() { return userID; }
+    public void setUserID(String userID) { this.userID = userID; }
 
-    public String getUserID() {
-        return userID;
-    }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
 
-    public void setUserID(String userID) {
-        this.userID = userID;
-    }
+    public double getBalance() { return balance; }
+    public void setBalance(double balance) { this.balance = balance; }
 
-    public String getType() {
-        return type;
-    }
+    public List<Transaction> getTransactions() { return transactions; }
+    public void setTransactions(List<Transaction> transactions) { this.transactions = transactions; }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public double getBalance() {
-        return balance;
-    }
-
-    public void setBalance(double balance) {
-        this.balance = balance;
-    }
-
-    public List<Transaction> getTransactions() {
-        return transactions;
-    }
-
-    public void setTransactions(List<Transaction> transactions) {
-        this.transactions = transactions;
-    }
-
-    /**
-     * Ajoute une transaction au modèle.
-     * Cette méthode est invoquée depuis AccountManager uniquement.
-     */
     public void addTransaction(Transaction transaction) {
         if (this.transactions == null) {
             this.transactions = new ArrayList<>();
@@ -120,12 +78,6 @@ public class Account {
 
     @Override
     public String toString() {
-        return "Account{" +
-                "accountID='" + accountID + '\'' +
-                ", userID='" + userID + '\'' +
-                ", type='" + type + '\'' +
-                ", name='" + name + '\'' +
-                ", balance=" + balance +
-                '}';
+        return "Account{" + "accountID='" + accountID + '\'' + ", balance=" + balance + '}';
     }
 }

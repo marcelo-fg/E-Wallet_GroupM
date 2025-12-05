@@ -16,6 +16,15 @@ public class WealthTracker {
     /** Richesse totale en USD. */
     private double totalWealthUsd;
 
+    /** Total Cash (Comptes bancaires) en USD. */
+    private double totalCash;
+
+    /** Total Crypto en USD. */
+    private double totalCrypto;
+
+    /** Total Stocks en USD. */
+    private double totalStocks;
+
     /** Taux de croissance depuis la première mesure. */
     private double growthRate;
 
@@ -32,6 +41,9 @@ public class WealthTracker {
     public WealthTracker(User user) {
         this.user = user;
         this.totalWealthUsd = 0.0;
+        this.totalCash = 0.0;
+        this.totalCrypto = 0.0;
+        this.totalStocks = 0.0;
         this.growthRate = 0.0;
         this.historicalValues = new ArrayList<>();
     }
@@ -43,29 +55,41 @@ public class WealthTracker {
 
     /**
      * Met à jour la richesse totale :
-     *  - Total des comptes (CHF converti en USD)
-     *  - Total de tous les portefeuilles (CHF converti en USD)
+     *  - Total des comptes (CHF converti en USD) -> Cash
+     *  - Total de tous les portefeuilles (CHF converti en USD) -> Crypto/Stocks
      *  - Met à jour : croissance, historique
      */
     public void updateWealth() {
 
         // =====================
-        //   1. Comptes en CHF
+        //   1. Comptes en CHF -> CASH
         // =====================
         double accountsChf = user.getTotalBalance();
-        double accountsUsd = CurrencyConverter.chfToUsd(accountsChf);
+        this.totalCash = CurrencyConverter.chfToUsd(accountsChf);
 
         // ================================================
         //   2. Sommation de TOUS les portefeuilles du user
         // ================================================
-        double portfoliosUsd = 0.0;
+        this.totalCrypto = 0.0;
+        this.totalStocks = 0.0;
 
         if (user.getPortfolios() != null) {
             for (Portfolio p : user.getPortfolios()) {
                 if (p.getAssets() != null) {
                     for (Asset asset : p.getAssets()) {
                         double assetChf = asset.getTotalValue();
-                        portfoliosUsd += CurrencyConverter.chfToUsd(assetChf);
+                        double assetUsd = CurrencyConverter.chfToUsd(assetChf);
+                        
+                        String type = (asset.getType() != null) ? asset.getType().toUpperCase() : "UNKNOWN";
+                        
+                        if ("CRYPTO".equals(type)) {
+                            this.totalCrypto += assetUsd;
+                        } else if ("STOCK".equals(type) || "SHARE".equals(type)) {
+                            this.totalStocks += assetUsd;
+                        } else {
+                            // Par défaut, on considère le reste comme Stocks/Investissements
+                            this.totalStocks += assetUsd;
+                        }
                     }
                 }
             }
@@ -74,7 +98,7 @@ public class WealthTracker {
         // ====================
         //   3. Total Wealth
         // ====================
-        totalWealthUsd = accountsUsd + portfoliosUsd;
+        this.totalWealthUsd = this.totalCash + this.totalCrypto + this.totalStocks;
 
         // ================================
         //   4. Mise à jour de l’historique
@@ -100,6 +124,18 @@ public class WealthTracker {
         return totalWealthUsd;
     }
 
+    public double getTotalCash() {
+        return totalCash;
+    }
+
+    public double getTotalCrypto() {
+        return totalCrypto;
+    }
+
+    public double getTotalStocks() {
+        return totalStocks;
+    }
+
     public double getTotalWealthChf() {
         return CurrencyConverter.usdToChf(totalWealthUsd);
     }
@@ -123,11 +159,12 @@ public class WealthTracker {
     @Override
     public String toString() {
         return String.format(
-                "WealthTracker{user=%s, totalWealth=%.2f USD (≈ %.2f CHF), growthRate=%.2f%%}",
+                "WealthTracker{user=%s, total=%.2f, cash=%.2f, crypto=%.2f, stocks=%.2f}",
                 user.getFirstName() + " " + user.getLastName(),
                 totalWealthUsd,
-                getTotalWealthChf(),
-                growthRate
+                totalCash,
+                totalCrypto,
+                totalStocks
         );
     }
 }

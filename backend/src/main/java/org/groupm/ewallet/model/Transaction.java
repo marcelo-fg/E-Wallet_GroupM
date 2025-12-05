@@ -1,16 +1,19 @@
 package org.groupm.ewallet.model;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
  * Représente une transaction financière effectuée sur un compte.
- * Une transaction peut être un dépôt, un retrait ou un transfert.
- * Ce modèle est compatible avec JSON-B/Jackson pour la désérialisation REST.
  */
+@Entity
+@Table(name = "transactions")
 public class Transaction {
 
     /** Identifiant unique de la transaction (ex : "TXN001"). */
+    @Id
+    @Column(name = "transaction_id")
     private String transactionID;
 
     /** Type de transaction ("deposit", "withdraw", "transfer"). */
@@ -26,18 +29,15 @@ public class Transaction {
     private String description;
 
     /** Identifiant du compte associé. */
+    @Column(name = "account_id", insertable = false, updatable = false)
     private String accountID;
 
-    /**
-     * Constructeur vide requis pour la désérialisation JSON-B.
-     */
+    // ===================== Constructeurs =====================
+
     public Transaction() {
         this.timestamp = LocalDateTime.now();
     }
 
-    /**
-     * Constructeur complet sans compte associé.
-     */
     public Transaction(String transactionID, String type, double amount, String description) {
         this.transactionID = transactionID;
         this.type = type;
@@ -46,9 +46,6 @@ public class Transaction {
         this.timestamp = LocalDateTime.now();
     }
 
-    /**
-     * Constructeur complet avec compte associé.
-     */
     public Transaction(String transactionID, String type, double amount, String description, String accountID) {
         this(transactionID, type, amount, description);
         this.accountID = accountID;
@@ -56,75 +53,31 @@ public class Transaction {
 
     // ===================== Getters =====================
 
-    public String getTransactionID() {
-        return transactionID;
-    }
+    public String getTransactionID() { return transactionID; }
+    public String getType() { return type; }
+    public double getAmount() { return amount; }
+    public LocalDateTime getTimestamp() { return timestamp; }
+    public String getDescription() { return description; }
+    public String getAccountID() { return accountID; }
 
-    public String getType() {
-        return type;
-    }
+    // ===================== Setters =====================
 
-    public double getAmount() {
-        return amount;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getAccountID() {
-        return accountID;
-    }
-
-    // ===================== Setters (nécessaires pour JSON et logique métier) =====================
-
-    public void setTransactionID(String transactionID) {
-        this.transactionID = transactionID;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public void setAmount(double amount) {
-        this.amount = amount;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setAccountID(String accountID) {
-        this.accountID = accountID;
-    }
+    public void setTransactionID(String transactionID) { this.transactionID = transactionID; }
+    public void setType(String type) { this.type = type; }
+    public void setAmount(double amount) { this.amount = amount; }
+    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    public void setDescription(String description) { this.description = description; }
+    public void setAccountID(String accountID) { this.accountID = accountID; }
 
     // ===================== Méthodes utilitaires =====================
 
-    /**
-     * Retourne la date formatée de manière lisible.
-     */
     public String getFormattedTimestamp() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        return timestamp.format(formatter);
+        return timestamp != null ? timestamp.format(formatter) : "";
     }
 
-    /**
-     * Représentation textuelle complète de la transaction.
-     */
     @Override
     public String toString() {
-        return "[" + getFormattedTimestamp() + "] "
-                + type.toUpperCase()
-                + " | Montant: " + amount + " CHF"
-                + (accountID != null ? " | Compte: " + accountID : "")
-                + (description != null && !description.isEmpty() ? " | " + description : "");
+        return "[" + getFormattedTimestamp() + "] " + type.toUpperCase() + " | Montant: " + amount;
     }
 }

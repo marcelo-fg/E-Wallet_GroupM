@@ -5,12 +5,14 @@
     <h:head>
         <title>WealthMate</title>
         <h:outputStylesheet library="css" name="styles.css"/>
+
+        <!-- Chart.js CDN -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     </h:head>
 
     <h:body styleClass="dashboard-page"
             style="background: url('#{resource['images/bg-dashboard_1.png']}') center/cover no-repeat fixed;">
 
-        <!-- Top Navigation Bar -->
         <nav class="top-nav">
             <div class="nav-left">
                 <img src="#{request.contextPath}/resources/images/Logo-W_color.png"
@@ -20,20 +22,21 @@
 
             <div class="nav-center">
                 <a href="dashboard.xhtml">Dashboard</a>
-                <a href="accounts.xhtml">Accounts</a>
+                <a href="accounts.xhtml">Bank Accounts</a>
                 <a href="portfolio.xhtml">Portfolio</a>
-                <a href="analysis.xhtml">Analysis</a>
                 <a href="transactions.xhtml">Transactions</a>
+                <a href="totalwealth.xhtml">Total Wealth</a>
             </div>
 
             <div class="nav-right">
-                <a href="profile.xhtml" class="profile-btn">
-                    #{loginBean.email != null ? loginBean.email.substring(0,1).toUpperCase() : 'U'}
-                </a>
+                <h:form style="display:inline;">
+                    <h:commandButton value="Logout"
+                                     action="#{loginBean.logout}"
+                                     styleClass="btn-logout" />
+                </h:form>
             </div>
         </nav>
 
-        <!-- Page Content -->
         <main class="page-content">
             <ui:insert name="content"/>
         </main>

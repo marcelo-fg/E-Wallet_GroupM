@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+<h:head>
+    <title>E-Wallet - Accueil</title>
+    <meta charset="UTF-8"/>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            height: 100%;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            background-image: url('img/lausanne.jpg'); /* <- ton image */
+            background-size: cover;
+            background-position: center;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                    to bottom,
+                    rgba(0, 0, 0, 0.55),
+                    rgba(0, 0, 0, 0.80)
+            );
+            pointer-events: none;
+        }
+
+        .hero-inner {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            padding: 24px 64px 40px 64px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER */
+
+        .hero-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .hero-logo {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hero-logo-badge {
+            width: 18px;
+            height: 18px;
+            border-radius: 6px;
+            border: 2px solid #ffffff;
+        }
+
+        .hero-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .hero-link {
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            color: #ffffff;
+        }
+
+        .hero-link:hover {
+            text-decoration: underline;
+        }
+
+        .hero-qr {
+            background: rgba(15, 23, 42, 0.9);
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+        }
+
+        .hero-qr small {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #cbd5f5;
+        }
+
+        .hero-qr-box {
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
+            border: 1px dashed rgba(148, 163, 184, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            text-align: center;
+        }
+
+        /* CONTENU CENTRAL */
+
+        .hero-main {
+            position: relative;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-card {
+            width: 310px;
+            height: 520px;
+            border-radius: 28px;
+            background: linear-gradient(145deg, #020617, #111827);
+            box-shadow:
+                    0 26px 60px rgba(0, 0, 0, 0.85),
+                    0 0 0 1px rgba(148, 163, 184, 0.35);
+            transform: rotate(-14deg);
+            display: flex;
+            flex-direction: column;
+            padding: 26px 24px;
+            backdrop-filter: blur(12px);
+        }
+
+        .hero-card-top {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .hero-card-chip {
+            width: 40px;
+            height: 28px;
+            border-radius: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.7);
+        }
+
+        .hero-card-logo {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.16em;
+        }
+
+        .hero-card-center {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-start;
+        }
+
+        .hero-card-number {
+            font-size: 18px;
+            letter-spacing: 0.24em;
+        }
+
+        .hero-card-bottom {
+            margin-top: 18px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+        }
+
+        .hero-card-label {
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: #9ca3af;
+            margin-bottom: 4px;
+        }
+
+        .hero-card-holder {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        /* TEXTE BAS GAUCHE */
+
+        .hero-footer {
+            position: absolute;
+            left: 64px;
+            bottom: 56px;
+            max-width: 520px;
+        }
+
+        .hero-tagline {
+            font-size: 13px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #cbd5f5;
+            margin-bottom: 12px;
+        }
+
+        .hero-title {
+            font-size: 42px;
+            line-height: 1.1;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .hero-subtitle {
+            font-size: 14px;
+            max-width: 460px;
+            color: #e5e7eb;
+        }
+
+        .hero-subtitle span {
+            opacity: 0.85;
+        }
+
+        .hero-cta {
+            margin-top: 22px;
+            display: flex;
+            gap: 14px;
+            align-items: center;
+        }
+
+        .hero-btn-primary {
+            border: none;
+            border-radius: 999px;
+            padding: 11px 26px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #000;
+        }
+
+        .hero-btn-secondary {
+            border-radius: 999px;
+            padding: 9px 20px;
+            font-size: 13px;
+            border: 1px solid rgba(148, 163, 184, 0.8);
+            background: transparent;
+            color: #e5e7eb;
+            cursor: pointer;
+        }
+
+        .hero-btn-primary:hover,
+        .hero-btn-secondary:hover {
+            opacity: 0.9;
+        }
+
+        /* Réduction grossière pour petits écrans */
+
+        @media (max-width: 900px) {
+            .hero-inner {
+                padding: 16px 20px 30px 20px;
+            }
+
+            .hero-footer {
+                left: 20px;
+                bottom: 28px;
+                right: 20px;
+            }
+
+            .hero-title {
+                font-size: 28px;
+            }
+
+            .hero-card {
+                display: none;
+            }
+        }
+    </style>
+</h:head>
+
+<h:body>
+    <div class="hero">
+        <div class="hero-inner">
+
+            <!-- HEADER -->
+            <header class="hero-header">
+                <div class="hero-logo">
+                    <div class="hero-logo-badge"></div>
+                    E-WALLET
+                </div>
+
+                <div class="hero-right">
+                    <a href="login.xhtml" class="hero-link">Connexion</a>
+                    <div class="hero-qr">
+                        <div>
+                            <small>Télécharger l’app</small><br/>
+                            <span style="font-size: 12px; opacity: 0.8;">Scannez pour ouvrir sur mobile</span>
+                        </div>
+                        <div class="hero-qr-box">
+                            QR<br/>placeholder
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- CONTENU CENTRAL : CARTE -->
+            <main class="hero-main">
+                <div class="hero-card">
+                    <div class="hero-card-top">
+                        <div class="hero-card-logo">E-WALLET</div>
+                        <div class="hero-card-chip"></div>
+                    </div>
+
+                    <div class="hero-card-center">
+                        <div class="hero-card-number">
+                            5273&nbsp; 9012&nbsp; 4431&nbsp; 2089
+                        </div>
+                    </div>
+
+                    <div class="hero-card-bottom">
+                        <div>
+                            <div class="hero-card-label">Card holder</div>
+                            <div class="hero-card-holder">LUKA CLIENT</div>
+                        </div>
+                        <div>
+                            <div class="hero-card-label">Valid thru</div>
+                            <div class="hero-card-holder">12 / 28</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- TEXTE BAS GAUCHE -->
+            <footer class="hero-footer">
+                <div class="hero-tagline">Lausanne • Suisse</div>
+
+                <h1 class="hero-title">
+                    La manière la plus fluide<br/>
+                    de gérer, payer et investir.
+                </h1>
+
+                <p class="hero-subtitle">
+                    Recevez jusqu’à <span>2&nbsp;% d’intérêts</span> sur vos avoirs en cash,
+                    suivez vos portefeuilles en temps réel et simplifiez vos paiements du quotidien.
+                </p>
+
+                <div class="hero-cta">
+                    <button class="hero-btn-primary" onclick="window.location.href='login.xhtml'">
+                        Ouvrir mon espace
+                    </button>
+
+                    <button class="hero-btn-secondary">
+                        Découvrir les fonctionnalités
+                    </button>
+                </div>
+            </footer>
+
+        </div>
+    </div>
+</h:body>
+</html>

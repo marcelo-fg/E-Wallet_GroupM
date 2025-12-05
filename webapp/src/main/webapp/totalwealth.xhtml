@@ -1,0 +1,234 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:f="jakarta.faces.core"
+                template="/templates/layout.xhtml">
+
+    <ui:define name="pageStyle">
+        <style>
+            body.dashboard-page {
+                background: url("#{request.contextPath}/resources/images/bg-dashboard_1.png") center/cover no-repeat fixed !important;
+            }
+            
+            .wealth-summary {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 24px;
+                padding: 20px 30px;
+                background: rgba(0, 0, 0, 0.55);
+                border-radius: 18px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                backdrop-filter: blur(14px);
+            }
+            
+            .wealth-metric {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .wealth-label {
+                font-size: 14px;
+                opacity: 0.7;
+                margin-bottom: 5px;
+            }
+            
+            .wealth-value {
+                font-size: 24px;
+                font-weight: 700;
+                color: #fff;
+            }
+            
+            .wealth-value.total {
+                font-size: 32px;
+                background: linear-gradient(90deg, #0062ff, #13d6b1);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+            
+            .chart-grid {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+            
+            .chart-card {
+                background: rgba(0, 0, 0, 0.55);
+                border-radius: 18px;
+                padding: 20px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                backdrop-filter: blur(14px);
+            }
+            
+            .chart-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+            }
+            
+            .chart-title {
+                margin: 0;
+                font-size: 18px;
+                font-weight: 600;
+            }
+            
+            .chart-container {
+                position: relative;
+                height: 300px;
+                width: 100%;
+            }
+        </style>
+    </ui:define>
+
+    <ui:define name="title">
+        Total Wealth - WealthMate
+    </ui:define>
+
+    <ui:define name="content">
+        
+        <!-- GLOBAL SUMMARY -->
+        <div class="wealth-summary">
+            <div class="wealth-metric">
+                <span class="wealth-label">Total Net Worth</span>
+                <span class="wealth-value total">
+                    <h:outputText value="#{totalWealthBean.totalNetWorth}">
+                        <f:convertNumber type="currency" currencySymbol="$" maxFractionDigits="2"/>
+                    </h:outputText>
+                </span>
+            </div>
+            <div class="wealth-metric">
+                <span class="wealth-label">Cash Balance</span>
+                <span class="wealth-value">
+                    <h:outputText value="#{totalWealthBean.totalCash}">
+                        <f:convertNumber type="currency" currencySymbol="$" maxFractionDigits="2"/>
+                    </h:outputText>
+                </span>
+            </div>
+            <div class="wealth-metric">
+                <span class="wealth-label">Crypto Assets</span>
+                <span class="wealth-value">
+                    <h:outputText value="#{totalWealthBean.totalCrypto}">
+                        <f:convertNumber type="currency" currencySymbol="$" maxFractionDigits="2"/>
+                    </h:outputText>
+                </span>
+            </div>
+            <div class="wealth-metric">
+                <span class="wealth-label">Stock Portfolio</span>
+                <span class="wealth-value">
+                    <h:outputText value="#{totalWealthBean.totalStocks}">
+                        <f:convertNumber type="currency" currencySymbol="$" maxFractionDigits="2"/>
+                    </h:outputText>
+                </span>
+            </div>
+        </div>
+
+        <!-- CHARTS GRID -->
+        <div class="chart-grid">
+            
+            <!-- CASH CHART -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Cash Evolution (30 Days)</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="cashChart"></canvas>
+                </div>
+            </div>
+
+            <!-- CRYPTO CHART -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Crypto Portfolio Performance</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="cryptoChart"></canvas>
+                </div>
+            </div>
+
+            <!-- STOCKS CHART -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Stocks Portfolio Performance</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="stocksChart"></canvas>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- Chart.js from CDN -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                
+                // Helper to create charts
+                function createLineChart(canvasId, label, color, jsonData) {
+                    var ctx = document.getElementById(canvasId);
+                    if (ctx) {
+                        new Chart(ctx.getContext('2d'), {
+                            type: 'line',
+                            data: {
+                                labels: jsonData.labels,
+                                datasets: [{
+                                    label: label,
+                                    data: jsonData.data,
+                                    borderColor: color,
+                                    backgroundColor: color + '20', // Transparent fill
+                                    borderWidth: 2,
+                                    tension: 0.4, // Smooth curves
+                                    fill: true,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 6
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        mode: 'index',
+                                        intersect: false,
+                                        backgroundColor: 'rgba(0,0,0,0.8)',
+                                        titleColor: '#fff',
+                                        bodyColor: '#fff'
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        grid: { display: false },
+                                        ticks: { color: 'rgba(255,255,255,0.5)' }
+                                    },
+                                    y: {
+                                        grid: { color: 'rgba(255,255,255,0.05)' },
+                                        ticks: { color: 'rgba(255,255,255,0.5)' }
+                                    }
+                                },
+                                interaction: {
+                                    mode: 'nearest',
+                                    axis: 'x',
+                                    intersect: false
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // Inject Data from Bean
+                var cashData = #{totalWealthBean.cashHistoryJson};
+                var cryptoData = #{totalWealthBean.cryptoHistoryJson};
+                var stocksData = #{totalWealthBean.stocksHistoryJson};
+
+                // Initialize Charts
+                createLineChart('cashChart', 'Cash Balance', '#13d6b1', cashData);
+                createLineChart('cryptoChart', 'Crypto Value', '#ffce56', cryptoData);
+                createLineChart('stocksChart', 'Stocks Value', '#0062ff', stocksData);
+            });
+        </script>
+
+    </ui:define>
+
+</ui:composition>

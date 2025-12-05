@@ -4,6 +4,7 @@ import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.servlet.http.HttpSession;
+import jakarta.annotation.PostConstruct;
 import org.groupm.ewallet.webapp.service.WebAppService;
 
 import java.io.Serializable;
@@ -54,8 +55,15 @@ public class DashboardBean implements Serializable {
     @Inject
     private WebAppService webAppService;
 
+    @PostConstruct
+    public void init() {
+        loadDashboard();
+    }
+
     public void loadDashboard() {
         var context = jakarta.faces.context.FacesContext.getCurrentInstance();
+        if (context == null) return;
+        
         HttpSession session = (HttpSession) context.getExternalContext().getSession(false);
 
         if (session != null) {

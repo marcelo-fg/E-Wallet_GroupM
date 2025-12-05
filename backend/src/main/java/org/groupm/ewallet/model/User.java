@@ -1,5 +1,6 @@
 package org.groupm.ewallet.model;
 
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,23 +8,38 @@ import java.util.List;
  * Représente un utilisateur du système, incluant ses informations
  * personnelles, ses comptes bancaires et ses portefeuilles d’investissement.
  */
+@Entity
+@Table(name = "users")
 public class User {
 
-    /** Solde total cumulé de tous les comptes de l’utilisateur. */
-    private double totalBalance;
-
     /** Identifiant unique de l'utilisateur. */
+    @Id
+    @Column(name = "user_id")
     private String userID;
 
+    @Column(unique = true)
     private String email;
+    
     private String password;
+    
+    @Column(name = "first_name")
     private String firstName;
+    
+    @Column(name = "last_name")
     private String lastName;
 
+    /** Solde total cumulé de tous les comptes de l’utilisateur. */
+    @Transient // Calculé, pas stocké
+    private double totalBalance;
+
     /** Liste des comptes bancaires associés à l'utilisateur. */
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id") // Clé étrangère dans la table account
     private List<Account> accounts;
 
     /** Liste des portefeuilles d'investissement associés à l'utilisateur. */
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id") // Clé étrangère dans la table portfolio
     private List<Portfolio> portfolios;
 
     // ===================== Constructeurs =====================
@@ -55,7 +71,11 @@ public class User {
     public String getLastName() { return lastName; }
     public List<Account> getAccounts() { return accounts; }
     public List<Portfolio> getPortfolios() { return portfolios; }
-    public double getTotalBalance() { return totalBalance; }
+    
+    public double getTotalBalance() { 
+        // Recalculer si nécessaire car @Transient
+        return initiateTotalBalance(); 
+    }
 
     // ===================== Setters =====================
 
@@ -65,26 +85,15 @@ public class User {
     public void setFirstName(String firstName) { this.firstName = firstName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
 
-    /**
-     * Remplace la liste complète des comptes.
-     * Recalcule automatiquement le solde total.
-     */
     public void setAccounts(List<Account> accounts) {
         this.accounts = (accounts != null) ? accounts : new ArrayList<>();
         this.totalBalance = initiateTotalBalance();
     }
 
-    /**
-     * Remplace la liste complète des portefeuilles.
-     */
     public void setPortfolios(List<Portfolio> portfolios) {
         this.portfolios = (portfolios != null) ? portfolios : new ArrayList<>();
     }
 
-    /**
-     * Définit un unique portefeuille pour l'utilisateur.
-     * Utile si le système impose une relation 1-to-1.
-     */
     public void setPortfolio(Portfolio portfolio) {
         if (this.portfolios == null) {
             this.portfolios = new ArrayList<>();
@@ -101,10 +110,6 @@ public class User {
 
     // ===================== Méthodes principales =====================
 
-    /**
-     * Ajoute un compte bancaire à l'utilisateur
-     * et met à jour le solde total.
-     */
     public void addAccount(Account account) {
         if (account != null) {
             accounts.add(account);
@@ -112,22 +117,18 @@ public class User {
         }
     }
 
-    /**
-     * Ajoute un portefeuille à la liste de l'utilisateur.
-     */
     public void addPortfolio(Portfolio portfolio) {
         if (portfolio != null) {
             portfolios.add(portfolio);
         }
     }
 
-    /**
-     * Recalcule le total des soldes de tous les comptes de l’utilisateur.
-     */
     public double initiateTotalBalance() {
         double total = 0.0;
-        for (Account account : accounts) {
-            total += account.getBalance();
+        if (accounts != null) {
+            for (Account account : accounts) {
+                total += account.getBalance();
+            }
         }
         return total;
     }

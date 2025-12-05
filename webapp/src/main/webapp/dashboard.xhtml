@@ -8,6 +8,12 @@
             body.dashboard-page {
                 background: url("#{request.contextPath}/resources/images/bg-dashboard_1.png") center/cover no-repeat fixed !important;
             }
+            .chart-container {
+                position: relative;
+                height: 300px;
+                width: 100%;
+                margin-top: 20px;
+            }
         </style>
     </ui:define>
 
@@ -18,11 +24,17 @@
     <ui:define name="content">
         <div class="bento-dashboard">
 
+            <!-- COLONNE GAUCHE : Total Wealth + GRAPHIQUE -->
             <div class="bento-box bento-main">
                 <h2>Total Wealth</h2>
                 <p class="bento-description">Overview of your complete financial portfolio</p>
+                
+                <div class="chart-container">
+                    <canvas id="assetChart"></canvas>
+                </div>
             </div>
 
+            <!-- COLONNE DROITE : Cards existantes -->
             <div class="bento-sidebar">
                 <div class="bento-box">
                     <h3>Accounts</h3>
@@ -41,6 +53,40 @@
             </div>
 
         </div>
+
+        <!-- Chart.js from CDN -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <!-- Script pour initialiser le graphique -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var ctx = document.getElementById('assetChart');
+                if (ctx) {
+                    var chart = new Chart(ctx.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Cash', 'Stocks', 'Crypto'],
+                            datasets: [{
+                                data: [30, 50, 20],
+                                backgroundColor: ['#13d6b1', '#0062ff', '#ffce56'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { color: 'white' }
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        </script>
+
     </ui:define>
 
 </ui:composition>
