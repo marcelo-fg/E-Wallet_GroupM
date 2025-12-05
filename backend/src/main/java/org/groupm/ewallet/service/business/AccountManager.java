@@ -17,6 +17,7 @@ public class AccountManager {
 
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+
     /**
      * Constructeur avec injection de dépendances (repository).
      * Permet de mocker ou reconfigurer la persistance selon besoin.
@@ -31,6 +32,7 @@ public class AccountManager {
 
     /**
      * Récupère tous les comptes.
+     * 
      * @return liste complète des comptes
      */
     public List<Account> getAllAccounts() {
@@ -39,6 +41,7 @@ public class AccountManager {
 
     /**
      * Ajoute un nouveau compte.
+     * 
      * @param account compte à persister
      * @return compte ajouté
      */
@@ -49,6 +52,7 @@ public class AccountManager {
 
     /**
      * Recherche un compte par son identifiant (String pour cohérence).
+     * 
      * @param id identifiant du compte
      * @return compte ou null
      */
@@ -58,6 +62,7 @@ public class AccountManager {
 
     /**
      * Supprime un compte existant selon son identifiant.
+     * 
      * @param id identifiant du compte à supprimer
      * @return true si suppression réussie, false sinon
      */
@@ -74,7 +79,7 @@ public class AccountManager {
      * Met à jour les informations d’un compte existant.
      * Les champs non nuls du nouvel objet remplacent ceux du compte existant.
      *
-     * @param id identifiant du compte
+     * @param id         identifiant du compte
      * @param newAccount données à mettre à jour
      * @return true si mise à jour réussie, false sinon
      */
@@ -87,6 +92,9 @@ public class AccountManager {
             if (newAccount.getBalance() != 0) {
                 account.setBalance(newAccount.getBalance());
             }
+            if (newAccount.getName() != null) {
+                account.setName(newAccount.getName());
+            }
             accountRepository.save(account); // Update via repo
             return true;
         }
@@ -95,6 +103,7 @@ public class AccountManager {
 
     /**
      * Liste tous les comptes d’un utilisateur donné.
+     * 
      * @param user utilisateur concerné
      * @return liste de comptes
      */
@@ -113,6 +122,7 @@ public class AccountManager {
 
     /**
      * Ajoute une transaction en appliquant la logique métier (dépôt/retrait).
+     * 
      * @param transaction modèle reçu du webservice
      * @return transaction persistée
      */
@@ -187,6 +197,51 @@ public class AccountManager {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Effectue un virement entre deux comptes.
+     * 
+     * @param fromId      compte source
+     * @param toId        compte destination
+     * @param amount      montant
+     * @param category    catégorie (optionnel)
+     * @param description description (optionnel)
+     * @return true si succès, false sinon
+     */
+    public boolean transfer(String fromId, String toId, double amount, String category, String description) {
+        if (fromId == null || toId == null || fromId.equals(toId) || amount <= 0) {
+            return false;
+        }
+
+        Account from = accountRepository.findById(fromId);
+        Account to = accountRepository.findById(toId);
+
+        if (from == null || to == null) {
+            return false;
+        }
+
+        if (from.getBalance() < amount) {
+            return false;
+        }
+
+        // 1. Retrait
+        Transaction withdrawal = new Transaction();
+        withdrawal.setAccountID(fromId);
+        withdrawal.setType("withdraw");
+        withdrawal.setAmount(amount);
+        withdrawal.setDescription("Transfer to " + toId + (description != null ? ": " + description : ""));
+        addTransaction(withdrawal);
+
+        // 2. Dépôt
+        Transaction deposit = new Transaction();
+        deposit.setAccountID(toId);
+        deposit.setType("deposit");
+        deposit.setAmount(amount);
+        deposit.setDescription("Transfer from " + fromId + (description != null ? ": " + description : ""));
+        addTransaction(deposit);
+
+        return true;
     }
 
 }

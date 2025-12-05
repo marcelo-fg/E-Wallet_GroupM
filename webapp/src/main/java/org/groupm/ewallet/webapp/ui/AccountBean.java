@@ -5,6 +5,8 @@ import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.groupm.ewallet.model.Account;
+import org.groupm.ewallet.model.Transaction;
 import org.groupm.ewallet.webapp.service.WebAppService;
 
 import java.io.Serializable;
@@ -52,9 +54,9 @@ public class AccountBean implements Serializable {
     private List<AccountDTO> accounts = new ArrayList<>();
 
     // Fields used for operations (deposit / withdrawal / transfer)
-    private double amount;                 // Amount entered by the user
+    private double amount; // Amount entered by the user
     private String transactionDescription; // Free description of the operation
-    private String expenseCategory;        // Category (expense / income / transfer)
+    private String expenseCategory; // Category (expense / income / transfer)
 
     /**
      * Operation type chosen in the UI: "DEPOSIT", "WITHDRAWAL" or "TRANSFER".
@@ -67,7 +69,7 @@ public class AccountBean implements Serializable {
     private String transferTargetAccountId;
 
     // Transaction selected for detailed display in the history
-    private WebAppService.LocalTransaction selectedTransaction;
+    private Transaction selectedTransaction;
 
     /**
      * Simplified DTO used only by the web layer.
@@ -134,25 +136,38 @@ public class AccountBean implements Serializable {
         }
     }
 
-    /* ==========================================================
-       Access to lists / base data
-       ========================================================== */
+    /*
+     * ==========================================================
+     * Access to lists / base data
+     * ==========================================================
+     */
+
+    private String getCurrentUserId() {
+        FacesContext context = FacesContext.getCurrentInstance();
+        if (context == null)
+            return null;
+        Object user = context.getExternalContext().getSessionMap().get("userId");
+        return user != null ? user.toString() : null;
+    }
 
     /**
      * Reload the list of accounts from the business service.
      * Internal method to centralize DTO mapping logic.
      */
     private void refreshAccounts() {
+        String userId = getCurrentUserId();
+        if (userId == null) {
+            this.accounts = new ArrayList<>();
+            return;
+        }
+
         List<AccountDTO> result = new ArrayList<>();
-        service.getAccounts().forEach(acc ->
-                result.add(new AccountDTO(
-                        acc.getId(),
-                        acc.getType(),
-                        acc.getNumber(),
-                        acc.getName(),
-                        acc.getBalance()
-                ))
-        );
+        service.getAccountsForUser(userId).forEach(acc -> result.add(new AccountDTO(
+                acc.getAccountID(),
+                acc.getType(),
+                acc.getAccountID(), // Number is ID for now
+                acc.getName(),
+                acc.getBalance())));
         this.accounts = result;
     }
 
@@ -174,9 +189,11 @@ public class AccountBean implements Serializable {
         return total;
     }
 
-    /* ==========================================================
-       Account creation management
-       ========================================================== */
+    /*
+     * ==========================================================
+     * Account creation management
+     * ==========================================================
+     */
 
     public boolean isShowTypeSelector() {
         return showTypeSelector;
@@ -200,16 +217,30 @@ public class AccountBean implements Serializable {
             return;
         }
 
-        service.createAccount(selectedType, newAccountName);
+        String userId = getCurrentUserId();
+        if (userId == null) {
+            addGlobalMessage(FacesMessage.SEVERITY_ERROR,
+                    "Not logged in",
+                    "You must be logged in to create an account.");
+            return;
+        }
 
-        selectedType = null;
-        newAccountName = null;
-        showTypeSelector = false;
-        refreshAccounts();
+        boolean success = service.createAccount(userId, selectedType, newAccountName);
 
-        addGlobalMessage(FacesMessage.SEVERITY_INFO,
-                "Account created",
-                "The new account has been created successfully.");
+        if (success) {
+            selectedType = null;
+            newAccountName = null;
+            showTypeSelector = false;
+            refreshAccounts();
+
+            addGlobalMessage(FacesMessage.SEVERITY_INFO,
+                    "Account created",
+                    "The new account has been created successfully.");
+        } else {
+            addGlobalMessage(FacesMessage.SEVERITY_ERROR,
+                    "Creation failed",
+                    "Could not create account. Please try again.");
+        }
     }
 
     public String getSelectedType() {
@@ -228,12 +259,14 @@ public class AccountBean implements Serializable {
         this.newAccountName = newAccountName;
     }
 
-    /* ==========================================================
-       Account selection for details display
-       ========================================================== */
+    /*
+     * ==========================================================
+     * Account selection for details display
+     * ==========================================================
+     */
 
     public void selectAccount(String id) {
-        var acc = service.getAccountById(id);
+        Account acc = service.getAccountById(id);
         if (acc == null) {
             selectedAccount = null;
             selectedAccountId = null;
@@ -243,15 +276,14 @@ public class AccountBean implements Serializable {
             return;
         }
 
-        selectedAccountId = acc.getId();
+        selectedAccountId = acc.getAccountID();
 
         selectedAccount = new AccountDTO(
-                acc.getId(),
+                acc.getAccountID(),
                 acc.getType(),
-                acc.getNumber(),
+                acc.getAccountID(),
                 acc.getName(),
-                acc.getBalance()
-        );
+                acc.getBalance());
 
         // Reset the operations form whenever an account is selected
         resetOperationForm();
@@ -269,9 +301,11 @@ public class AccountBean implements Serializable {
         this.selectedAccountId = selectedAccountId;
     }
 
-    /* ==========================================================
-       Operations: deposit / withdrawal / transfer
-       ========================================================== */
+    /*
+     * ==========================================================
+     * Operations: deposit / withdrawal / transfer
+     * ==========================================================
+     */
 
     public double getAmount() {
         return amount;
@@ -302,8 +336,7 @@ public class AccountBean implements Serializable {
             "Salary",
             "Dividends",
             "Refund",
-            "Other"
-    );
+            "Other");
 
     private static final List<String> WITHDRAWAL_CATEGORIES = List.of(
             "Leisure",
@@ -311,14 +344,12 @@ public class AccountBean implements Serializable {
             "Rent",
             "Insurance",
             "Subscriptions",
-            "Other"
-    );
+            "Other");
 
     private static final List<String> TRANSFER_CATEGORIES = List.of(
             "Internal transfer",
             "Savings reallocation",
-            "Other"
-    );
+            "Other");
 
     public List<String> getExpenseCategories() {
         if ("DEPOSIT".equalsIgnoreCase(operationType)) {
@@ -357,16 +388,17 @@ public class AccountBean implements Serializable {
         this.transferTargetAccountId = transferTargetAccountId;
     }
 
-    public WebAppService.LocalTransaction getSelectedTransaction() {
+    public Transaction getSelectedTransaction() {
         return selectedTransaction;
     }
 
-    public void setSelectedTransaction(WebAppService.LocalTransaction selectedTransaction) {
+    public void setSelectedTransaction(Transaction selectedTransaction) {
         this.selectedTransaction = selectedTransaction;
     }
 
     /**
-     * Performs the selected operation (deposit / withdrawal / transfer) then reloads balances and history.
+     * Performs the selected operation (deposit / withdrawal / transfer) then
+     * reloads balances and history.
      */
     public void confirmOperation() {
         if (amount <= 0) {
@@ -398,8 +430,7 @@ public class AccountBean implements Serializable {
                     selectedAccountId,
                     amount,
                     expenseCategory,
-                    transactionDescription
-            );
+                    transactionDescription);
 
         } else if ("TRANSFER".equalsIgnoreCase(operationType)) {
             if (transferSourceAccountId == null || transferTargetAccountId == null
@@ -421,8 +452,7 @@ public class AccountBean implements Serializable {
                     transferTargetAccountId,
                     amount,
                     expenseCategory,
-                    transactionDescription
-            );
+                    transactionDescription);
         }
 
         if (!ok) {
@@ -433,12 +463,11 @@ public class AccountBean implements Serializable {
         }
 
         if (selectedAccountId != null) {
-            var acc = service.getAccountById(selectedAccountId);
+            Account acc = service.getAccountById(selectedAccountId);
             if (acc != null) {
                 if (selectedAccount == null) {
                     selectedAccount = new AccountDTO(
-                            acc.getId(), acc.getType(), acc.getNumber(), acc.getName(), acc.getBalance()
-                    );
+                            acc.getAccountID(), acc.getType(), acc.getAccountID(), acc.getName(), acc.getBalance());
                 } else {
                     selectedAccount.setBalance(acc.getBalance());
                 }
@@ -453,16 +482,18 @@ public class AccountBean implements Serializable {
                 "The transaction has been recorded successfully.");
     }
 
-    public List<WebAppService.LocalTransaction> getSelectedAccountTransactions() {
+    public List<Transaction> getSelectedAccountTransactions() {
         if (selectedAccountId == null || selectedAccountId.isBlank()) {
             return List.of();
         }
         return service.getTransactionsForAccount(selectedAccountId);
     }
 
-    /* ==========================================================
-       Internal utilities
-       ========================================================== */
+    /*
+     * ==========================================================
+     * Internal utilities
+     * ==========================================================
+     */
 
     /**
      * Find an account DTO by identifier.
@@ -481,7 +512,7 @@ public class AccountBean implements Serializable {
         if (selectedAccountId == null || selectedAccountId.isBlank()) {
             return;
         }
-        var acc = service.getAccountById(selectedAccountId);
+        Account acc = service.getAccountById(selectedAccountId);
         if (acc != null && selectedAccount != null) {
             selectedAccount.setBalance(acc.getBalance());
         }

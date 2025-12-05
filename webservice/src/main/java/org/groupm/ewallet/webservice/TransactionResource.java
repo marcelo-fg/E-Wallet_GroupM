@@ -26,12 +26,9 @@ public class TransactionResource {
     // Managers / repositories partagés du backend
     private static final AccountManager accountManager = new AccountManager(
             BackendContext.ACCOUNT_REPO,
-            BackendContext.TRANSACTION_REPO
-    );
-    private static final TransactionRepository transactionRepository =
-            BackendContext.TRANSACTION_REPO;
-    private static final AccountRepository accountRepository =
-            BackendContext.ACCOUNT_REPO;
+            BackendContext.TRANSACTION_REPO);
+    private static final TransactionRepository transactionRepository = BackendContext.TRANSACTION_REPO;
+    private static final AccountRepository accountRepository = BackendContext.ACCOUNT_REPO;
 
     /**
      * Récupère la liste complète des transactions enregistrées.
@@ -156,8 +153,7 @@ public class TransactionResource {
         // Agrège toutes les transactions
         List<Transaction> allTransactions = new ArrayList<>();
         for (Account acc : userAccounts) {
-            List<Transaction> txList =
-                    transactionRepository.findByAccountId(acc.getAccountID());
+            List<Transaction> txList = transactionRepository.findByAccountId(acc.getAccountID());
             if (txList != null && !txList.isEmpty()) {
                 allTransactions.addAll(txList);
             }
@@ -180,5 +176,45 @@ public class TransactionResource {
                     .build();
         }
         return Response.noContent().build();
+    }
+
+    /**
+     * DTO pour la requête de virement.
+     */
+    public static class TransferRequest {
+        public String fromAccount;
+        public String toAccount;
+        public double amount;
+        public String category;
+        public String description;
+    }
+
+    /**
+     * Effectue un virement entre deux comptes.
+     * Endpoint : POST /api/transactions/transfer
+     */
+    @POST
+    @Path("/transfer")
+    public Response transfer(TransferRequest request) {
+        if (request == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Requête invalide.")
+                    .build();
+        }
+
+        boolean success = accountManager.transfer(
+                request.fromAccount,
+                request.toAccount,
+                request.amount,
+                request.category,
+                request.description);
+
+        if (success) {
+            return Response.ok("Virement effectué avec succès.").build();
+        } else {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Échec du virement (solde insuffisant ou compte introuvable).")
+                    .build();
+        }
     }
 }

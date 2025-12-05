@@ -6,7 +6,8 @@ import java.util.List;
 /**
  * Modèle représentant un compte bancaire utilisateur.
  * Ce modèle ne contient aucune logique métier.
- * Toute la gestion de dépôts, retraits et transactions est effectuée dans AccountManager.
+ * Toute la gestion de dépôts, retraits et transactions est effectuée dans
+ * AccountManager.
  */
 public class Account {
 
@@ -18,6 +19,9 @@ public class Account {
 
     /** Type du compte (ex : "épargne", "courant"). */
     private String type;
+
+    /** Nom personnalisé du compte (ex: "Mes économies"). */
+    private String name;
 
     /** Solde actuel du compte. */
     private double balance;
@@ -79,6 +83,14 @@ public class Account {
         this.type = type;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public double getBalance() {
         return balance;
     }
@@ -112,6 +124,7 @@ public class Account {
                 "accountID='" + accountID + '\'' +
                 ", userID='" + userID + '\'' +
                 ", type='" + type + '\'' +
+                ", name='" + name + '\'' +
                 ", balance=" + balance +
                 '}';
     }

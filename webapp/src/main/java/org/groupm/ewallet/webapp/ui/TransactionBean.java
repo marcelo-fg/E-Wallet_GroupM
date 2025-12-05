@@ -27,6 +27,16 @@ public class TransactionBean implements Serializable {
      * Data is always fresh from the service to stay in sync with recent operations.
      */
     public List<WebAppService.UnifiedTransaction> getAllTransactions() {
-        return webAppService.getAllUnifiedTransactions();
+        jakarta.faces.context.FacesContext context = jakarta.faces.context.FacesContext.getCurrentInstance();
+        if (context == null)
+            return List.of();
+        Object user = context.getExternalContext().getSessionMap().get("userId");
+        String userId = user != null ? user.toString() : null;
+
+        if (userId == null) {
+            return List.of();
+        }
+
+        return webAppService.getAllUnifiedTransactions(userId);
     }
 }

@@ -21,8 +21,8 @@ public class DashboardBean implements Serializable {
         return username;
     }
 
-    private List<String> accounts;   // comptes bancaires
-    private double totalWealth;      // richesse totale
+    private List<String> accounts; // comptes bancaires
+    private double totalWealth; // richesse totale
     private double percentageGrowth; // croissance du patrimoine
 
     private List<Transaction> recentTransactions;
@@ -38,9 +38,17 @@ public class DashboardBean implements Serializable {
             this.amount = amount;
         }
 
-        public String getDate() { return date; }
-        public String getType() { return type; }
-        public double getAmount() { return amount; }
+        public String getDate() {
+            return date;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public double getAmount() {
+            return amount;
+        }
     }
 
     @Inject
@@ -60,7 +68,11 @@ public class DashboardBean implements Serializable {
         }
 
         if (userId != null) {
-            this.accounts = webAppService.getAccountsForUser(userId);
+            List<org.groupm.ewallet.model.Account> userAccounts = webAppService.getAccountsForUser(userId);
+            this.accounts = new java.util.ArrayList<>();
+            for (org.groupm.ewallet.model.Account acc : userAccounts) {
+                this.accounts.add(acc.getAccountID() + " - " + acc.getBalance() + " CHF");
+            }
 
             // Exemple de valeurs si pas encore connecté à une vraie logique métier
             this.totalWealth = webAppService.getTotalWealthForUser(userId);
