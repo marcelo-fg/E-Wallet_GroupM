@@ -1,6 +1,7 @@
 package org.groupm.ewallet.model;
 
-import org.groupm.ewallet.service.connector.CurrencyConverter;
+import org.groupm.ewallet.service.CurrencyConverter;
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,67 +9,87 @@ import java.util.List;
  * Suit la richesse totale d’un utilisateur (comptes + portefeuilles).
  * Calcule la valeur en USD, en CHF et le taux de croissance.
  */
+@Entity
+@Table(name = "wealth_trackers")
 public class WealthTracker {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
     /** Utilisateur suivi. */
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "user_id")
     private User user;
 
     /** Richesse totale en USD. */
+    @Column(name = "total_wealth_usd")
     private double totalWealthUsd;
 
     /** Total Cash (Comptes bancaires) en USD. */
+    @Column(name = "total_cash")
     private double totalCash;
 
     /** Total Crypto en USD. */
+    @Column(name = "total_crypto")
     private double totalCrypto;
 
     /** Total Stocks en USD. */
+    @Column(name = "total_stocks")
     private double totalStocks;
 
     /** Taux de croissance depuis la première mesure. */
+    @Column(name = "growth_rate")
     private double growthRate;
 
     /** Historique des valeurs enregistrées (en USD). */
-    private final List<Double> historicalValues;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "wealth_history", joinColumns = @JoinColumn(name = "tracker_id"))
+    @Column(name = "value")
+    private List<Double> historicalValues;
 
     // ============================================================
-    //                        CONSTRUCTEURS
+    // CONSTRUCTEURS
     // ============================================================
+
+    public WealthTracker() {
+        // Constructeur JPA requis
+        this.historicalValues = new ArrayList<>();
+    }
 
     /**
      * Constructeur normal : suivi direct d’un utilisateur.
      */
     public WealthTracker(User user) {
+        this();
         this.user = user;
         this.totalWealthUsd = 0.0;
         this.totalCash = 0.0;
         this.totalCrypto = 0.0;
         this.totalStocks = 0.0;
         this.growthRate = 0.0;
-        this.historicalValues = new ArrayList<>();
     }
 
-
     // ============================================================
-    //                 CALCUL PRINCIPAL DE LA RICHESSE
+    // CALCUL PRINCIPAL DE LA RICHESSE
     // ============================================================
 
     /**
      * Met à jour la richesse totale :
-     *  - Total des comptes (CHF converti en USD) -> Cash
-     *  - Total de tous les portefeuilles (CHF converti en USD) -> Crypto/Stocks
-     *  - Met à jour : croissance, historique
+     * - Total des comptes (CHF converti en USD) -> Cash
+     * - Total de tous les portefeuilles (CHF converti en USD) -> Crypto/Stocks
+     * - Met à jour : croissance, historique
      */
     public void updateWealth() {
 
         // =====================
-        //   1. Comptes en CHF -> CASH
+        // 1. Comptes en CHF -> CASH
         // =====================
         double accountsChf = user.getTotalBalance();
         this.totalCash = CurrencyConverter.chfToUsd(accountsChf);
 
         // ================================================
-        //   2. Sommation de TOUS les portefeuilles du user
+        // 2. Sommation de TOUS les portefeuilles du user
         // ================================================
         this.totalCrypto = 0.0;
         this.totalStocks = 0.0;
@@ -79,9 +100,9 @@ public class WealthTracker {
                     for (Asset asset : p.getAssets()) {
                         double assetChf = asset.getTotalValue();
                         double assetUsd = CurrencyConverter.chfToUsd(assetChf);
-                        
+
                         String type = (asset.getType() != null) ? asset.getType().toUpperCase() : "UNKNOWN";
-                        
+
                         if ("CRYPTO".equals(type)) {
                             this.totalCrypto += assetUsd;
                         } else if ("STOCK".equals(type) || "SHARE".equals(type)) {
@@ -96,17 +117,17 @@ public class WealthTracker {
         }
 
         // ====================
-        //   3. Total Wealth
+        // 3. Total Wealth
         // ====================
         this.totalWealthUsd = this.totalCash + this.totalCrypto + this.totalStocks;
 
         // ================================
-        //   4. Mise à jour de l’historique
+        // 4. Mise à jour de l’historique
         // ================================
         historicalValues.add(totalWealthUsd);
 
         // ================================
-        //   5. Calcul du taux de croissance
+        // 5. Calcul du taux de croissance
         // ================================
         if (historicalValues.size() > 1) {
             double initial = historicalValues.get(0);
@@ -117,7 +138,7 @@ public class WealthTracker {
     }
 
     // ============================================================
-    //                     GETTERS CALCULÉS
+    // GETTERS CALCULÉS
     // ============================================================
 
     public double getTotalWealthUsd() {
@@ -152,8 +173,16 @@ public class WealthTracker {
         return user;
     }
 
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
     // ============================================================
-    //                     TO STRING
+    // TO STRING
     // ============================================================
 
     @Override
@@ -164,7 +193,6 @@ public class WealthTracker {
                 totalWealthUsd,
                 totalCash,
                 totalCrypto,
-                totalStocks
-        );
+                totalStocks);
     }
 }

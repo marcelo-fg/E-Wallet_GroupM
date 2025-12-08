@@ -16,7 +16,37 @@ public class JpaUserRepository implements UserRepository {
     private final EntityManagerFactory emf;
 
     public JpaUserRepository() {
-        this.emf = Persistence.createEntityManagerFactory("ewalletPU");
+        // Retry logic to handle MySQL startup timing issues
+        int maxRetries = 10;
+        int retryCount = 0;
+        EntityManagerFactory tempEmf = null;
+
+        while (retryCount < maxRetries) {
+            try {
+                System.out.println("[JpaUserRepository] Attempting to connect to MySQL (attempt " + (retryCount + 1)
+                        + "/" + maxRetries + ")");
+                tempEmf = Persistence.createEntityManagerFactory("ewalletPU");
+                System.out.println("[JpaUserRepository] Successfully connected to MySQL!");
+                break;
+            } catch (Exception e) {
+                retryCount++;
+                if (retryCount >= maxRetries) {
+                    System.err.println(
+                            "[JpaUserRepository] Failed to connect to MySQL after " + maxRetries + " attempts");
+                    throw new RuntimeException("Could not connect to MySQL database", e);
+                }
+                try {
+                    long waitTime = 1000 * retryCount; // Exponential backoff
+                    System.out.println(
+                            "[JpaUserRepository] Connection failed, waiting " + waitTime + "ms before retry...");
+                    Thread.sleep(waitTime);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Interrupted while waiting to retry MySQL connection", ie);
+                }
+            }
+        }
+        this.emf = tempEmf;
     }
 
     @Override
@@ -73,6 +103,11 @@ public class JpaUserRepository implements UserRepository {
                 em.remove(user);
             }
             em.getTransaction().commit();
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            throw e;
         } finally {
             em.close();
         }

@@ -1,5 +1,7 @@
 package org.groupm.ewallet.webservice;
 
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -8,7 +10,6 @@ import org.groupm.ewallet.model.Account;
 import org.groupm.ewallet.repository.TransactionRepository;
 import org.groupm.ewallet.repository.AccountRepository;
 import org.groupm.ewallet.service.business.AccountManager;
-import org.groupm.ewallet.webservice.context.BackendContext;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -21,14 +22,18 @@ import java.util.ArrayList;
 @Path("/transactions")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@RequestScoped
 public class TransactionResource {
 
     // Managers / repositories partagés du backend
-    private static final AccountManager accountManager = new AccountManager(
-            BackendContext.ACCOUNT_REPO,
-            BackendContext.TRANSACTION_REPO);
-    private static final TransactionRepository transactionRepository = BackendContext.TRANSACTION_REPO;
-    private static final AccountRepository accountRepository = BackendContext.ACCOUNT_REPO;
+    @Inject
+    private AccountManager accountManager;
+
+    @Inject
+    private TransactionRepository transactionRepository;
+
+    @Inject
+    private AccountRepository accountRepository;
 
     /**
      * Récupère la liste complète des transactions enregistrées.
@@ -43,45 +48,23 @@ public class TransactionResource {
     /**
      * Crée une nouvelle transaction.
      * Endpoint : POST /api/transactions
+     * 
+     * Délègue toute la validation et logique métier à AccountManager.
      */
     @POST
     public Response createTransaction(Transaction transaction) {
-
-        // Validation préliminaire
-        if (transaction == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Requête invalide : aucune transaction reçue.")
-                    .build();
-        }
-        if (transaction.getType() == null || transaction.getType().isEmpty()) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Le champ 'type' est obligatoire.")
-                    .build();
-        }
-        if (transaction.getAccountID() == null || transaction.getAccountID().isEmpty()) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Le champ 'accountID' est obligatoire.")
-                    .build();
-        }
-        if (transaction.getAmount() <= 0) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Le montant doit être strictement supérieur à zéro.")
-                    .build();
-        }
-
-        // Log simple pour debug
-        System.out.println("[DEBUG] Transaction reçue : " + transaction);
-
         try {
             Transaction created = accountManager.addTransaction(transaction);
             return Response.status(Response.Status.CREATED)
                     .entity(created)
                     .build();
         } catch (IllegalArgumentException e) {
+            // Conversion exception métier → HTTP 400
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Erreur métier : " + e.getMessage())
+                    .entity("Erreur : " + e.getMessage())
                     .build();
         } catch (Exception e) {
+            // Erreur interne
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Erreur interne lors du traitement de la transaction.")
                     .build();

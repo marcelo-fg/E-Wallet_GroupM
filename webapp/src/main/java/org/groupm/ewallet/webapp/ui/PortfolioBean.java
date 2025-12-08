@@ -6,10 +6,13 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.servlet.http.HttpSession;
 import org.groupm.ewallet.webapp.connector.ExternalAsset;
+import org.groupm.ewallet.webapp.model.PortfolioTrade;
+import org.groupm.ewallet.webapp.model.PortfolioAsset;
 import org.groupm.ewallet.webapp.service.WebAppService;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Session-scoped bean for managing portfolios and their assets.
@@ -137,7 +140,7 @@ public class PortfolioBean implements Serializable {
     /**
      * Cached list of trades for the selected portfolio, used to display history.
      */
-    private List<WebAppService.PortfolioTrade> tradeHistory;
+    private List<PortfolioTrade> tradeHistory;
 
     // -------------------------------------------------------------------------
     // SESSION HANDLING
@@ -148,8 +151,7 @@ public class PortfolioBean implements Serializable {
      */
     private String getUserIdFromSession() {
         FacesContext context = FacesContext.getCurrentInstance();
-        HttpSession session =
-                (HttpSession) context.getExternalContext().getSession(false);
+        HttpSession session = (HttpSession) context.getExternalContext().getSession(false);
 
         if (session == null) {
             return null;
@@ -195,7 +197,22 @@ public class PortfolioBean implements Serializable {
             tradeHistory = List.of();
             return;
         }
-        assets = webAppService.getAssetsForPortfolio(selectedPortfolioId);
+        System.out.println("[PortfolioBean] Loading assets for portfolio " + selectedPortfolioId);
+
+        // Load assets from in-memory storage
+        List<PortfolioAsset> portfolioAssets = webAppService.getPortfolioAssets(selectedPortfolioId);
+
+        // Format for display
+        assets = portfolioAssets.stream()
+                .map(asset -> String.format("%s (%s) - Qty: %.2f @ %.2f USD",
+                        asset.getSymbol(),
+                        asset.getType(),
+                        asset.getQuantity(),
+                        asset.getUnitPrice()))
+                .collect(Collectors.toList());
+
+        System.out.println("[PortfolioBean] Loaded " + assets.size() + " assets from in-memory storage");
+
         tradeHistory = webAppService.getTradesForPortfolio(selectedPortfolioId);
     }
 
@@ -232,6 +249,8 @@ public class PortfolioBean implements Serializable {
      * Loads available assets from external API based on selected type.
      */
     public void loadAssetsFromApi() {
+        System.out.println("[PortfolioBean] loadAssetsFromApi called with selectedType: " + selectedType);
+
         if (selectedType == null || selectedType.isBlank()) {
             availableAssets = List.of();
             selectedExternalSymbol = null;
@@ -243,6 +262,8 @@ public class PortfolioBean implements Serializable {
         }
 
         availableAssets = webAppService.loadAssetsFromApi(selectedType);
+        System.out.println(
+                "[PortfolioBean] Loaded " + (availableAssets != null ? availableAssets.size() : 0) + " assets");
 
         selectedExternalSymbol = null;
         selectedExternalApiId = null;
@@ -291,10 +312,9 @@ public class PortfolioBean implements Serializable {
             return;
         }
 
-        String idOrSymbol =
-                selectedType.equalsIgnoreCase("crypto")
-                        ? selectedExternalApiId
-                        : selectedExternalSymbol;
+        String idOrSymbol = selectedType.equalsIgnoreCase("crypto")
+                ? selectedExternalApiId
+                : selectedExternalSymbol;
 
         if (idOrSymbol == null || idOrSymbol.isBlank()) {
             marketUnitPrice = 0.0;
@@ -304,7 +324,8 @@ public class PortfolioBean implements Serializable {
 
         double price = webAppService.getPriceForAsset(idOrSymbol, selectedType);
         if (price <= 0.0) {
-            // Do not overwrite a previous valid price with zero because of a transient API issue.
+            // Do not overwrite a previous valid price with zero because of a transient API
+            // issue.
             return;
         }
 
@@ -325,17 +346,16 @@ public class PortfolioBean implements Serializable {
             return null;
         }
 
-        boolean created = webAppService.createPortfolioForUser(userId);
+        Integer newPortfolioId = webAppService.createPortfolioForUser(userId);
 
-        if (created) {
+        if (newPortfolioId != null) {
             loadPortfolios();
             if (!portfolioIds.isEmpty()) {
-                Integer newestId = portfolioIds.get(portfolioIds.size() - 1);
                 String name = (portfolioName != null && !portfolioName.isBlank())
                         ? portfolioName
-                        : "Portfolio " + newestId;
-                portfolioNames.put(newestId, name);
-                selectedPortfolioId = newestId;
+                        : "Portfolio " + newPortfolioId;
+                portfolioNames.put(newPortfolioId, name);
+                selectedPortfolioId = newPortfolioId;
             }
             portfolioName = null;
             loadAssets();
@@ -361,8 +381,7 @@ public class PortfolioBean implements Serializable {
                 assetType,
                 assetQuantity,
                 assetUnitValue,
-                assetSymbol
-        );
+                assetSymbol);
 
         if (ok) {
             assetName = null;
@@ -389,8 +408,7 @@ public class PortfolioBean implements Serializable {
                 assetType,
                 assetQuantity,
                 assetUnitValue,
-                assetSymbol
-        );
+                assetSymbol);
 
         if (ok) {
             loadAssets();
@@ -414,14 +432,27 @@ public class PortfolioBean implements Serializable {
      * and records a BUY trade in memory.
      */
     public String addAssetFromApi() {
+        System.out.println("[PortfolioBean] addAssetFromApi called");
+        System.out.println("  Portfolio ID: " + selectedPortfolioId);
+        System.out.println("  Symbol: " + selectedExternalSymbol);
+        System.out.println("  Name: " + selectedExternalName);
+        System.out.println("  Quantity: " + assetQuantity);
+        System.out.println("  Price: " + marketUnitPrice);
+
         if (selectedPortfolioId == null) {
+            System.out.println("[PortfolioBean] ERROR: No portfolio selected");
+            addGlobalMessage("No portfolio selected", "Please select or create a portfolio first.");
             return null;
         }
         if (selectedExternalSymbol == null || selectedExternalName == null) {
+            System.out.println("[PortfolioBean] ERROR: No asset selected");
+            addGlobalMessage("No asset selected", "Please select an asset from the dropdown.");
             return null;
         }
 
         if (assetQuantity <= 0.0) {
+            System.out.println("[PortfolioBean] ERROR: Invalid quantity");
+            addGlobalMessage("Invalid quantity", "Quantity must be greater than zero.");
             return null;
         }
 
@@ -429,40 +460,45 @@ public class PortfolioBean implements Serializable {
             loadPriceForSelectedAsset();
         }
         if (marketUnitPrice <= 0.0) {
-            // Still no valid price, do not save a zero-priced asset.
+            System.out.println("[PortfolioBean] ERROR: Could not fetch price");
+            addGlobalMessage("Price unavailable", "Could not fetch market price for this asset.");
             return null;
         }
 
-        boolean ok = webAppService.addAssetToPortfolio(
+        // Add asset directly to in-memory storage (like transactions)
+        webAppService.addPortfolioAsset(
                 selectedPortfolioId,
                 selectedExternalName,
+                selectedExternalSymbol,
                 selectedType,
                 assetQuantity,
-                marketUnitPrice,
-                selectedExternalSymbol
-        );
+                marketUnitPrice);
 
-        if (ok) {
-            // Record BUY trade for PnL history.
-            webAppService.recordPortfolioTrade(
-                    selectedPortfolioId,
-                    selectedExternalName,
-                    selectedExternalSymbol,
-                    "BUY",
-                    assetQuantity,
-                    marketUnitPrice
-            );
+        // Record the trade in in-memory history
+        webAppService.recordPortfolioTrade(
+                selectedPortfolioId,
+                selectedExternalName,
+                selectedExternalSymbol,
+                "BUY",
+                assetQuantity,
+                marketUnitPrice);
 
-            loadAssets();
+        // Reload portfolio assets to show the new addition
+        loadAssets();
 
-            selectedExternalSymbol = null;
-            selectedExternalApiId = null;
-            selectedExternalName = null;
-            assetQuantity = 0.0;
-            marketUnitPrice = 0.0;
-            assetUnitValue = 0.0;
-        }
+        // Reset form fields
+        selectedExternalSymbol = null;
+        selectedExternalApiId = null;
+        selectedExternalName = null;
+        assetQuantity = 0.0;
+        marketUnitPrice = 0.0;
+        assetUnitValue = 0.0;
 
+        // Show success message
+        addGlobalMessage("Asset added successfully",
+                selectedExternalName + " has been added to your portfolio.");
+
+        System.out.println("[PortfolioBean] Asset added successfully to in-memory storage");
         return null;
     }
 
@@ -528,15 +564,71 @@ public class PortfolioBean implements Serializable {
     }
 
     /**
-     * Sells a given quantity of the selected held asset at market price.
-     * This only records an in-memory trade for PnL and global history; it does
-     * not currently update backend-held quantities (backend API is missing).
+     * Returns JSF SelectItem options for assets available to sell.
+     * Each option contains the symbol as value and a display label.
      */
-    public String sellAssetAtMarketPrice() {
-        if (selectedPortfolioId == null) {
+    public List<jakarta.faces.model.SelectItem> getSoldAssetOptions() {
+        List<jakarta.faces.model.SelectItem> items = new ArrayList<>();
+        if (assets == null || assets.isEmpty()) {
+            return items;
+        }
+
+        for (String asset : assets) {
+            // Parse symbol from asset string: "BTC (crypto) - Qty: 0.40 @ 0.00 USD"
+            String symbol = extractSymbol(asset);
+            if (symbol != null) {
+                items.add(new jakarta.faces.model.SelectItem(symbol, asset));
+            }
+        }
+        return items;
+    }
+
+    /**
+     * Extracts symbol from asset display string.
+     */
+    private String extractSymbol(String assetStr) {
+        if (assetStr == null || assetStr.isBlank()) {
             return null;
         }
-        if (selectedHeldSymbol == null || sellQuantity <= 0.0) {
+        // Format: "BTC (crypto) - Qty: 0.40 @ 0.00 USD"
+        int spacePos = assetStr.indexOf(' ');
+        if (spacePos > 0) {
+            return assetStr.substring(0, spacePos);
+        }
+        return assetStr;
+    }
+
+    /**
+     * AJAX listener when user selects an asset to sell.
+     * Automatically refreshes the sell price.
+     */
+    public void onAssetSelectedForSale() {
+        if (selectedHeldSymbol != null && !selectedHeldSymbol.isBlank()) {
+            refreshSellPrice();
+        }
+    }
+
+    /**
+     * Sells a given quantity of the selected held asset at market price.
+     * Records a SELL trade for transaction history.
+     */
+    public String sellAssetAtMarketPrice() {
+        System.out.println("[PortfolioBean] sellAssetAtMarketPrice called");
+        System.out.println("  Portfolio ID: " + selectedPortfolioId);
+        System.out.println("  Symbol: " + selectedHeldSymbol);
+        System.out.println("  Quantity: " + sellQuantity);
+        System.out.println("  Price: " + sellMarketPrice);
+
+        if (selectedPortfolioId == null) {
+            addGlobalMessage("No portfolio selected", "Please select a portfolio first.");
+            return null;
+        }
+        if (selectedHeldSymbol == null || selectedHeldSymbol.isBlank()) {
+            addGlobalMessage("No asset selected", "Please select an asset to sell.");
+            return null;
+        }
+        if (sellQuantity <= 0.0) {
+            addGlobalMessage("Invalid quantity", "Sell quantity must be greater than zero.");
             return null;
         }
 
@@ -544,6 +636,7 @@ public class PortfolioBean implements Serializable {
             refreshSellPrice();
         }
         if (sellMarketPrice <= 0.0) {
+            addGlobalMessage("Price unavailable", "Could not fetch market price for this asset.");
             return null;
         }
 
@@ -555,13 +648,19 @@ public class PortfolioBean implements Serializable {
                 selectedHeldSymbol,
                 "SELL",
                 sellQuantity,
-                sellMarketPrice
-        );
+                sellMarketPrice);
 
-        // In a full implementation, a backend call should update remaining quantity here.
-
+        // Reload portfolio assets
         loadAssets();
+
+        // Reset sell form
         sellQuantity = 0.0;
+        selectedHeldSymbol = null;
+        selectedHeldName = null;
+        sellMarketPrice = 0.0;
+
+        addGlobalMessage("Asset sold successfully",
+                String.format("Sold %.2f of %s at %.2f", sellQuantity, name, sellMarketPrice));
 
         return null;
     }
@@ -573,7 +672,7 @@ public class PortfolioBean implements Serializable {
     /**
      * Returns the in-memory trade history for the selected portfolio.
      */
-    public List<WebAppService.PortfolioTrade> getTradeHistory() {
+    public List<PortfolioTrade> getTradeHistory() {
         if (selectedPortfolioId == null) {
             return List.of();
         }
@@ -592,12 +691,12 @@ public class PortfolioBean implements Serializable {
             return 0.0;
         }
 
-        List<WebAppService.PortfolioTrade> trades = getTradeHistory();
+        List<PortfolioTrade> trades = getTradeHistory();
         // Open positions by symbol: queue of [quantity, price] lots
         Map<String, Deque<double[]>> openPositions = new HashMap<>();
         double realizedPnl = 0.0;
 
-        for (WebAppService.PortfolioTrade t : trades) {
+        for (PortfolioTrade t : trades) {
             String symbol = t.getSymbol();
             if (symbol == null) {
                 continue;
@@ -607,7 +706,7 @@ public class PortfolioBean implements Serializable {
 
             if ("BUY".equalsIgnoreCase(t.getType())) {
                 // Add a buy lot [qty, price]
-                lots.addLast(new double[]{t.getQuantity(), t.getUnitPrice()});
+                lots.addLast(new double[] { t.getQuantity(), t.getUnitPrice() });
             } else if ("SELL".equalsIgnoreCase(t.getType())) {
                 double qtyToSell = t.getQuantity();
                 double sellPrice = t.getUnitPrice();
@@ -711,6 +810,17 @@ public class PortfolioBean implements Serializable {
 
     public void setAssetUnitValue(double assetUnitValue) {
         this.assetUnitValue = assetUnitValue;
+    }
+
+    /**
+     * Adds a global FacesMessage visible to the user.
+     */
+    private void addGlobalMessage(String summary, String detail) {
+        FacesContext context = FacesContext.getCurrentInstance();
+        if (context != null) {
+            context.addMessage(null, new jakarta.faces.application.FacesMessage(
+                    jakarta.faces.application.FacesMessage.SEVERITY_INFO, summary, detail));
+        }
     }
 
     public double getSellQuantity() {

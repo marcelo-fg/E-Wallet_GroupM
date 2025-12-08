@@ -53,26 +53,60 @@ public class Transaction {
 
     // ===================== Getters =====================
 
-    public String getTransactionID() { return transactionID; }
-    public String getType() { return type; }
-    public double getAmount() { return amount; }
-    public LocalDateTime getTimestamp() { return timestamp; }
-    public String getDescription() { return description; }
-    public String getAccountID() { return accountID; }
+    public String getTransactionID() {
+        return transactionID;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getAccountID() {
+        return accountID;
+    }
 
     // ===================== Setters =====================
 
-    public void setTransactionID(String transactionID) { this.transactionID = transactionID; }
-    public void setType(String type) { this.type = type; }
-    public void setAmount(double amount) { this.amount = amount; }
-    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
-    public void setDescription(String description) { this.description = description; }
-    public void setAccountID(String accountID) { this.accountID = accountID; }
+    public void setTransactionID(String transactionID) {
+        this.transactionID = transactionID;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setAccountID(String accountID) {
+        this.accountID = accountID;
+    }
 
     // ===================== Méthodes utilitaires =====================
 
     public String getFormattedTimestamp() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         return timestamp != null ? timestamp.format(formatter) : "";
     }
 

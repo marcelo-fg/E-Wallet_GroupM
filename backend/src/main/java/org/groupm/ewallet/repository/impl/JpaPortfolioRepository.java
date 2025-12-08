@@ -16,7 +16,37 @@ public class JpaPortfolioRepository implements PortfolioRepository {
     private final EntityManagerFactory emf;
 
     public JpaPortfolioRepository() {
-        this.emf = Persistence.createEntityManagerFactory("ewalletPU");
+        // Retry logic to handle MySQL startup timing issues
+        int maxRetries = 10;
+        int retryCount = 0;
+        EntityManagerFactory tempEmf = null;
+
+        while (retryCount < maxRetries) {
+            try {
+                System.out.println("[JpaPortfolioRepository] Attempting to connect to MySQL (attempt "
+                        + (retryCount + 1) + "/" + maxRetries + ")");
+                tempEmf = Persistence.createEntityManagerFactory("ewalletPU");
+                System.out.println("[JpaPortfolioRepository] Successfully connected to MySQL!");
+                break;
+            } catch (Exception e) {
+                retryCount++;
+                if (retryCount >= maxRetries) {
+                    System.err.println(
+                            "[JpaPortfolioRepository] Failed to connect to MySQL after " + maxRetries + " attempts");
+                    throw new RuntimeException("Could not connect to MySQL database", e);
+                }
+                try {
+                    long waitTime = 1000 * retryCount;
+                    System.out.println(
+                            "[JpaPortfolioRepository] Connection failed, waiting " + waitTime + "ms before retry...");
+                    Thread.sleep(waitTime);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Interrupted while waiting to retry MySQL connection", ie);
+                }
+            }
+        }
+        this.emf = tempEmf;
     }
 
     @Override
@@ -27,11 +57,7 @@ public class JpaPortfolioRepository implements PortfolioRepository {
             if (portfolio.getId() == 0) {
                 em.persist(portfolio);
             } else {
-                if (em.find(Portfolio.class, portfolio.getId()) == null) {
-                    em.persist(portfolio);
-                } else {
-                    em.merge(portfolio);
-                }
+                em.merge(portfolio);
             }
             em.getTransaction().commit();
         } catch (Exception e) {
@@ -69,11 +95,16 @@ public class JpaPortfolioRepository implements PortfolioRepository {
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
-            Portfolio p = em.find(Portfolio.class, id);
-            if (p != null) {
-                em.remove(p);
+            Portfolio portfolio = em.find(Portfolio.class, id);
+            if (portfolio != null) {
+                em.remove(portfolio);
             }
             em.getTransaction().commit();
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            throw e;
         } finally {
             em.close();
         }

@@ -57,26 +57,63 @@ public class Asset {
 
     // ===================== Getters et Setters =====================
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public int getId() {
+        return id;
+    }
 
-    public String getSymbol() { return symbol; }
-    public void setSymbol(String symbol) { this.symbol = symbol; }
+    public void setId(int id) {
+        this.id = id;
+    }
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public String getSymbol() {
+        return symbol;
+    }
 
-    public String getAssetName() { return assetName; }
-    public void setAssetName(String assetName) { this.assetName = assetName; }
+    public void setSymbol(String symbol) {
+        this.symbol = symbol;
+    }
 
-    public double getUnitValue() { return unitValue; }
-    public void setUnitValue(double unitValue) { this.unitValue = unitValue; }
+    public String getType() {
+        return type;
+    }
 
-    public double getQuantity() { return quantity; }
-    public void setQuantity(double quantity) { this.quantity = quantity; }
+    public void setType(String type) {
+        this.type = type;
+    }
 
-    public int getPortfolioID() { return portfolioID; }
-    public void setPortfolioID(int portfolioID) { this.portfolioID = portfolioID; }
+    public String getAssetName() {
+        return assetName;
+    }
+
+    public void setAssetName(String assetName) {
+        this.assetName = assetName;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("unitPrice")
+    public double getUnitValue() {
+        return unitValue;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("unitPrice")
+    public void setUnitValue(double unitValue) {
+        this.unitValue = unitValue;
+    }
+
+    public double getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(double quantity) {
+        this.quantity = quantity;
+    }
+
+    public int getPortfolioID() {
+        return portfolioID;
+    }
+
+    public void setPortfolioID(int portfolioID) {
+        this.portfolioID = portfolioID;
+    }
 
     // ===================== Méthodes utilitaires =====================
 

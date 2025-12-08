@@ -1,5 +1,8 @@
 package org.groupm.ewallet.service.business;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import org.groupm.ewallet.model.Account;
 import org.groupm.ewallet.model.User;
 import org.groupm.ewallet.model.Transaction;
@@ -13,22 +16,16 @@ import java.util.List;
  * Cette classe encapsule la logique de création, modification, suppression
  * et récupération des comptes/transactions via abstraction repository.
  */
+@ApplicationScoped
 public class AccountManager {
 
-    private final AccountRepository accountRepository;
-    private final TransactionRepository transactionRepository;
+    @Inject
+    private AccountRepository accountRepository;
 
-    /**
-     * Constructeur avec injection de dépendances (repository).
-     * Permet de mocker ou reconfigurer la persistance selon besoin.
-     *
-     * @param accountRepository     repository de comptes
-     * @param transactionRepository repository de transactions
-     */
-    public AccountManager(AccountRepository accountRepository, TransactionRepository transactionRepository) {
-        this.accountRepository = accountRepository;
-        this.transactionRepository = transactionRepository;
-    }
+    @Inject
+    private TransactionRepository transactionRepository;
+
+    // CDI will inject repositories automatically
 
     /**
      * Récupère tous les comptes.
@@ -122,15 +119,26 @@ public class AccountManager {
 
     /**
      * Ajoute une transaction en appliquant la logique métier (dépôt/retrait).
+     * Utilise @Transactional pour garantir l'atomicité.
      * 
      * @param transaction modèle reçu du webservice
      * @return transaction persistée
      */
+    @Transactional
     public Transaction addTransaction(Transaction transaction) {
 
-        // Vérification du compte cible
-        if (transaction.getAccountID() == null) {
+        // Validation complète (centralisée dans Manager)
+        if (transaction == null) {
+            throw new IllegalArgumentException("Transaction ne peut pas être null.");
+        }
+        if (transaction.getAccountID() == null || transaction.getAccountID().isEmpty()) {
             throw new IllegalArgumentException("Aucun 'accountID' fourni pour la transaction.");
+        }
+        if (transaction.getType() == null || transaction.getType().isEmpty()) {
+            throw new IllegalArgumentException("Le type de transaction est obligatoire.");
+        }
+        if (transaction.getAmount() <= 0) {
+            throw new IllegalArgumentException("Le montant doit être strictement supérieur à zéro.");
         }
 
         Account account = accountRepository.findById(transaction.getAccountID());
@@ -146,10 +154,6 @@ public class AccountManager {
 
         String type = transaction.getType();
         double amount = transaction.getAmount();
-
-        if (type == null || amount <= 0) {
-            throw new IllegalArgumentException("Type de transaction invalide ou montant <= 0.");
-        }
 
         switch (type.toLowerCase()) {
 
@@ -200,7 +204,9 @@ public class AccountManager {
     }
 
     /**
-     * Effectue un virement entre deux comptes.
+     * Effectue un virement ATOMIQUE entre deux comptes.
+     * Utilise @Transactional pour garantir que SOIT tout réussit, SOIT tout échoue.
+     * Évite les pertes de données financières.
      * 
      * @param fromId      compte source
      * @param toId        compte destination
@@ -208,39 +214,73 @@ public class AccountManager {
      * @param category    catégorie (optionnel)
      * @param description description (optionnel)
      * @return true si succès, false sinon
+     * @throws IllegalArgumentException si validation échoue (provoque rollback
+     *                                  automatique)
      */
+    @Transactional
     public boolean transfer(String fromId, String toId, double amount, String category, String description) {
-        if (fromId == null || toId == null || fromId.equals(toId) || amount <= 0) {
-            return false;
+        // Validations préliminaires
+        if (fromId == null || toId == null) {
+            throw new IllegalArgumentException("Les identifiants de compte ne peuvent pas être null.");
+        }
+        if (fromId.equals(toId)) {
+            throw new IllegalArgumentException("Impossible de transférer vers le même compte.");
+        }
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Le montant doit être strictement positif.");
         }
 
+        // Chargement des comptes
         Account from = accountRepository.findById(fromId);
         Account to = accountRepository.findById(toId);
 
-        if (from == null || to == null) {
-            return false;
+        if (from == null) {
+            throw new IllegalArgumentException("Compte source introuvable : " + fromId);
+        }
+        if (to == null) {
+            throw new IllegalArgumentException("Compte destination introuvable : " + toId);
         }
 
+        // Validation du solde AVANT toute modification
         if (from.getBalance() < amount) {
-            return false;
+            throw new IllegalArgumentException(
+                    "Solde insuffisant. Disponible: " + from.getBalance() + "€, Demandé: " + amount + "€");
         }
 
-        // 1. Retrait
+        // === TRANSACTION ATOMIQUE : Tout ou rien ===
+
+        // 1. Modifier les balances
+        from.setBalance(from.getBalance() - amount);
+        to.setBalance(to.getBalance() + amount);
+
+        // 2. Créer les transactions (historique)
         Transaction withdrawal = new Transaction();
+        withdrawal.setTransactionID(generateTransactionId());
         withdrawal.setAccountID(fromId);
         withdrawal.setType("withdraw");
         withdrawal.setAmount(amount);
         withdrawal.setDescription("Transfer to " + toId + (description != null ? ": " + description : ""));
-        addTransaction(withdrawal);
 
-        // 2. Dépôt
         Transaction deposit = new Transaction();
+        deposit.setTransactionID(generateTransactionId());
         deposit.setAccountID(toId);
         deposit.setType("deposit");
         deposit.setAmount(amount);
         deposit.setDescription("Transfer from " + fromId + (description != null ? ": " + description : ""));
-        addTransaction(deposit);
 
+        // 3. Ajouter les transactions aux modèles de compte
+        from.addTransaction(withdrawal);
+        to.addTransaction(deposit);
+
+        // 4. Persister TOUT dans UNE SEULE transaction JPA
+        // Si UNE SEULE opération échoue → rollback automatique de TOUT
+        accountRepository.save(from);
+        accountRepository.save(to);
+        transactionRepository.save(withdrawal);
+        transactionRepository.save(deposit);
+
+        // Si on arrive ici, transaction JPA commit automatiquement
+        // Sinon, exception → rollback automatique via @Transactional
         return true;
     }
 

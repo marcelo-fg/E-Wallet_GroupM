@@ -1,27 +1,28 @@
 package org.groupm.ewallet.webservice;
 
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.groupm.ewallet.model.WealthTracker;
 import org.groupm.ewallet.service.business.UserManager;
-import org.groupm.ewallet.webservice.context.BackendContext; // <-- Import BackendContext
 import java.util.logging.Logger;
 
 /**
  * Ressource REST responsable du suivi de la richesse des utilisateurs.
- * Permet de vérifier l’état du service et de récupérer les données financières d’un utilisateur.
+ * Permet de vérifier l’état du service et de récupérer les données financières
+ * d’un utilisateur.
  */
 @Path("/wealth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@RequestScoped
 public class WealthTrackerResource {
 
-    // UserManager instancié avec les repos mémoire partagés du BackendContext
-    private static final UserManager userManager = new UserManager(
-            BackendContext.USER_REPO,
-            BackendContext.PORTFOLIO_REPO
-    );
+    @Inject
+    private UserManager userManager;
+
     private static final Logger LOGGER = Logger.getLogger(WealthTrackerResource.class.getName());
 
     /**

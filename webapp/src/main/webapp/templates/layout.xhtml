@@ -1,22 +1,20 @@
-<ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="http://xmlns.jcp.org/jsf/html"
-                xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
 
     <h:head>
         <title>WealthMate</title>
-        <h:outputStylesheet library="css" name="styles.css"/>
+        <h:outputStylesheet library="css" name="styles.css" />
 
         <!-- Chart.js CDN -->
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     </h:head>
 
     <h:body styleClass="dashboard-page"
-            style="background: url('#{resource['images/bg-dashboard_1.png']}') center/cover no-repeat fixed;">
+        style="background: url('#{resource['images/bg-dashboard_1.png']}') center/cover no-repeat fixed;">
 
         <nav class="top-nav">
             <div class="nav-left">
-                <img src="#{request.contextPath}/resources/images/Logo-W_color.png"
-                     class="app-logo" alt="logo" />
+                <img src="#{request.contextPath}/resources/images/Logo-W_color.png" class="app-logo" alt="logo" />
                 <span class="app-title">WealthMate</span>
             </div>
 
@@ -30,15 +28,19 @@
 
             <div class="nav-right">
                 <h:form style="display:inline;">
-                    <h:commandButton value="Logout"
-                                     action="#{loginBean.logout}"
-                                     styleClass="btn-logout" />
+                    <h:commandButton value="Logout" action="#{loginBean.logout}" styleClass="btn-logout" />
                 </h:form>
             </div>
         </nav>
 
         <main class="page-content">
-            <ui:insert name="content"/>
+            <!-- Global Flash Messages -->
+            <h:messages id="globalMessages" globalOnly="true"
+                style="list-style:none; margin:0 0 20px 0; padding:15px; border-radius:8px;"
+                errorStyle="background:rgba(255,59,48,0.2); color:#ff453a; border:1px solid #ff453a;"
+                infoStyle="background:rgba(48,209,88,0.2); color:#30d158; border:1px solid #30d158;"
+                warnStyle="background:rgba(255,159,10,0.2); color:#ff9f0a; border:1px solid #ff9f0a;" />
+            <ui:insert name="content" />
         </main>
 
     </h:body>

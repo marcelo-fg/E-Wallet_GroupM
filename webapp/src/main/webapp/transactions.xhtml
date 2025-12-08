@@ -1,8 +1,5 @@
-<ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="jakarta.faces.html"
-                xmlns:ui="jakarta.faces.facelets"
-                xmlns:f="jakarta.faces.core"
-                template="/templates/layout.xhtml">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html" xmlns:ui="jakarta.faces.facelets"
+    xmlns:f="jakarta.faces.core" template="/templates/layout.xhtml">
 
     <!-- Page title for the layout -->
     <ui:define name="title">Transactions</ui:define>
@@ -11,8 +8,7 @@
     <ui:define name="pageStyle">
         <style>
             body.dashboard-page {
-                background: url("#{request.contextPath}/resources/images/bg-dashboard_1.png")
-                center/cover no-repeat fixed !important;
+                background: url("#{request.contextPath}/resources/images/bg-dashboard_1.png") center/cover no-repeat fixed !important;
             }
         </style>
     </ui:define>
@@ -34,43 +30,43 @@
                         <div style="margin-top:20px;">
                             <table style="width:100%; border-collapse:separate; border-spacing:0 6px; font-size:13px;">
                                 <thead>
-                                <tr style="opacity:0.8; text-align:left;">
-                                    <th style="width:4%;">#</th>
-                                    <th style="width:10%;">Type</th>
-                                    <th style="width:16%;">Source</th>
-                                    <th style="width:18%;">Date / Time</th>
-                                    <th style="width:12%;">Category</th>
-                                    <th>Description</th>
-                                    <th style="width:10%; text-align:right;">Amount</th>
-                                </tr>
+                                    <tr style="opacity:0.8; text-align:left;">
+                                        <th style="width:4%;">#</th>
+                                        <th style="width:10%;">Type</th>
+                                        <th style="width:16%;">Source</th>
+                                        <th style="width:18%;">Date / Time</th>
+                                        <th style="width:12%;">Category</th>
+                                        <th>Description</th>
+                                        <th style="width:10%; text-align:right;">Amount</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
-                                <ui:repeat value="#{transactionBean.allTransactions}" var="t" varStatus="st">
-                                    <tr class="assets-row">
-                                        <td>#{st.index + 1}</td>
-                                        <td>
-                                            #{t.source eq 'ACCOUNT' ? 'Account' : 'Portfolio'}
-                                        </td>
-                                        <td>#{t.sourceLabel}</td>
-                                        <td>#{t.dateTime}</td>
-                                        <td>#{t.category}</td>
-                                        <td>#{t.description}</td>
-                                        <td style="text-align:right;">
-                                            <h:outputText value="#{t.amount}">
-                                                <f:convertNumber maxFractionDigits="2" type="number" />
-                                            </h:outputText>
-                                            <span> CHF</span>
-                                        </td>
-                                    </tr>
-                                </ui:repeat>
+                                    <ui:repeat value="#{transactionBean.allTransactions}" var="t" varStatus="st">
+                                        <tr class="assets-row">
+                                            <td>#{st.index + 1}</td>
+                                            <td>
+                                                #{t.source eq 'ACCOUNT' ? 'Account' : 'Portfolio'}
+                                            </td>
+                                            <td>#{t.sourceLabel}</td>
+                                            <td>#{t.formattedDateTime}</td>
+                                            <td>#{t.category}</td>
+                                            <td>#{t.description}</td>
+                                            <td style="text-align:right;">
+                                                <h:outputText value="#{t.amount}">
+                                                    <f:convertNumber maxFractionDigits="2" type="number" />
+                                                </h:outputText>
+                                                <span> CHF</span>
+                                            </td>
+                                        </tr>
+                                    </ui:repeat>
 
-                                <h:panelGroup rendered="#{empty transactionBean.allTransactions}">
-                                    <tr>
-                                        <td colspan="7" style="padding:8px 10px; opacity:0.75;">
-                                            No transactions recorded yet.
-                                        </td>
-                                    </tr>
-                                </h:panelGroup>
+                                    <h:panelGroup rendered="#{empty transactionBean.allTransactions}">
+                                        <tr>
+                                            <td colspan="7" style="padding:8px 10px; opacity:0.75;">
+                                                No transactions recorded yet.
+                                            </td>
+                                        </tr>
+                                    </h:panelGroup>
                                 </tbody>
                             </table>
                         </div>

@@ -19,12 +19,12 @@ public class User {
 
     @Column(unique = true)
     private String email;
-    
+
     private String password;
-    
+
     @Column(name = "first_name")
     private String firstName;
-    
+
     @Column(name = "last_name")
     private String lastName;
 
@@ -33,8 +33,8 @@ public class User {
     private double totalBalance;
 
     /** Liste des comptes bancaires associés à l'utilisateur. */
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id") // Clé étrangère dans la table account
+    /** Liste des comptes bancaires associés à l'utilisateur. */
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Account> accounts;
 
     /** Liste des portefeuilles d'investissement associés à l'utilisateur. */
@@ -51,7 +51,7 @@ public class User {
     }
 
     public User(String userID, String email, String password,
-                String firstName, String lastName) {
+            String firstName, String lastName) {
         this.userID = userID;
         this.email = email;
         this.password = password;
@@ -64,26 +64,60 @@ public class User {
 
     // ===================== Getters =====================
 
-    public String getUserID() { return userID; }
-    public String getEmail() { return email; }
-    public String getPassword() { return password; }
-    public String getFirstName() { return firstName; }
-    public String getLastName() { return lastName; }
-    public List<Account> getAccounts() { return accounts; }
-    public List<Portfolio> getPortfolios() { return portfolios; }
-    
-    public double getTotalBalance() { 
+    public String getUserID() {
+        return userID;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public List<Account> getAccounts() {
+        return accounts;
+    }
+
+    public List<Portfolio> getPortfolios() {
+        return portfolios;
+    }
+
+    public double getTotalBalance() {
         // Recalculer si nécessaire car @Transient
-        return initiateTotalBalance(); 
+        return initiateTotalBalance();
     }
 
     // ===================== Setters =====================
 
-    public void setUserID(String userID) { this.userID = userID; }
-    public void setEmail(String email) { this.email = email; }
-    public void setPassword(String password) { this.password = password; }
-    public void setFirstName(String firstName) { this.firstName = firstName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
+    public void setUserID(String userID) {
+        this.userID = userID;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
 
     public void setAccounts(List<Account> accounts) {
         this.accounts = (accounts != null) ? accounts : new ArrayList<>();

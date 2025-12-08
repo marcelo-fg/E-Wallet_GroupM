@@ -1,6 +1,7 @@
 package org.groupm.ewallet.model;
 
 import jakarta.persistence.*;
+import jakarta.json.bind.annotation.JsonbTransient;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,14 +18,23 @@ public class Account {
     private String accountID;
 
     /** Identifiant de l'utilisateur propriétaire du compte. */
-    @Column(name = "user_id", insertable = false, updatable = false)
+    /** Identifiant de l'utilisateur propriétaire du compte. */
+    @Column(name = "user_id")
     private String userID;
+
+    @JsonbTransient
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    private User user;
 
     /** Type du compte (ex : "épargne", "courant"). */
     private String type;
 
     /** Solde actuel du compte. */
     private double balance;
+
+    /** Nom personnalisé du compte. */
+    private String name;
 
     /** Liste des transactions associées à ce compte. */
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
@@ -54,20 +64,61 @@ public class Account {
 
     // ===================== Getters et Setters =====================
 
-    public String getAccountID() { return accountID; }
-    public void setAccountID(String accountID) { this.accountID = accountID; }
+    public String getAccountID() {
+        return accountID;
+    }
 
-    public String getUserID() { return userID; }
-    public void setUserID(String userID) { this.userID = userID; }
+    public void setAccountID(String accountID) {
+        this.accountID = accountID;
+    }
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public String getUserID() {
+        return userID;
+    }
 
-    public double getBalance() { return balance; }
-    public void setBalance(double balance) { this.balance = balance; }
+    public void setUserID(String userID) {
+        this.userID = userID;
+    }
 
-    public List<Transaction> getTransactions() { return transactions; }
-    public void setTransactions(List<Transaction> transactions) { this.transactions = transactions; }
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+
+    public void setBalance(double balance) {
+        this.balance = balance;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public List<Transaction> getTransactions() {
+        return transactions;
+    }
+
+    public void setTransactions(List<Transaction> transactions) {
+        this.transactions = transactions;
+    }
 
     public void addTransaction(Transaction transaction) {
         if (this.transactions == null) {

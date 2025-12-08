@@ -1,28 +1,28 @@
 package org.groupm.ewallet.webservice;
 
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.groupm.ewallet.model.User;
 import org.groupm.ewallet.service.business.UserManager;
-import org.groupm.ewallet.webservice.context.BackendContext; // <-- Import BackendContext
 
 import java.util.List;
 
 /**
  * Ressource REST responsable de la gestion des utilisateurs.
- * Fournit les opérations CRUD ainsi que les endpoints d’enregistrement et d’authentification.
+ * Fournit les opérations CRUD ainsi que les endpoints d’enregistrement et
+ * d’authentification.
  */
 @Path("/users")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@RequestScoped
 public class UserResource {
 
-    // Utilisation des SINGLETONS partagés du BackendContext
-    private static final UserManager userManager = new UserManager(
-            BackendContext.USER_REPO,
-            BackendContext.PORTFOLIO_REPO
-    );
+    @Inject
+    private UserManager userManager;
 
     /**
      * Récupère la liste de tous les utilisateurs.

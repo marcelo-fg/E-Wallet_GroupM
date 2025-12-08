@@ -5,8 +5,9 @@ import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.groupm.ewallet.model.Account;
 import org.groupm.ewallet.model.Transaction;
+import org.groupm.ewallet.webapp.model.LocalAccount;
+import org.groupm.ewallet.webapp.model.LocalTransaction;
 import org.groupm.ewallet.webapp.service.WebAppService;
 
 import java.io.Serializable;
@@ -162,10 +163,10 @@ public class AccountBean implements Serializable {
         }
 
         List<AccountDTO> result = new ArrayList<>();
-        service.getAccountsForUser(userId).forEach(acc -> result.add(new AccountDTO(
-                acc.getAccountID(),
+        service.getAccounts(userId).forEach(acc -> result.add(new AccountDTO(
+                acc.getId(),
                 acc.getType(),
-                acc.getAccountID(), // Number is ID for now
+                acc.getId(), // Number is ID for now
                 acc.getName(),
                 acc.getBalance())));
         this.accounts = result;
@@ -225,7 +226,7 @@ public class AccountBean implements Serializable {
             return;
         }
 
-        boolean success = service.createAccount(userId, selectedType, newAccountName);
+        boolean success = service.createAccount(userId, selectedType, newAccountName) != null;
 
         if (success) {
             selectedType = null;
@@ -266,7 +267,7 @@ public class AccountBean implements Serializable {
      */
 
     public void selectAccount(String id) {
-        Account acc = service.getAccountById(id);
+        LocalAccount acc = service.getAccountById(id);
         if (acc == null) {
             selectedAccount = null;
             selectedAccountId = null;
@@ -276,12 +277,12 @@ public class AccountBean implements Serializable {
             return;
         }
 
-        selectedAccountId = acc.getAccountID();
+        selectedAccountId = acc.getId();
 
         selectedAccount = new AccountDTO(
-                acc.getAccountID(),
+                acc.getId(),
                 acc.getType(),
-                acc.getAccountID(),
+                acc.getId(),
                 acc.getName(),
                 acc.getBalance());
 
@@ -463,11 +464,11 @@ public class AccountBean implements Serializable {
         }
 
         if (selectedAccountId != null) {
-            Account acc = service.getAccountById(selectedAccountId);
+            LocalAccount acc = service.getAccountById(selectedAccountId);
             if (acc != null) {
                 if (selectedAccount == null) {
                     selectedAccount = new AccountDTO(
-                            acc.getAccountID(), acc.getType(), acc.getAccountID(), acc.getName(), acc.getBalance());
+                            acc.getId(), acc.getType(), acc.getId(), acc.getName(), acc.getBalance());
                 } else {
                     selectedAccount.setBalance(acc.getBalance());
                 }
@@ -482,7 +483,7 @@ public class AccountBean implements Serializable {
                 "The transaction has been recorded successfully.");
     }
 
-    public List<Transaction> getSelectedAccountTransactions() {
+    public List<LocalTransaction> getSelectedAccountTransactions() {
         if (selectedAccountId == null || selectedAccountId.isBlank()) {
             return List.of();
         }
@@ -512,7 +513,7 @@ public class AccountBean implements Serializable {
         if (selectedAccountId == null || selectedAccountId.isBlank()) {
             return;
         }
-        Account acc = service.getAccountById(selectedAccountId);
+        LocalAccount acc = service.getAccountById(selectedAccountId);
         if (acc != null && selectedAccount != null) {
             selectedAccount.setBalance(acc.getBalance());
         }

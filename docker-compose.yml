@@ -1,9 +1,28 @@
 version: "3.8"
 
 services:
+  mysql:
+    container_name: ewallet-db
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=ewallet_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   payara:
     container_name: payara-ewallet
     image: payara/server-full:6.2025.8-jdk17
+    depends_on:
+      mysql:
+        condition: service_healthy
     environment:
       - SECURE_ADMIN=true
       - ADMIN_USER=admin
@@ -15,3 +34,6 @@ services:
     volumes:
       - ./webservice/target/webservice-1.0-SNAPSHOT.war:/opt/payara/appserver/glassfish/domains/domain1/autodeploy/webservice.war
       - ./webapp/target/webapp-1.0-SNAPSHOT.war:/opt/payara/appserver/glassfish/domains/domain1/autodeploy/webapp.war
+
+volumes:
+  mysql-data:

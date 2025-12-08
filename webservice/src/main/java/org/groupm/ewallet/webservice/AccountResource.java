@@ -1,5 +1,7 @@
 package org.groupm.ewallet.webservice;
 
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -7,28 +9,25 @@ import org.groupm.ewallet.model.Account;
 import org.groupm.ewallet.model.User;
 import org.groupm.ewallet.service.business.AccountManager;
 import org.groupm.ewallet.service.business.UserManager;
-import org.groupm.ewallet.webservice.context.BackendContext; // <-- import unique
 
 import java.util.List;
 
 /**
  * Ressource REST pour la gestion des comptes utilisateurs.
- * Fournit les endpoints CRUD pour créer, lire, mettre à jour et supprimer des comptes.
+ * Fournit les endpoints CRUD pour créer, lire, mettre à jour et supprimer des
+ * comptes.
  */
 @Path("/accounts")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@RequestScoped
 public class AccountResource {
 
-    // Utilisation des SINGLETONS partagés du BackendContext :
-    private static final AccountManager accountManager = new AccountManager(
-            BackendContext.ACCOUNT_REPO,
-            BackendContext.TRANSACTION_REPO
-    );
-    private static final UserManager userManager = new UserManager(
-            BackendContext.USER_REPO,
-            BackendContext.PORTFOLIO_REPO
-    );
+    @Inject
+    private AccountManager accountManager;
+
+    @Inject
+    private UserManager userManager;
 
     /**
      * Récupère la liste de tous les comptes.
@@ -98,9 +97,11 @@ public class AccountResource {
                     .build();
         }
 
-        System.out.println("[DEBUG] Création de compte pour utilisateur : userId=" + userId + ", accountId=" + account.getAccountID());
+        System.out.println("[DEBUG] Création de compte pour utilisateur : userId=" + userId + ", accountId="
+                + account.getAccountID());
         // Liaison du compte à l'utilisateur
         account.setUserID(userId);
+        account.setUser(user);
         user.addAccount(account);
         accountManager.addAccount(account);
 

@@ -1,5 +1,7 @@
 package org.groupm.ewallet.service.business;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.groupm.ewallet.model.*;
 import org.groupm.ewallet.repository.UserRepository;
 import org.groupm.ewallet.repository.PortfolioRepository;
@@ -8,22 +10,23 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Service métier de gestion des utilisateurs et de leurs portefeuilles d’investissement.
+ * Service métier de gestion des utilisateurs et de leurs portefeuilles
+ * d’investissement.
  * Supporte désormais plusieurs portefeuilles par utilisateur.
  */
+@ApplicationScoped
 public class UserManager {
 
-    private final UserRepository userRepository;
-    private final PortfolioRepository portfolioRepository;
+    @Inject
+    private UserRepository userRepository;
 
-    public UserManager(UserRepository userRepository,
-                       PortfolioRepository portfolioRepository) {
-        this.userRepository = userRepository;
-        this.portfolioRepository = portfolioRepository;
-    }
+    @Inject
+    private PortfolioRepository portfolioRepository;
+
+    // CDI will inject repositories automatically - no constructor needed
 
     // =====================================================================
-    //                              USERS
+    // USERS
     // =====================================================================
 
     /**
@@ -43,6 +46,7 @@ public class UserManager {
 
     /**
      * Authentifie un utilisateur selon email + mot de passe.
+     * 
      * @return l'utilisateur si OK, sinon null
      */
     public User login(String email, String password) {
@@ -73,10 +77,14 @@ public class UserManager {
     public boolean updateUser(String userId, User newUser) {
         User user = userRepository.findById(userId);
         if (user != null) {
-            if (newUser.getFirstName() != null) user.setFirstName(newUser.getFirstName());
-            if (newUser.getLastName() != null)  user.setLastName(newUser.getLastName());
-            if (newUser.getEmail() != null)     user.setEmail(newUser.getEmail());
-            if (newUser.getPassword() != null)  user.setPassword(newUser.getPassword());
+            if (newUser.getFirstName() != null)
+                user.setFirstName(newUser.getFirstName());
+            if (newUser.getLastName() != null)
+                user.setLastName(newUser.getLastName());
+            if (newUser.getEmail() != null)
+                user.setEmail(newUser.getEmail());
+            if (newUser.getPassword() != null)
+                user.setPassword(newUser.getPassword());
             userRepository.save(user);
             return true;
         }
@@ -84,7 +92,7 @@ public class UserManager {
     }
 
     // =====================================================================
-    //                              PORTFOLIOS
+    // PORTFOLIOS
     // =====================================================================
 
     /**
@@ -139,7 +147,7 @@ public class UserManager {
     }
 
     // =====================================================================
-    //                          WEALTH TRACKER
+    // WEALTH TRACKER
     // =====================================================================
 
     /**

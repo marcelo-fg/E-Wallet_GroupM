@@ -5,6 +5,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.servlet.http.HttpSession;
 import jakarta.annotation.PostConstruct;
+import org.groupm.ewallet.webapp.model.LocalAccount;
 import org.groupm.ewallet.webapp.service.WebAppService;
 
 import java.io.Serializable;
@@ -62,8 +63,9 @@ public class DashboardBean implements Serializable {
 
     public void loadDashboard() {
         var context = jakarta.faces.context.FacesContext.getCurrentInstance();
-        if (context == null) return;
-        
+        if (context == null)
+            return;
+
         HttpSession session = (HttpSession) context.getExternalContext().getSession(false);
 
         if (session != null) {
@@ -76,10 +78,10 @@ public class DashboardBean implements Serializable {
         }
 
         if (userId != null) {
-            List<org.groupm.ewallet.model.Account> userAccounts = webAppService.getAccountsForUser(userId);
+            List<LocalAccount> userAccounts = webAppService.getAccounts(userId);
             this.accounts = new java.util.ArrayList<>();
-            for (org.groupm.ewallet.model.Account acc : userAccounts) {
-                this.accounts.add(acc.getAccountID() + " - " + acc.getBalance() + " CHF");
+            for (LocalAccount acc : userAccounts) {
+                this.accounts.add(acc.getId() + " - " + acc.getBalance() + " CHF");
             }
 
             // Exemple de valeurs si pas encore connecté à une vraie logique métier
