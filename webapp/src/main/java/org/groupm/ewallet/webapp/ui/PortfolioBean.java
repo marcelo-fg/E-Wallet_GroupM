@@ -66,6 +66,10 @@ public class PortfolioBean implements Serializable {
         this.portfolioName = portfolioName;
     }
 
+    public Map<Integer, String> getPortfolioNames() {
+        return portfolioNames;
+    }
+
     // -------------------------------------------------------------------------
     // EXTERNAL API (BUY SIDE)
     // -------------------------------------------------------------------------
@@ -202,13 +206,14 @@ public class PortfolioBean implements Serializable {
         // Load assets from in-memory storage
         List<PortfolioAsset> portfolioAssets = webAppService.getPortfolioAssets(selectedPortfolioId);
 
-        // Format for display
+        // Format for display with total value
         assets = portfolioAssets.stream()
-                .map(asset -> String.format("%s (%s) - Qty: %.2f @ %.2f USD",
+                .map(asset -> String.format("%s (%s) - Qty: %.2f @ %.2f USD = %.2f USD",
                         asset.getSymbol(),
                         asset.getType(),
                         asset.getQuantity(),
-                        asset.getUnitPrice()))
+                        asset.getUnitPrice(),
+                        asset.getTotalValue()))
                 .collect(Collectors.toList());
 
         System.out.println("[PortfolioBean] Loaded " + assets.size() + " assets from in-memory storage");
@@ -465,7 +470,7 @@ public class PortfolioBean implements Serializable {
             return null;
         }
 
-        // Add asset directly to in-memory storage (like transactions)
+        // Add asset to in-memory storage for UI display (fast, reliable)
         webAppService.addPortfolioAsset(
                 selectedPortfolioId,
                 selectedExternalName,
@@ -473,6 +478,15 @@ public class PortfolioBean implements Serializable {
                 selectedType,
                 assetQuantity,
                 marketUnitPrice);
+
+        // ALSO add to backend MySQL so Postman/API calls see it
+        webAppService.addAssetToPortfolio(
+                selectedPortfolioId,
+                selectedExternalName,
+                selectedType,
+                assetQuantity,
+                marketUnitPrice,
+                selectedExternalSymbol);
 
         // Record the trade in in-memory history
         webAppService.recordPortfolioTrade(
@@ -683,6 +697,31 @@ public class PortfolioBean implements Serializable {
     }
 
     /**
+     * Calculates total value of the selected portfolio.
+     * 
+     * @return Total value of all assets in USD
+     */
+    public double getTotalPortfolioValue() {
+        if (selectedPortfolioId == null) {
+            return 0.0;
+        }
+
+        List<PortfolioAsset> portfolioAssets = webAppService.getPortfolioAssets(selectedPortfolioId);
+        return portfolioAssets.stream()
+                .mapToDouble(PortfolioAsset::getTotalValue)
+                .sum();
+    }
+
+    /**
+     * Formats total portfolio value for display.
+     * 
+     * @return Formatted portfolio value string
+     */
+    public String getFormattedTotalPortfolioValue() {
+        return String.format("%.2f USD", getTotalPortfolioValue());
+    }
+
+    /**
      * Realized PnL calculated per symbol using FIFO matching of BUY and SELL lots.
      * If buy and sell prices are identical for the matched quantity, PnL is zero.
      */
@@ -713,28 +752,149 @@ public class PortfolioBean implements Serializable {
 
                 while (qtyToSell > 0 && !lots.isEmpty()) {
                     double[] lot = lots.peekFirst();
-                    double lotQty = lot[0];
-                    double lotPrice = lot[1];
 
-                    double matchedQty = Math.min(qtyToSell, lotQty);
-
-                    // PnL on the matched part of this lot
-                    realizedPnl += (sellPrice - lotPrice) * matchedQty;
-
-                    lotQty -= matchedQty;
-                    qtyToSell -= matchedQty;
-
-                    if (lotQty <= 0.0) {
+                    if (lot[0] <= qtyToSell) {
+                        // Fully consume this lot
+                        realizedPnl += (sellPrice - lot[1]) * lot[0];
+                        qtyToSell -= lot[0];
                         lots.removeFirst();
                     } else {
-                        lot[0] = lotQty;
+                        // Partially consume this lot
+                        realizedPnl += (sellPrice - lot[1]) * qtyToSell;
+                        lot[0] -= qtyToSell;
+                        qtyToSell = 0;
                     }
                 }
-                // Any remaining qtyToSell is ignored for this prototype.
+            }
+        }
+        return realizedPnl;
+    }
+
+    // ============================================================
+    // ANALYTICS & CHARTING
+    // ============================================================
+
+    private String selectedAnalyticsAssetSymbol;
+    private String chartDataJson;
+
+    public String goToAnalytics() {
+        if (selectedPortfolioId != null) {
+            List<PortfolioAsset> list = webAppService.getPortfolioAssets(selectedPortfolioId);
+            if (!list.isEmpty()) {
+                this.selectedAnalyticsAssetSymbol = list.get(0).getSymbol();
+            }
+            calculatePortfolioAnalytics();
+            generateChartData();
+        }
+        return "portfolio_analytics?faces-redirect=true";
+    }
+
+    public void calculatePortfolioAnalytics() {
+        if (selectedPortfolioId == null)
+            return;
+
+        List<PortfolioTrade> trades = getTradeHistory();
+        List<PortfolioAsset> currentAssets = webAppService.getPortfolioAssets(selectedPortfolioId);
+
+        // Map symbol -> FIFO Queue of [qty, price]
+        Map<String, Deque<double[]>> openPositions = new HashMap<>();
+
+        // 1. Replay history to build open positions
+        for (PortfolioTrade t : trades) {
+            String sym = t.getSymbol();
+            openPositions.putIfAbsent(sym, new ArrayDeque<>());
+            Deque<double[]> lots = openPositions.get(sym);
+
+            if ("BUY".equalsIgnoreCase(t.getType())) {
+                lots.addLast(new double[] { t.getQuantity(), t.getUnitPrice() });
+            } else if ("SELL".equalsIgnoreCase(t.getType())) {
+                double qtyToSell = t.getQuantity();
+                while (qtyToSell > 0 && !lots.isEmpty()) {
+                    double[] lot = lots.peekFirst();
+                    if (lot[0] <= qtyToSell) {
+                        qtyToSell -= lot[0];
+                        lots.removeFirst();
+                    } else {
+                        lot[0] -= qtyToSell;
+                        qtyToSell = 0;
+                    }
+                }
             }
         }
 
-        return realizedPnl;
+        // 2. Calculate Avg Buy Price and PnL for current assets
+        for (PortfolioAsset asset : currentAssets) {
+            Deque<double[]> lots = openPositions.get(asset.getSymbol());
+            if (lots != null && !lots.isEmpty()) {
+                double totalCost = 0;
+                double totalQty = 0;
+                for (double[] lot : lots) {
+                    totalCost += lot[0] * lot[1];
+                    totalQty += lot[0];
+                }
+                double avgPrice = (totalQty > 0) ? totalCost / totalQty : 0.0;
+                asset.setAverageBuyPrice(avgPrice); // Set transient field
+
+                // Unrealized PnL = (Current Price - Avg Price) * Current Qty
+                double currentVal = asset.getUnitPrice();
+                double pnl = (currentVal - avgPrice) * asset.getQuantity();
+                asset.setPnl(pnl);
+            }
+        }
+    }
+
+    public void generateChartData() {
+        // GENERATING DUMMY DATA FOR DEMO
+        // In a real app, you would fetch historical prices from an API
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        sb.append("\"labels\": [\"Day 1\", \"Day 2\", \"Day 3\", \"Day 4\", \"Day 5\", \"Day 6\", \"Today\"],");
+        sb.append("\"datasets\": [{");
+        sb.append("\"label\": \"Price Evolution (Simulated)\",");
+        sb.append("\"borderColor\": \"#00d2ff\",");
+        sb.append("\"backgroundColor\": \"rgba(0, 210, 255, 0.1)\",");
+        sb.append("\"data\": [");
+
+        // Simulate random walk around current price
+        double basePrice = 100.0;
+        // Try to find current price of selected asset
+        if (selectedPortfolioId != null && selectedAnalyticsAssetSymbol != null) {
+            List<PortfolioAsset> assets = webAppService.getPortfolioAssets(selectedPortfolioId);
+            for (PortfolioAsset a : assets) {
+                if (a.getSymbol().equals(selectedAnalyticsAssetSymbol)) {
+                    basePrice = a.getUnitPrice();
+                    break;
+                }
+            }
+        }
+
+        Random r = new Random();
+        for (int i = 0; i < 7; i++) {
+            double price = basePrice * (0.8 + (r.nextDouble() * 0.4)); // +/- 20%
+            sb.append(String.format("%.2f", price));
+            if (i < 6)
+                sb.append(", ");
+        }
+
+        sb.append("],");
+        sb.append("\"fill\": true");
+        sb.append("}]");
+        sb.append("}");
+        this.chartDataJson = sb.toString();
+    }
+
+    // Getters / Setters for new fields
+    public String getChartDataJson() {
+        return chartDataJson;
+    }
+
+    public String getSelectedAnalyticsAssetSymbol() {
+        return selectedAnalyticsAssetSymbol;
+    }
+
+    public void setSelectedAnalyticsAssetSymbol(String s) {
+        this.selectedAnalyticsAssetSymbol = s;
+        generateChartData(); // Regenerate chart when selection changes
     }
 
     // -------------------------------------------------------------------------

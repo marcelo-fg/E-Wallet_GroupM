@@ -69,4 +69,24 @@ public class PortfolioAsset {
     public void setUnitPrice(double unitPrice) {
         this.unitPrice = unitPrice;
     }
+
+    // Analytics fields (transient / calculated)
+    private double averageBuyPrice;
+    private double pnl;
+
+    public double getAverageBuyPrice() {
+        return averageBuyPrice;
+    }
+
+    public void setAverageBuyPrice(double averageBuyPrice) {
+        this.averageBuyPrice = averageBuyPrice;
+    }
+
+    public double getPnl() {
+        return pnl;
+    }
+
+    public void setPnl(double pnl) {
+        this.pnl = pnl;
+    }
 }

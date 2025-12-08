@@ -1,0 +1,169 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html" xmlns:ui="jakarta.faces.facelets"
+    xmlns:f="jakarta.faces.core" template="/templates/layout.xhtml">
+
+    <ui:define name="title">Portfolio Analytics</ui:define>
+
+    <!-- Use dashboard background -->
+    <ui:define name="pageStyle">
+        <style>
+            body.dashboard-page {
+                background: url("#{request.contextPath}/resources/images/bg-dashboard_1.png") center/cover no-repeat fixed !important;
+            }
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+        <div class="page-content portfolio-page" style="padding-top: 70px;">
+
+            <!-- Header with Back Button -->
+            <div style="margin-bottom: 24px; display:flex; align-items:center; justify-content: space-between;">
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <div onclick="window.location.href='portfolio.xhtml';"
+                        style="cursor:pointer; background:rgba(255,255,255,0.1); padding:8px 16px; border-radius:12px; display:flex; align-items:center; gap:8px;">
+                        <span>&#8592; Back</span>
+                    </div>
+                    <h2 style="margin:0; font-size:24px;">Analytics:
+                        #{portfolioBean.portfolioNames[portfolioBean.selectedPortfolioId]}</h2>
+                </div>
+            </div>
+
+            <h:panelGroup rendered="#{empty portfolioBean.selectedPortfolioId}">
+                <div class="bento-box glow-hover">
+                    <h3>No Portfolio Selected</h3>
+                    <p>Please select a portfolio from the main page.</p>
+                </div>
+            </h:panelGroup>
+
+            <h:panelGroup rendered="#{not empty portfolioBean.selectedPortfolioId}" layout="block"
+                class="bento-dashboard" style="display:grid; grid-template-columns: 2fr 1fr; gap:16px;">
+
+                <!-- CHARTS SECTION (Left, Large) -->
+                <div class="bento-box glow-hover" style="grid-column: 1 / 2; display:flex; flex-direction:column;">
+                    <div class="card-header">
+                        <h3>Price History</h3>
+                        <!-- Asset Selector -->
+                        <h:form>
+                            <h:selectOneMenu value="#{portfolioBean.selectedAnalyticsAssetSymbol}"
+                                styleClass="select-field" style="width:auto; padding:4px 8px;">
+                                <f:selectItems
+                                    value="#{webAppService.getPortfolioAssets(portfolioBean.selectedPortfolioId)}"
+                                    var="a" itemLabel="#{a.symbol} (#{a.type})" itemValue="#{a.symbol}" />
+                                <f:ajax listener="#{portfolioBean.generateChartData}" render="chartScriptPanel" />
+                            </h:selectOneMenu>
+                        </h:form>
+                    </div>
+
+                    <div style="flex:1; position:relative; min-height:300px;">
+                        <canvas id="priceChart"></canvas>
+                    </div>
+
+                    <h:panelGroup id="chartScriptPanel">
+                        <h:outputText value="&lt;script&gt;" escape="false" />
+                        <h:outputText value="
+                              if(window.myChart) { window.myChart.destroy(); }
+                              var ctx = document.getElementById('priceChart').getContext('2d');
+                              var chartData = #{portfolioBean.chartDataJson};
+                              
+                              window.myChart = new Chart(ctx, {
+                                  type: 'line',
+                                  data: chartData,
+                                  options: {
+                                      responsive: true,
+                                      maintainAspectRatio: false,
+                                      interaction: { mode: 'index', intersect: false },
+                                      plugins: {
+                                          legend: { labels: { color: 'white' } }
+                                      },
+                                      scales: {
+                                          x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: 'rgba(255,255,255,0.7)' } },
+                                          y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: 'rgba(255,255,255,0.7)' } }
+                                      }
+                                  }
+                              });
+                          " escape="false" />
+                        <h:outputText value="&lt;/script&gt;" escape="false" />
+                    </h:panelGroup>
+                </div>
+
+                <!-- METRICS SUMMARY (Right, Stacked) -->
+                <div class="bento-sidebar" style="grid-column: 2 / 3;">
+
+                    <!-- Total Value -->
+                    <div class="bento-box glow-hover"
+                        style="display:flex; flex-direction:column; justify-content:center;">
+                        <h3 style="font-size:16px; opacity:0.8;">Total Valuation</h3>
+                        <h:outputText value="#{portfolioBean.formattedTotalPortfolioValue}"
+                            style="font-size:32px; font-weight:700; background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" />
+                    </div>
+
+                    <!-- Realized PnL (Closed Positions) -->
+                    <div class="bento-box glow-hover">
+                        <h3 style="font-size:16px; opacity:0.8;">Realized PnL</h3>
+                        <h:outputText value="#{portfolioBean.realizedPnl}"
+                            style="font-size:28px; font-weight:600; color: #{portfolioBean.realizedPnl >= 0 ? '#30d158' : '#ff453a'};">
+                            <f:convertNumber type="currency" currencyCode="USD" />
+                        </h:outputText>
+                        <p class="bento-description">Profit/Loss from sold assets</p>
+                    </div>
+
+                </div>
+
+                <!-- ASSETS BREAKDOWN TABLE (Bottom, Full Width) -->
+                <div class="bento-box glow-hover" style="grid-column: 1 / -1; margin-top:0;">
+                    <h3 style="margin-bottom:16px;">Holdings Performance</h3>
+                    <table style="width:100%; border-collapse:separate; border-spacing:0 8px; font-size:14px;">
+                        <thead>
+                            <tr style="text-align:left; opacity:0.7;">
+                                <th>Asset</th>
+                                <th style="text-align:right;">Qty</th>
+                                <th style="text-align:right;">Avg Buy Price</th>
+                                <th style="text-align:right;">Current Price</th>
+                                <th style="text-align:right;">Market Value</th>
+                                <th style="text-align:right;">Unrealized PnL</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <ui:repeat value="#{webAppService.getPortfolioAssets(portfolioBean.selectedPortfolioId)}"
+                                var="asset">
+                                <tr style="background:rgba(255,255,255,0.05); border-radius:8px;">
+                                    <td style="padding:12px; border-radius:8px 0 0 8px;">
+                                        <strong>#{asset.symbol}</strong> <span
+                                            style="opacity:0.6; font-size:12px;">(#{asset.type})</span>
+                                    </td>
+                                    <td style="text-align:right; padding:12px;">
+                                        <h:outputText value="#{asset.quantity}">
+                                            <f:convertNumber pattern="#,##0.00" />
+                                        </h:outputText>
+                                    </td>
+                                    <td style="text-align:right; padding:12px;">
+                                        <h:outputText value="#{asset.averageBuyPrice}">
+                                            <f:convertNumber type="currency" currencyCode="USD" />
+                                        </h:outputText>
+                                    </td>
+                                    <td style="text-align:right; padding:12px;">
+                                        <h:outputText value="#{asset.unitPrice}">
+                                            <f:convertNumber type="currency" currencyCode="USD" />
+                                        </h:outputText>
+                                    </td>
+                                    <td style="text-align:right; padding:12px;">
+                                        <h:outputText value="#{asset.totalValue}">
+                                            <f:convertNumber type="currency" currencyCode="USD" />
+                                        </h:outputText>
+                                    </td>
+                                    <td style="text-align:right; padding:12px; border-radius:0 8px 8px 0;">
+                                        <h:outputText value="#{asset.pnl}"
+                                            style="font-weight:600; color: #{asset.pnl >= 0 ? '#30d158' : '#ff453a'};">
+                                            <f:convertNumber type="currency" currencyCode="USD" />
+                                        </h:outputText>
+                                    </td>
+                                </tr>
+                            </ui:repeat>
+                        </tbody>
+                    </table>
+                </div>
+
+            </h:panelGroup>
+
+        </div>
+    </ui:define>
+</ui:composition>
