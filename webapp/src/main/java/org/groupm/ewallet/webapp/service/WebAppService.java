@@ -9,6 +9,8 @@ import org.groupm.ewallet.webapp.model.LocalTransaction;
 import org.groupm.ewallet.webapp.model.PortfolioTrade;
 
 import java.util.List;
+import java.util.Map;
+import java.time.LocalDate;
 
 /**
  * Central application service facade.
@@ -54,9 +56,26 @@ public class WebAppService {
         return backendApi.getWealthForUser(userId);
     }
 
-    // ============================================================
-    // TRANSACTIONS & TRANSFERS
-    // ============================================================
+    @Inject
+    private WealthCalculatorService wealthCalculator;
+
+    // ...
+
+    /**
+     * Calculates the historical evolution of the user's total portfolio value.
+     */
+    public Map<LocalDate, Double> getPortfolioHistory(String userId, int days) {
+        // Delegate to dedicated service
+        return wealthCalculator.calculatePortfolioHistory(userId, days, getWealthForUser(userId));
+    }
+
+    /**
+     * Calculates the historical evolution of the user's total cash balance.
+     */
+    public Map<LocalDate, Double> getCashHistory(String userId, int days) {
+        // Delegate to dedicated service
+        return wealthCalculator.calculateCashHistory(userId, days);
+    }
 
     public boolean makeTransfer(String fromAccount, String toAccount, double amount) {
         return backendApi.makeTransfer(fromAccount, toAccount, amount);
@@ -81,6 +100,15 @@ public class WebAppService {
     public boolean addAssetToPortfolio(int portfolioId, String name, String type,
             double qty, double unitPrice, String symbol) {
         return backendApi.addAssetToPortfolio(portfolioId, name, type, qty, unitPrice, symbol);
+    }
+
+    public List<org.groupm.ewallet.webapp.model.PortfolioAsset> getAllUserAssets(String userId) {
+        List<org.groupm.ewallet.webapp.model.PortfolioAsset> allAssets = new java.util.ArrayList<>();
+        List<Integer> portfolios = getPortfoliosForUser(userId);
+        for (Integer pid : portfolios) {
+            allAssets.addAll(getPortfolioAssets(pid));
+        }
+        return allAssets;
     }
 
     // ============================================================

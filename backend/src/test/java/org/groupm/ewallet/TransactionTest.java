@@ -52,8 +52,8 @@ public class TransactionTest {
     void testFormattedTimestamp() {
         Transaction txn = new Transaction("TXN-3", "deposit", 50.0, "Test format date");
         String formatted = txn.getFormattedTimestamp();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        LocalDateTime parsed = LocalDateTime.parse(formatted, formatter);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        java.time.LocalDate parsed = java.time.LocalDate.parse(formatted, formatter);
 
         System.out.println("=== Test de formatage de la date ===");
         System.out.println("Horodatage formaté : " + formatted);

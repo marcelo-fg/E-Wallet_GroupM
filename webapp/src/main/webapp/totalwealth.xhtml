@@ -1,234 +1,251 @@
-<ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="jakarta.faces.html"
-                xmlns:ui="jakarta.faces.facelets"
-                xmlns:f="jakarta.faces.core"
-                template="/templates/layout.xhtml">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core" xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    template="/templates/layout.xhtml">
 
-    <ui:define name="pageStyle">
-        <style>
-            body.dashboard-page {
-                background: url("#{request.contextPath}/resources/images/bg-dashboard_1.png") center/cover no-repeat fixed !important;
-            }
-            
-            .wealth-summary {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 24px;
-                padding: 20px 30px;
-                background: rgba(0, 0, 0, 0.55);
-                border-radius: 18px;
-                border: 1px solid rgba(255, 255, 255, 0.12);
-                backdrop-filter: blur(14px);
-            }
-            
-            .wealth-metric {
-                display: flex;
-                flex-direction: column;
-            }
-            
-            .wealth-label {
-                font-size: 14px;
-                opacity: 0.7;
-                margin-bottom: 5px;
-            }
-            
-            .wealth-value {
-                font-size: 24px;
-                font-weight: 700;
-                color: #fff;
-            }
-            
-            .wealth-value.total {
-                font-size: 32px;
-                background: linear-gradient(90deg, #0062ff, #13d6b1);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-            }
-            
-            .chart-grid {
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: 24px;
-            }
-            
-            .chart-card {
-                background: rgba(0, 0, 0, 0.55);
-                border-radius: 18px;
-                padding: 20px;
-                border: 1px solid rgba(255, 255, 255, 0.12);
-                backdrop-filter: blur(14px);
-            }
-            
-            .chart-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 15px;
-            }
-            
-            .chart-title {
-                margin: 0;
-                font-size: 18px;
-                font-weight: 600;
-            }
-            
-            .chart-container {
-                position: relative;
-                height: 300px;
-                width: 100%;
-            }
-        </style>
-    </ui:define>
-
-    <ui:define name="title">
-        Total Wealth - WealthMate
-    </ui:define>
+    <ui:define name="title">Total Wealth - WealthMate</ui:define>
 
     <ui:define name="content">
-        
-        <!-- GLOBAL SUMMARY -->
-        <div class="wealth-summary">
-            <div class="wealth-metric">
-                <span class="wealth-label">Total Net Worth</span>
-                <span class="wealth-value total">
-                    <h:outputText value="#{totalWealthBean.totalNetWorth}">
-                        <f:convertNumber type="currency" currencySymbol="$" maxFractionDigits="2"/>
-                    </h:outputText>
-                </span>
-            </div>
-            <div class="wealth-metric">
-                <span class="wealth-label">Cash Balance</span>
-                <span class="wealth-value">
-                    <h:outputText value="#{totalWealthBean.totalCash}">
-                        <f:convertNumber type="currency" currencySymbol="$" maxFractionDigits="2"/>
-                    </h:outputText>
-                </span>
-            </div>
-            <div class="wealth-metric">
-                <span class="wealth-label">Crypto Assets</span>
-                <span class="wealth-value">
-                    <h:outputText value="#{totalWealthBean.totalCrypto}">
-                        <f:convertNumber type="currency" currencySymbol="$" maxFractionDigits="2"/>
-                    </h:outputText>
-                </span>
-            </div>
-            <div class="wealth-metric">
-                <span class="wealth-label">Stock Portfolio</span>
-                <span class="wealth-value">
-                    <h:outputText value="#{totalWealthBean.totalStocks}">
-                        <f:convertNumber type="currency" currencySymbol="$" maxFractionDigits="2"/>
-                    </h:outputText>
-                </span>
-            </div>
-        </div>
-
-        <!-- CHARTS GRID -->
-        <div class="chart-grid">
-            
-            <!-- CASH CHART -->
-            <div class="chart-card">
-                <div class="chart-header">
-                    <h3 class="chart-title">Cash Evolution (30 Days)</h3>
-                </div>
-                <div class="chart-container">
-                    <canvas id="cashChart"></canvas>
-                </div>
-            </div>
-
-            <!-- CRYPTO CHART -->
-            <div class="chart-card">
-                <div class="chart-header">
-                    <h3 class="chart-title">Crypto Portfolio Performance</h3>
-                </div>
-                <div class="chart-container">
-                    <canvas id="cryptoChart"></canvas>
-                </div>
-            </div>
-
-            <!-- STOCKS CHART -->
-            <div class="chart-card">
-                <div class="chart-header">
-                    <h3 class="chart-title">Stocks Portfolio Performance</h3>
-                </div>
-                <div class="chart-container">
-                    <canvas id="stocksChart"></canvas>
-                </div>
-            </div>
-            
-        </div>
-
-        <!-- Chart.js from CDN -->
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                
-                // Helper to create charts
-                function createLineChart(canvasId, label, color, jsonData) {
-                    var ctx = document.getElementById(canvasId);
-                    if (ctx) {
-                        new Chart(ctx.getContext('2d'), {
-                            type: 'line',
-                            data: {
-                                labels: jsonData.labels,
-                                datasets: [{
-                                    label: label,
-                                    data: jsonData.data,
-                                    borderColor: color,
-                                    backgroundColor: color + '20', // Transparent fill
-                                    borderWidth: 2,
-                                    tension: 0.4, // Smooth curves
-                                    fill: true,
-                                    pointRadius: 0,
-                                    pointHoverRadius: 6
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: { display: false },
-                                    tooltip: {
-                                        mode: 'index',
-                                        intersect: false,
-                                        backgroundColor: 'rgba(0,0,0,0.8)',
-                                        titleColor: '#fff',
-                                        bodyColor: '#fff'
-                                    }
-                                },
-                                scales: {
-                                    x: {
-                                        grid: { display: false },
-                                        ticks: { color: 'rgba(255,255,255,0.5)' }
-                                    },
-                                    y: {
-                                        grid: { color: 'rgba(255,255,255,0.05)' },
-                                        ticks: { color: 'rgba(255,255,255,0.5)' }
-                                    }
-                                },
-                                interaction: {
-                                    mode: 'nearest',
-                                    axis: 'x',
-                                    intersect: false
-                                }
-                            }
-                        });
-                    }
+        <style>
+            :root {
+                --glass-bg: rgba(255, 255, 255, 0.05);
+                --glass-border: rgba(255, 255, 255, 0.1);
+                --text-primary: #ffffff;
+                --text-secondary: #a0a0a0;
+                --accent-color: #f7b924;
+                /* Gold */
+                --chart-color-1: #13d6b1;
+                /* Teal */
+                --chart-color-2: #0062ff;
+                /* Blue */
+                --chart-color-3: #ffce56;
+                /* Yellow */
+            }
+
+            .wealth-dashboard {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px;
+                color: var(--text-primary);
+                font-family: 'Inter', sans-serif;
+            }
+
+            /* Header Section */
+            .wealth-header {
+                display: flex;
+                flex-direction: column;
+                margin-bottom: 10px;
+            }
+
+            .total-label {
+                font-size: 1rem;
+                color: var(--text-secondary);
+                margin-bottom: 5px;
+            }
+
+            .total-amount {
+                font-size: 2.5rem;
+                font-weight: 700;
+                background: linear-gradient(90deg, #fff, #ccc);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            /* Main Grid Layout */
+            .charts-container {
+                display: grid;
+                grid-template-columns: 2fr 1fr;
+                /* 2/3 and 1/3 ratio */
+                gap: 20px;
+                height: 500px;
+            }
+
+            /* Glassmorphism Cards */
+            .glass-card {
+                background: var(--glass-bg);
+                border: 1px solid var(--glass-border);
+                border-radius: 16px;
+                padding: 24px;
+                display: flex;
+                flex-direction: column;
+                backdrop-filter: blur(10px);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+
+            .card-title {
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin-bottom: 20px;
+                color: #e0e0e0;
+            }
+
+            .chart-wrapper {
+                flex-grow: 1;
+                position: relative;
+                width: 100%;
+                height: 100%;
+            }
+
+            /* Responsive */
+            @media (max-width: 900px) {
+                .charts-container {
+                    grid-template-columns: 1fr;
+                    /* Stack on mobile */
+                    height: auto;
                 }
 
-                // Inject Data from Bean
-                var cashData = #{totalWealthBean.cashHistoryJson};
-                var cryptoData = #{totalWealthBean.cryptoHistoryJson};
-                var stocksData = #{totalWealthBean.stocksHistoryJson};
+                .glass-card {
+                    height: 400px;
+                }
+            }
+        </style>
 
-                // Initialize Charts
-                createLineChart('cashChart', 'Cash Balance', '#13d6b1', cashData);
-                createLineChart('cryptoChart', 'Crypto Value', '#ffce56', cryptoData);
-                createLineChart('stocksChart', 'Stocks Value', '#0062ff', stocksData);
+        <div class="wealth-dashboard">
+            <!-- Header -->
+            <div class="wealth-header">
+                <span class="total-label">Total Net Worth</span>
+                <span class="total-amount">
+                    <h:outputText value="#{totalWealthBean.totalNetWorth}">
+                        <f:convertNumber type="currency" currencySymbol="$" maxFractionDigits="2" />
+                    </h:outputText>
+                </span>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="charts-container">
+                <!-- 1. Left: Line Chart (Net Worth) -->
+                <div class="glass-card">
+                    <div class="card-title">Total Net Worth Evolution</div>
+                    <div class="chart-wrapper">
+                        <canvas id="netWorthChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 2. Right: Donut Chart (Wealth Breakdown) -->
+                <div class="glass-card">
+                    <div class="card-title">Total Wealth Breakdown</div>
+                    <div class="chart-wrapper">
+                        <canvas id="wealthDonutChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden Data Containers for JSON -->
+        <div id="netWorthData" style="display:none;">
+            <h:outputText value="#{totalWealthBean.netWorthHistoryJson}" escape="false" />
+        </div>
+        <div id="wealthDistData" style="display:none;">
+            <h:outputText value="#{totalWealthBean.wealthDistributionJson}" escape="false" />
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                // Read JSON from hidden divs (Safe approach)
+                const nwRaw = document.getElementById('netWorthData').textContent;
+                const distRaw = document.getElementById('wealthDistData').textContent;
+
+                const netWorthHistory = JSON.parse(nwRaw);
+                const wealthDistribution = JSON.parse(distRaw);
+                // [Cash, Stocks, Crypto, ETFs]
+
+                // --- 1. Net Worth Line Chart ---
+                const ctxLine = document.getElementById('netWorthChart').getContext('2d');
+
+                // Gradient for fill
+                let gradient = ctxLine.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, 'rgba(247, 185, 36, 0.2)'); // Gold alpha
+                gradient.addColorStop(1, 'rgba(247, 185, 36, 0.0)');
+
+                new Chart(ctxLine, {
+                    type: 'line',
+                    data: {
+                        labels: netWorthHistory.labels,
+                        datasets: [{
+                            label: 'Net Worth',
+                            data: netWorthHistory.data,
+                            borderColor: '#f7b924', // Gold
+                            backgroundColor: gradient,
+                            borderWidth: 2,
+                            pointRadius: 0, // Smooth line without dots usually cleaner
+                            pointHoverRadius: 5,
+                            fill: true,
+                            tension: 0.4 // Smooth curve
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: 'rgba(255,255,255,0.1)',
+                                borderWidth: 1
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false, drawBorder: false },
+                                ticks: { color: '#666', maxTicksLimit: 10 }
+                            },
+                            y: {
+                                grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
+                                ticks: { color: '#666' }
+                            }
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false
+                        }
+                    }
+                });
+
+                // --- 2. Wealth Breakdown Donut Chart ---
+                const ctxDonut = document.getElementById('wealthDonutChart').getContext('2d');
+                new Chart(ctxDonut, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Cash', 'Stocks', 'Crypto', 'ETFs'],
+                        datasets: [{
+                            data: wealthDistribution,
+                            backgroundColor: [
+                                '#13d6b1', // Teal (Cash)
+                                '#0062ff', // Blue (Stocks)
+                                '#ffce56', // Yellow (Crypto)
+                                '#9b59b6'  // Purple (ETFs)
+                            ],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%', // Thinner ring
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#a0a0a0',
+                                    usePointStyle: true,
+                                    padding: 20,
+                                    font: { size: 12 }
+                                }
+                            }
+                        }
+                    }
+                });
             });
         </script>
 
     </ui:define>
-
 </ui:composition>
