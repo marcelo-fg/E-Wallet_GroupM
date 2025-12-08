@@ -12,6 +12,10 @@
         </style>
     </ui:define>
 
+    <f:metadata>
+        <f:event type="preRenderView" listener="#{portfolioBean.ensureAnalyticsData}" />
+    </f:metadata>
+
     <ui:define name="content">
         <div class="page-content portfolio-page" style="padding-top: 70px;">
 
@@ -35,81 +39,250 @@
             </h:panelGroup>
 
             <h:panelGroup rendered="#{not empty portfolioBean.selectedPortfolioId}" layout="block"
-                class="bento-dashboard" style="display:grid; grid-template-columns: 2fr 1fr; gap:16px;">
+                class="portfolio-dashboard">
 
-                <!-- CHARTS SECTION (Left, Large) -->
-                <div class="bento-box glow-hover" style="grid-column: 1 / 2; display:flex; flex-direction:column;">
-                    <div class="card-header">
-                        <h3>Price History</h3>
-                        <!-- Asset Selector -->
-                        <h:form>
-                            <h:selectOneMenu value="#{portfolioBean.selectedAnalyticsAssetSymbol}"
-                                styleClass="select-field" style="width:auto; padding:4px 8px;">
-                                <f:selectItems
-                                    value="#{webAppService.getPortfolioAssets(portfolioBean.selectedPortfolioId)}"
-                                    var="a" itemLabel="#{a.symbol} (#{a.type})" itemValue="#{a.symbol}" />
-                                <f:ajax listener="#{portfolioBean.generateChartData}" render="chartScriptPanel" />
-                            </h:selectOneMenu>
-                        </h:form>
+                <!-- Styles for Flip Effect -->
+                <style>
+                    /* The external grid matches the previous style */
+                    .analytics-grid {
+                        display: grid;
+                        grid-template-columns: 3fr 1fr;
+                        gap: 16px;
+                    }
+
+                    /* 3D Flip Container */
+                    .flip-container {
+                        perspective: 1000px;
+                        width: 100%;
+                        height: 450px;
+                        /* Fixed height for consistent flip */
+                        position: relative;
+                    }
+
+                    /* The Flipper (Inner) */
+                    .flipper {
+                        width: 100%;
+                        height: 100%;
+                        transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                        transform-style: preserve-3d;
+                        position: relative;
+                    }
+
+                    /* Flip State */
+                    .flip-container.flipped .flipper {
+                        transform: rotateY(180deg);
+                    }
+
+                    /* Common Face Styles */
+                    .front,
+                    .back {
+                        backface-visibility: hidden;
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        /* Inherit bento styles manually since we are inside f:panelGroup */
+                        background: rgba(20, 20, 30, 0.8);
+                        backdrop-filter: blur(10px);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-radius: 16px;
+                        padding: 20px;
+                        display: flex;
+                        flex-direction: column;
+                    }
+
+                    .back {
+                        transform: rotateY(180deg);
+                    }
+
+                    /* Toggle Button Style */
+                    .flip-toggle-btn {
+                        cursor: pointer;
+                        background: rgba(255, 255, 255, 0.1);
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        color: white;
+                        padding: 6px 12px;
+                        border-radius: 8px;
+                        font-size: 13px;
+                        transition: all 0.2s;
+                    }
+
+                    .flip-toggle-btn:hover {
+                        background: rgba(255, 255, 255, 0.2);
+                    }
+                </style>
+
+                <div class="analytics-grid">
+
+                    <!-- LEFT COL: FLIPPABLE CHART CARD -->
+                    <div class="flip-container" id="chartFlipCard">
+                        <div class="flipper">
+
+                            <!-- FRONT: PORTFOLIO VALUE -->
+                            <div class="front">
+                                <div class="card-header"
+                                    style="justify-content:space-between; display:flex; align-items:center;">
+                                    <div>
+                                        <h3>Portfolio Value Evolution</h3>
+                                        <h:outputText value="7 Day History" style="opacity:0.6; font-size:12px;" />
+                                    </div>
+                                    <button type="button" class="flip-toggle-btn" onclick="toggleFlip()">
+                                        Switch to Asset View &#8594;
+                                    </button>
+                                </div>
+                                <div style="flex:1; position:relative;">
+                                    <canvas id="portfolioChart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- BACK: ASSET PRICE -->
+                            <div class="back">
+                                <div class="card-header"
+                                    style="justify-content:space-between; display:flex; align-items:center;">
+                                    <div>
+                                        <h3>Asset Price History</h3>
+                                        <h:form id="assetSelectForm" style="display:inline-block; margin-left:8px;">
+                                            <h:selectOneMenu value="#{portfolioBean.selectedAnalyticsAssetSymbol}"
+                                                styleClass="select-field"
+                                                style="width:auto; padding:4px 8px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:4px;">
+                                                <f:selectItems value="#{portfolioBean.analyticsAssets}" var="a"
+                                                    itemLabel="#{a.symbol}" itemValue="#{a.symbol}" />
+                                                <f:ajax listener="#{portfolioBean.generateAssetChartData}"
+                                                    render="chartScriptPanel" />
+                                            </h:selectOneMenu>
+                                        </h:form>
+                                    </div>
+                                    <button type="button" class="flip-toggle-btn" onclick="toggleFlip()">
+                                        &#8592; Back to Portfolio
+                                    </button>
+                                </div>
+                                <div style="flex:1; position:relative;">
+                                    <canvas id="assetChart"></canvas>
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
 
-                    <div style="flex:1; position:relative; min-height:300px;">
-                        <canvas id="priceChart"></canvas>
-                    </div>
+                    <!-- RIGHT COL: METRICS SIDEBAR (Standard Position) -->
+                    <div class="bento-sidebar" style="display:flex; flex-direction:column; gap:16px;">
+                        <!-- Total Value -->
+                        <div class="bento-box glow-hover"
+                            style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                            <h3 style="font-size:16px; opacity:0.8; margin-bottom:8px;">Total Valuation</h3>
+                            <h:outputText value="#{portfolioBean.formattedTotalPortfolioValue}"
+                                style="font-size:32px; font-weight:700; background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" />
+                        </div>
 
-                    <h:panelGroup id="chartScriptPanel">
-                        <h:outputText value="&lt;script&gt;" escape="false" />
-                        <h:outputText value="
-                              if(window.myChart) { window.myChart.destroy(); }
-                              var ctx = document.getElementById('priceChart').getContext('2d');
-                              var chartData = #{portfolioBean.chartDataJson};
-                              
-                              window.myChart = new Chart(ctx, {
-                                  type: 'line',
-                                  data: chartData,
-                                  options: {
-                                      responsive: true,
-                                      maintainAspectRatio: false,
-                                      interaction: { mode: 'index', intersect: false },
-                                      plugins: {
-                                          legend: { labels: { color: 'white' } }
-                                      },
-                                      scales: {
-                                          x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: 'rgba(255,255,255,0.7)' } },
-                                          y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: 'rgba(255,255,255,0.7)' } }
-                                      }
-                                  }
-                              });
-                          " escape="false" />
-                        <h:outputText value="&lt;/script&gt;" escape="false" />
-                    </h:panelGroup>
+                        <!-- Realized PnL -->
+                        <div class="bento-box glow-hover"
+                            style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                            <h3 style="font-size:16px; opacity:0.8; margin-bottom:8px;">Realized PnL</h3>
+                            <h:outputText value="#{portfolioBean.realizedPnl}"
+                                style="font-size:28px; font-weight:600; color: #{portfolioBean.realizedPnl >= 0 ? '#30d158' : '#ff453a'};">
+                                <f:convertNumber type="currency" currencyCode="USD" />
+                            </h:outputText>
+                            <p class="bento-description">Profit/Loss from sold assets</p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- METRICS SUMMARY (Right, Stacked) -->
-                <div class="bento-sidebar" style="grid-column: 2 / 3;">
+                <script>
+                    function toggleFlip() {
+                        var card = document.getElementById('chartFlipCard');
+                        card.classList.toggle('flipped');
+                    }
+                </script>
 
-                    <!-- Total Value -->
-                    <div class="bento-box glow-hover"
-                        style="display:flex; flex-direction:column; justify-content:center;">
-                        <h3 style="font-size:16px; opacity:0.8;">Total Valuation</h3>
-                        <h:outputText value="#{portfolioBean.formattedTotalPortfolioValue}"
-                            style="font-size:32px; font-weight:700; background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" />
-                    </div>
+                <!-- JAVASCRIPT FOR CHARTS -->
+                <h:panelGroup id="chartScriptPanel">
 
-                    <!-- Realized PnL (Closed Positions) -->
-                    <div class="bento-box glow-hover">
-                        <h3 style="font-size:16px; opacity:0.8;">Realized PnL</h3>
-                        <h:outputText value="#{portfolioBean.realizedPnl}"
-                            style="font-size:28px; font-weight:600; color: #{portfolioBean.realizedPnl >= 0 ? '#30d158' : '#ff453a'};">
-                            <f:convertNumber type="currency" currencyCode="USD" />
-                        </h:outputText>
-                        <p class="bento-description">Profit/Loss from sold assets</p>
-                    </div>
+                    <!-- Hidden inputs to pass JSON safely -->
+                    <h:inputHidden id="pfChartJson" value="#{portfolioBean.portfolioChartJson}" />
+                    <h:inputHidden id="assetChartJson" value="#{portfolioBean.assetChartJson}" />
 
-                </div>
+                    <script type="text/javascript">
+                        //<![CDATA[
+                        document.addEventListener('DOMContentLoaded', function () {
+                            initCharts();
+                        });
+
+                        // Also call on AJAX updates
+                        if (document.readyState === 'complete') {
+                            initCharts();
+                        }
+
+                        function initCharts() {
+                            console.log('Initializing charts...');
+
+                            // Helper to read JSON from hidden field by partial ID
+                            function getJsonData(partialId) {
+                                // Use simple quotes for CSS selector
+                                var input = document.querySelector("input[id$='" + partialId + "']");
+                                if (input && input.value && input.value !== 'null') {
+                                    try {
+                                        return JSON.parse(input.value);
+                                    } catch (e) {
+                                        console.error('Error parsing JSON for ' + partialId, e);
+                                        return null;
+                                    }
+                                }
+                                return null;
+                            }
+
+                            // PORTFOLIO CHART
+                            var ctx1 = document.getElementById('portfolioChart');
+                            if (ctx1) {
+                                if (window.pfChart) { window.pfChart.destroy(); }
+                                var data1 = getJsonData('pfChartJson');
+                                if (data1) {
+                                    window.pfChart = new Chart(ctx1.getContext('2d'), {
+                                        type: 'line',
+                                        data: data1,
+                                        options: {
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+                                            interaction: { mode: 'index', intersect: false },
+                                            plugins: { legend: { labels: { color: 'white' } } },
+                                            scales: {
+                                                x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: 'rgba(255,255,255,0.7)' } },
+                                                y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: 'rgba(255,255,255,0.7)' } }
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+
+                            // ASSET CHART
+                            var ctx2 = document.getElementById('assetChart');
+                            if (ctx2) {
+                                if (window.assetChart) { window.assetChart.destroy(); }
+                                var data2 = getJsonData('assetChartJson');
+                                if (data2) {
+                                    window.assetChart = new Chart(ctx2.getContext('2d'), {
+                                        type: 'line',
+                                        data: data2,
+                                        options: {
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+                                            interaction: { mode: 'index', intersect: false },
+                                            plugins: { legend: { labels: { color: 'white' } } },
+                                            scales: {
+                                                x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: 'rgba(255,255,255,0.7)' } },
+                                                y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: 'rgba(255,255,255,0.7)' } }
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                        //]]>
+                    </script>
+                </h:panelGroup>
 
                 <!-- ASSETS BREAKDOWN TABLE (Bottom, Full Width) -->
-                <div class="bento-box glow-hover" style="grid-column: 1 / -1; margin-top:0;">
+                <div class="bento-box glow-hover" style="margin-top:24px;">
                     <h3 style="margin-bottom:16px;">Holdings Performance</h3>
                     <table style="width:100%; border-collapse:separate; border-spacing:0 8px; font-size:14px;">
                         <thead>
@@ -123,8 +296,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <ui:repeat value="#{webAppService.getPortfolioAssets(portfolioBean.selectedPortfolioId)}"
-                                var="asset">
+                            <ui:repeat value="#{portfolioBean.analyticsAssets}" var="asset">
                                 <tr style="background:rgba(255,255,255,0.05); border-radius:8px;">
                                     <td style="padding:12px; border-radius:8px 0 0 8px;">
                                         <strong>#{asset.symbol}</strong> <span
@@ -132,7 +304,7 @@
                                     </td>
                                     <td style="text-align:right; padding:12px;">
                                         <h:outputText value="#{asset.quantity}">
-                                            <f:convertNumber pattern="#,##0.00" />
+                                            <f:convertNumber pattern="#,##0.00######" />
                                         </h:outputText>
                                     </td>
                                     <td style="text-align:right; padding:12px;">

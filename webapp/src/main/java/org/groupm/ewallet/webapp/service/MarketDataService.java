@@ -41,4 +41,15 @@ public class MarketDataService {
             default -> 0.0;
         };
     }
+
+    /**
+     * Retrieves historical prices for a given asset.
+     */
+    public List<Double> getHistoricalPrices(String idOrSymbol, String type, int days) {
+        return switch (type.toLowerCase()) {
+            case "crypto" -> coinGecko.getHistoricalCryptoPrice(idOrSymbol, days);
+            case "stock", "etf" -> finnhub.getHistoricalStockPrice(idOrSymbol, days);
+            default -> List.of();
+        };
+    }
 }

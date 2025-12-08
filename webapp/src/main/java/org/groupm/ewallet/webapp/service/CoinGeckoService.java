@@ -75,4 +75,43 @@ public class CoinGeckoService {
             return 0.0;
         }
     }
+
+    /**
+     * Requests historical prices for a crypto asset.
+     * 
+     * @param apiId The CoinGecko API ID (e.g. "bitcoin")
+     * @param days  Number of days of history
+     * @return List of prices ordered by time
+     */
+    public List<Double> getHistoricalCryptoPrice(String apiId, int days) {
+        try {
+            Client client = ClientBuilder.newClient();
+            String url = API_URL + "/coins/" + apiId + "/market_chart?vs_currency=usd&days=" + days;
+
+            WebTarget target = client.target(url);
+            String json = target.request(MediaType.APPLICATION_JSON).get(String.class);
+
+            var reader = Json.createReader(new StringReader(json));
+            var obj = reader.readObject();
+            reader.close();
+
+            List<Double> prices = new ArrayList<>();
+
+            if (obj.containsKey("prices")) {
+                var priceArray = obj.getJsonArray("prices");
+                for (var p : priceArray) {
+                    var point = p.asJsonArray();
+                    // [timestamp, price]
+                    if (point.size() >= 2) {
+                        prices.add(point.getJsonNumber(1).doubleValue());
+                    }
+                }
+            }
+            return prices;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
 }

@@ -92,8 +92,11 @@ public class WebAppService {
     }
 
     public double getPriceForAsset(String idOrSymbol, String type) {
-        // Use cached price first to avoid hitting API rate limits
-        return priceCache.getCachedPrice(idOrSymbol, type);
+        return marketData.getPriceForAsset(idOrSymbol, type);
+    }
+
+    public List<Double> getHistoricalPrices(String idOrSymbol, String type, int days) {
+        return marketData.getHistoricalPrices(idOrSymbol, type, days);
     }
 
     // ============================================================
@@ -174,7 +177,8 @@ public class WebAppService {
     }
 
     public List<org.groupm.ewallet.webapp.model.PortfolioAsset> getPortfolioAssets(int portfolioId) {
-        return mockData.getPortfolioAssets(portfolioId);
+        // Switch from mock data to real backend data
+        return backendApi.getPortfolioAssetsFromBackend(portfolioId);
     }
 
     // ============================================================

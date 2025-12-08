@@ -99,6 +99,16 @@ public class Asset {
         this.unitValue = unitValue;
     }
 
+    // JSON-B Compatibility (Payara uses Yasson by default, which might ignore
+    // Jackson annotations)
+    public double getUnitPrice() {
+        return unitValue;
+    }
+
+    public void setUnitPrice(double unitPrice) {
+        this.unitValue = unitPrice;
+    }
+
     public double getQuantity() {
         return quantity;
     }

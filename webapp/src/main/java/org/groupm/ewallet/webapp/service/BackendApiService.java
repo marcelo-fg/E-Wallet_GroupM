@@ -476,6 +476,58 @@ public class BackendApiService {
     }
 
     /**
+     * Retrieves the list of assets for a given portfolio as rich objects.
+     */
+    public List<org.groupm.ewallet.webapp.model.PortfolioAsset> getPortfolioAssetsFromBackend(int portfolioId) {
+        try (Client client = ClientBuilder.newClient()) {
+
+            WebTarget target = client.target(BASE_URL + "/portfolios/" + portfolioId + "/assets");
+            Response res = target.request(MediaType.APPLICATION_JSON_TYPE).get();
+
+            if (res.getStatus() != 200) {
+                return List.of();
+            }
+
+            String json = res.readEntity(String.class);
+            var array = Json.createReader(new StringReader(json)).readArray();
+
+            List<org.groupm.ewallet.webapp.model.PortfolioAsset> out = new ArrayList<>();
+
+            for (var obj : array) {
+                var asset = obj.asJsonObject();
+                String symbol = asset.getString("symbol", "N/A");
+                String name = asset.getString("name", symbol);
+                String type = asset.getString("type", "");
+                double qty = asset.getJsonNumber("quantity").doubleValue();
+                double unitValue = asset.containsKey("unitValue") ? asset.getJsonNumber("unitValue").doubleValue()
+                        : 0.0;
+
+                // If unitValue is 0 (backend default), try to use unitPrice if available or
+                // fetch current price?
+                // For now, let's treat unitValue as the current market price or cost basis.
+                // The PortfolioAsset model expects: symbol, name, type, quantity, unitPrice
+                // (current market price ideally)
+
+                out.add(new org.groupm.ewallet.webapp.model.PortfolioAsset(
+                        portfolioId, // portfolioId
+                        name, // assetName
+                        symbol, // symbol
+                        type, // type
+                        qty, // quantity
+                        unitValue, // unitPrice
+                        java.time.LocalDateTime.now() // addedAt (fallback)
+                ));
+            }
+
+            return out;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
+        }
+    }
+
+    /**
      * Adds a new asset to the given portfolio in the backend.
      */
     public boolean addAssetToPortfolio(int portfolioId,

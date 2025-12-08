@@ -176,4 +176,51 @@ public class FinnhubService {
             return 0.0;
         }
     }
+
+    /**
+     * Requests historical prices for a stock/ETF asset using Candle endpoint.
+     * 
+     * @param symbol The ticker symbol
+     * @param days   Number of days of history (converted to 'count' or 'resolution'
+     *               logic for Finnhub)
+     *               Note: Finnhub free tier has limits. Using '/stock/candle'.
+     */
+    public List<Double> getHistoricalStockPrice(String symbol, int days) {
+        try {
+            if (API_KEY == null || API_KEY.isBlank()) {
+                return new ArrayList<>();
+            }
+
+            // Finnhub Candle: /stock/candle?symbol=AAPL&resolution=D&from=...&to=...
+            // Resolution 'D' = Daily.
+            long to = System.currentTimeMillis() / 1000;
+            long from = to - (days * 86400L);
+
+            Client client = ClientBuilder.newClient();
+            String url = API_URL + "/stock/candle?symbol=" + symbol + "&resolution=D&from=" + from + "&to=" + to
+                    + "&token=" + API_KEY;
+
+            WebTarget target = client.target(url);
+            String json = target.request(MediaType.APPLICATION_JSON).get(String.class);
+
+            var reader = Json.createReader(new StringReader(json));
+            var obj = reader.readObject();
+            reader.close();
+
+            List<Double> prices = new ArrayList<>();
+
+            if (obj.containsKey("c")) {
+                // "c" is an array of close prices
+                var closeArray = obj.getJsonArray("c");
+                for (var p : closeArray) {
+                    prices.add(p.toString().equals("null") ? 0.0 : Double.parseDouble(p.toString()));
+                }
+            }
+            return prices;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
 }
