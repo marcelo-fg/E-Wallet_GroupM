@@ -90,8 +90,8 @@ public class WealthCalculatorService {
         List<LocalAccount> accounts = backendApi.getAccountsForUser(userId);
         double currentTotalCash = accounts.stream().mapToDouble(LocalAccount::getBalance).sum();
 
-        // 2. Transactions
-        List<LocalTransaction> transactions = backendApi.getTransactionsForUser(userId);
+        // 2. Transactions - Create mutable copy before sorting
+        List<LocalTransaction> transactions = new java.util.ArrayList<>(backendApi.getTransactionsForUser(userId));
         transactions.sort(Comparator.comparing(LocalTransaction::getDateTime).reversed());
 
         // 3. Reconstruct

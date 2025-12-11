@@ -201,8 +201,11 @@
                             <!-- Montant -->
                             <div class="form-field">
                                 <h:outputLabel value="Amount" styleClass="field-label" />
-                                <h:inputText value="#{accountBean.amount}" styleClass="input-field">
+                                <h:inputText value="#{accountBean.amount}" styleClass="input-field" required="true"
+                                    requiredMessage="Amount is required"
+                                    validatorMessage="Please enter a valid positive amount">
                                     <f:convertNumber maxFractionDigits="2" type="number" />
+                                    <f:validateDoubleRange minimum="0.01" />
                                 </h:inputText>
                             </div>
 

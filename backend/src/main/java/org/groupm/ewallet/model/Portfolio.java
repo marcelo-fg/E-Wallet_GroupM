@@ -56,6 +56,17 @@ public class Portfolio {
         this.userID = userID;
     }
 
+    @Column(name = "name")
+    private String name;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public List<Asset> getAssets() {
         return assets;
     }

@@ -1,18 +1,141 @@
-<ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:h="jakarta.faces.html"
-                xmlns:ui="jakarta.faces.facelets"
-                template="/templates/layout.xhtml">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html" xmlns:ui="jakarta.faces.facelets"
+    template="/templates/layout.xhtml">
 
     <ui:define name="pageStyle">
         <style>
             body.dashboard-page {
                 background: url("#{request.contextPath}/resources/images/bg-dashboard_1.png") center/cover no-repeat fixed !important;
             }
+
             .chart-container {
                 position: relative;
                 height: 300px;
                 width: 100%;
                 margin-top: 20px;
+            }
+
+            /* iOS 18 Style Wealth Amount */
+            .wealth-amount {
+                font-size: 32px;
+                font-weight: 700;
+                color: rgba(255, 255, 255, 0.85);
+                letter-spacing: -0.5px;
+                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            }
+
+            /* Clickable Accounts Box */
+            .bento-box-link {
+                text-decoration: none;
+                display: block;
+                transition: all 0.2s ease;
+            }
+
+            .bento-box-link .bento-box {
+                cursor: pointer;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .bento-box-link:hover .bento-box {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            }
+
+            /* Accounts Summary */
+            .accounts-summary {
+                margin-top: 15px;
+            }
+
+            .account-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            }
+
+            .account-row:last-child {
+                border-bottom: none;
+            }
+
+            .account-name {
+                font-size: 14px;
+                color: rgba(255, 255, 255, 0.7);
+            }
+
+            .account-balance {
+                font-size: 15px;
+                font-weight: 600;
+                color: rgba(255, 255, 255, 0.9);
+            }
+
+            /* Add Favorite Button */
+            .add-favorite-btn {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.15);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                color: white;
+                font-size: 20px;
+                font-weight: 300;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .add-favorite-btn:hover {
+                background: rgba(255, 255, 255, 0.25);
+                transform: scale(1.1);
+            }
+
+            /* Transactions List */
+            .transactions-list {
+                margin-top: 15px;
+            }
+
+            .transaction-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            }
+
+            .transaction-item:last-child {
+                border-bottom: none;
+            }
+
+            .transaction-info {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .transaction-label {
+                font-size: 14px;
+                color: rgba(255, 255, 255, 0.8);
+                font-weight: 500;
+            }
+
+            .transaction-date {
+                font-size: 12px;
+                color: rgba(255, 255, 255, 0.4);
+            }
+
+            .transaction-amount {
+                font-size: 15px;
+                font-weight: 600;
+            }
+
+            .transaction-amount.positive {
+                color: #30d158;
+            }
+
+            .transaction-amount.negative {
+                color: rgba(255, 255, 255, 0.7);
             }
         </style>
     </ui:define>
@@ -26,9 +149,16 @@
 
             <!-- COLONNE GAUCHE : Total Wealth + GRAPHIQUE -->
             <div class="bento-box bento-main">
-                <h2>Total Wealth</h2>
-                <p class="bento-description">Overview of your complete financial portfolio</p>
-                
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h2>Total Wealth</h2>
+                        <p class="bento-description">Overview of your complete financial portfolio</p>
+                    </div>
+                    <div class="wealth-amount">
+                        $#{totalWealthBean.totalNetWorth}
+                    </div>
+                </div>
+
                 <div class="chart-container">
                     <canvas id="assetChart"></canvas>
                 </div>
@@ -36,19 +166,73 @@
 
             <!-- COLONNE DROITE : Cards existantes -->
             <div class="bento-sidebar">
-                <div class="bento-box">
-                    <h3>Accounts</h3>
-                    <p class="bento-description">Manage your bank accounts</p>
+                <!-- ACCOUNTS BOX - Cliquable -->
+                <h:form>
+                    <h:commandLink action="accounts" styleClass="bento-box-link">
+                        <div class="bento-box">
+                            <h3>Accounts</h3>
+                            <div class="accounts-summary">
+                                <ui:repeat value="#{accountBean.accounts}" var="account" varStatus="status">
+                                    <ui:fragment rendered="#{status.index lt 3}">
+                                        <div class="account-row">
+                                            <span class="account-name">#{account.name}</span>
+                                            <span class="account-balance">$#{account.balance}</span>
+                                        </div>
+                                    </ui:fragment>
+                                </ui:repeat>
+                                <ui:fragment rendered="#{accountBean.accounts.size() gt 3}">
+                                    <p style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.5);">
+                                        +#{accountBean.accounts.size() - 3} more accounts
+                                    </p>
+                                </ui:fragment>
+                                <ui:fragment rendered="#{empty accountBean.accounts}">
+                                    <p
+                                        style="text-align: center; color: rgba(255,255,255,0.4); margin-top: 20px; font-size: 14px;">
+                                        No accounts yet
+                                    </p>
+                                </ui:fragment>
+                            </div>
+                        </div>
+                    </h:commandLink>
+                </h:form>
+
+                <!-- FAVORITE ASSETS BOX -->
+                <div class="bento-box" style="position: relative;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Favorite Assets</h3>
+                        <button class="add-favorite-btn"
+                            onclick="alert('Feature coming soon: Add favorite assets!'); return false;">+</button>
+                    </div>
+                    <p class="bento-description" style="margin-top: 10px;">Your watched investments</p>
+                    <p style="text-align: center; color: rgba(255,255,255,0.4); margin-top: 20px; font-size: 14px;">
+                        No favorites yet. Click + to add!
+                    </p>
                 </div>
 
-                <div class="bento-box">
-                    <h3>Favorite Assets</h3>
-                    <p class="bento-description">Your watched investments</p>
-                </div>
-
+                <!-- RECENT TRANSACTIONS BOX -->
                 <div class="bento-box">
                     <h3>Recent Transactions</h3>
-                    <p class="bento-description">Latest activity</p>
+                    <div class="transactions-list">
+                        <ui:repeat value="#{transactionBean.allTransactions}" var="tx" varStatus="status">
+                            <ui:fragment rendered="#{status.index lt 5}">
+                                <div class="transaction-item">
+                                    <div class="transaction-info">
+                                        <span class="transaction-label">#{tx.sourceLabel}</span>
+                                        <span class="transaction-date">#{tx.formattedDateTime}</span>
+                                    </div>
+                                    <span class="transaction-amount #{tx.type == 'deposit' ? 'positive' : 'negative'}">
+                                        #{tx.type == 'deposit' ? '+' : '-'}$#{tx.amount}
+                                    </span>
+                                </div>
+                            </ui:fragment>
+                        </ui:repeat>
+                        <ui:fragment rendered="#{empty transactionBean.allTransactions}">
+                            <p
+                                style="text-align: center; color: rgba(255,255,255,0.4); margin-top: 20px; font-size: 14px;">
+                                No transactions yet
+                            </p>
+                        </ui:fragment>
+                    </div>
                 </div>
             </div>
 
@@ -59,16 +243,21 @@
 
         <!-- Script pour initialiser le graphique -->
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 var ctx = document.getElementById('assetChart');
                 if (ctx) {
                     var chart = new Chart(ctx.getContext('2d'), {
                         type: 'doughnut',
                         data: {
-                            labels: ['Cash', 'Stocks', 'Crypto'],
+                            labels: ['Cash', 'Stocks', 'Crypto', 'ETFs'],
                             datasets: [{
-                                data: [30, 50, 20],
-                                backgroundColor: ['#13d6b1', '#0062ff', '#ffce56'],
+                                data: [
+                                    #{ totalWealthBean.totalCash },
+                                    #{ totalWealthBean.totalStocks },
+                                    #{ totalWealthBean.totalCrypto },
+                                    #{ totalWealthBean.totalEtf }
+                                ],
+                                backgroundColor: ['#13d6b1', '#0062ff', '#ffce56', '#ff6384'],
                                 borderWidth: 0
                             }]
                         },
@@ -78,7 +267,30 @@
                             plugins: {
                                 legend: {
                                     position: 'bottom',
-                                    labels: { color: 'white' }
+                                    labels: {
+                                        color: 'white',
+                                        padding: 15,
+                                        font: {
+                                            size: 12,
+                                            family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    padding: 12,
+                                    cornerRadius: 8,
+                                    titleFont: {
+                                        size: 14
+                                    },
+                                    bodyFont: {
+                                        size: 13
+                                    },
+                                    callbacks: {
+                                        label: function (context) {
+                                            return context.label + ': $' + context.parsed.toFixed(2);
+                                        }
+                                    }
                                 }
                             }
                         }

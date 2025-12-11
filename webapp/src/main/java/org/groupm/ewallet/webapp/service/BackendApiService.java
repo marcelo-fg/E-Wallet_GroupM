@@ -383,17 +383,18 @@ public class BackendApiService {
     }
 
     /**
-     * Creates a new portfolio for the given user.
+     * Creates a new portfolio for the given user with an optional name.
      */
-    public Integer createPortfolioForUser(String userId) {
+    public Integer createPortfolioForUser(String userId, String name) {
         try (Client client = ClientBuilder.newClient()) {
-            WebTarget target = client.target(BASE_URL + "/portfolios");
+            String payload = String.format(
+                    "{\"userID\":\"%s\",\"name\":%s}",
+                    userId,
+                    name != null ? "\"" + name + "\"" : "null");
 
-            String payload = """
-                        {"userID":"%s"}
-                    """.formatted(userId);
-
-            Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(payload));
+            Response response = client.target(BASE_URL + "/portfolios")
+                    .request(MediaType.APPLICATION_JSON)
+                    .post(Entity.json(payload));
 
             if (response.getStatus() != 200 && response.getStatus() != 201) {
                 return null;
@@ -402,6 +403,35 @@ public class BackendApiService {
             String json = response.readEntity(String.class);
             var obj = Json.createReader(new StringReader(json)).readObject();
             return obj.getInt("id");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Gets portfolio details by ID.
+     */
+    public org.groupm.ewallet.webapp.model.Portfolio getPortfolioById(int portfolioId) {
+        try (Client client = ClientBuilder.newClient()) {
+            WebTarget target = client.target(BASE_URL + "/portfolios/" + portfolioId);
+            Response res = target.request(MediaType.APPLICATION_JSON_TYPE).get();
+
+            if (res.getStatus() != 200) {
+                return null;
+            }
+
+            String json = res.readEntity(String.class);
+            var obj = Json.createReader(new StringReader(json)).readObject();
+
+            int id = obj.getInt("id");
+            String userId = obj.getString("userID", null);
+            String name = obj.containsKey("name") && !obj.isNull("name")
+                    ? obj.getString("name")
+                    : null;
+
+            return new org.groupm.ewallet.webapp.model.Portfolio(id, userId, name);
 
         } catch (Exception e) {
             e.printStackTrace();

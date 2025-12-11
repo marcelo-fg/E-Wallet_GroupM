@@ -11,7 +11,8 @@ import java.io.Serializable;
 
 /**
  * Bean de présentation pour la gestion de l'authentification.
- * Responsable du login/logout et du stockage minimal d'informations utilisateur en session.
+ * Responsable du login/logout et du stockage minimal d'informations utilisateur
+ * en session.
  */
 @Named
 @SessionScoped
@@ -36,12 +37,30 @@ public class LoginBean implements Serializable {
      * @return outcome de navigation JSF
      */
     public String login() {
+        // Validation du format email
+        if (email == null || email.isBlank()) {
+            addErrorMessage("Email requis", "Veuillez entrer votre adresse email.");
+            return null;
+        }
+
+        if (!isValidEmail(email)) {
+            addErrorMessage("Email invalide", "Le format de l'adresse email n'est pas valide.");
+            return null;
+        }
+
+        if (password == null || password.isBlank()) {
+            addErrorMessage("Mot de passe requis", "Veuillez entrer votre mot de passe.");
+            return null;
+        }
+
         // TODO : renforcer l'authentification via le backend (hash, rôles, etc.)
         String userId = webAppService.login(email, password);
         boolean success = (userId != null && !userId.isBlank());
 
         if (!success) {
-            return "login.xhtml?error=true";
+            addErrorMessage("Échec de connexion",
+                    "Email ou mot de passe incorrect. Veuillez réessayer.");
+            return null;
         }
 
         FacesContext context = FacesContext.getCurrentInstance();
@@ -61,6 +80,37 @@ public class LoginBean implements Serializable {
         session.setAttribute("userEmail", email);
 
         return "dashboard.xhtml?faces-redirect=true";
+    }
+
+    /**
+     * Validation simple du format email.
+     * 
+     * @param email L'adresse email à valider
+     * @return true si le format est valide, false sinon
+     */
+    private boolean isValidEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        // Pattern simple et robuste pour validation email
+        return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    }
+
+    /**
+     * Ajoute un message d'erreur au contexte JSF.
+     * 
+     * @param summary Titre du message
+     * @param detail  Description détaillée
+     */
+    private void addErrorMessage(String summary, String detail) {
+        FacesContext context = FacesContext.getCurrentInstance();
+        if (context != null) {
+            context.addMessage(null,
+                    new jakarta.faces.application.FacesMessage(
+                            jakarta.faces.application.FacesMessage.SEVERITY_ERROR,
+                            summary,
+                            detail));
+        }
     }
 
     /**

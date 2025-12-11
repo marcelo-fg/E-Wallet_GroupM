@@ -34,12 +34,9 @@
         </nav>
 
         <main class="page-content">
-            <!-- Global Flash Messages -->
-            <h:messages id="globalMessages" globalOnly="true"
-                style="list-style:none; margin:0 0 20px 0; padding:15px; border-radius:8px;"
-                errorStyle="background:rgba(255,59,48,0.2); color:#ff453a; border:1px solid #ff453a;"
-                infoStyle="background:rgba(48,209,88,0.2); color:#30d158; border:1px solid #30d158;"
-                warnStyle="background:rgba(255,159,10,0.2); color:#ff9f0a; border:1px solid #ff9f0a;" />
+            <!-- Global Flash Messages with Bento Box Styling -->
+            <h:messages id="globalMessages" layout="table" globalOnly="true" styleClass="error-message-container"
+                errorClass="error-message" warnClass="warning-message" infoClass="success-message" />
             <ui:insert name="content" />
         </main>
 

@@ -187,8 +187,17 @@ public class PortfolioBean implements Serializable {
             return;
         }
         portfolioIds = webAppService.getPortfoliosForUser(userId);
-        for (Integer id : portfolioIds) {
-            portfolioNames.putIfAbsent(id, "Portfolio " + id);
+
+        // Load portfolio names from backend instead of using defaults
+        if (portfolioIds != null) {
+            for (Integer id : portfolioIds) {
+                org.groupm.ewallet.webapp.model.Portfolio p = webAppService.getPortfolioById(id);
+                if (p != null && p.getName() != null) {
+                    portfolioNames.put(id, p.getName());
+                } else {
+                    portfolioNames.putIfAbsent(id, "Portfolio " + id);
+                }
+            }
         }
     }
 
@@ -351,17 +360,16 @@ public class PortfolioBean implements Serializable {
             return null;
         }
 
-        Integer newPortfolioId = webAppService.createPortfolioForUser(userId);
+        // Prepare name: use user input or let backend generate default
+        String name = (portfolioName != null && !portfolioName.isBlank())
+                ? portfolioName
+                : null;
+
+        Integer newPortfolioId = webAppService.createPortfolioForUser(userId, name);
 
         if (newPortfolioId != null) {
             loadPortfolios();
-            if (!portfolioIds.isEmpty()) {
-                String name = (portfolioName != null && !portfolioName.isBlank())
-                        ? portfolioName
-                        : "Portfolio " + newPortfolioId;
-                portfolioNames.put(newPortfolioId, name);
-                selectedPortfolioId = newPortfolioId;
-            }
+            selectedPortfolioId = newPortfolioId;
             portfolioName = null;
             loadAssets();
         }
@@ -446,18 +454,21 @@ public class PortfolioBean implements Serializable {
 
         if (selectedPortfolioId == null) {
             System.out.println("[PortfolioBean] ERROR: No portfolio selected");
-            addGlobalMessage("No portfolio selected", "Please select or create a portfolio first.");
+            addGlobalMessage(jakarta.faces.application.FacesMessage.SEVERITY_WARN, "No portfolio selected",
+                    "Please select or create a portfolio first.");
             return null;
         }
         if (selectedExternalSymbol == null || selectedExternalName == null) {
             System.out.println("[PortfolioBean] ERROR: No asset selected");
-            addGlobalMessage("No asset selected", "Please select an asset from the dropdown.");
+            addGlobalMessage(jakarta.faces.application.FacesMessage.SEVERITY_WARN, "No asset selected",
+                    "Please select an asset from the dropdown.");
             return null;
         }
 
         if (assetQuantity <= 0.0) {
             System.out.println("[PortfolioBean] ERROR: Invalid quantity");
-            addGlobalMessage("Invalid quantity", "Quantity must be greater than zero.");
+            addGlobalMessage(jakarta.faces.application.FacesMessage.SEVERITY_ERROR, "Invalid quantity",
+                    "Quantity must be greater than zero.");
             return null;
         }
 
@@ -466,7 +477,8 @@ public class PortfolioBean implements Serializable {
         }
         if (marketUnitPrice <= 0.0) {
             System.out.println("[PortfolioBean] ERROR: Could not fetch price");
-            addGlobalMessage("Price unavailable", "Could not fetch market price for this asset.");
+            addGlobalMessage(jakarta.faces.application.FacesMessage.SEVERITY_ERROR, "Price unavailable",
+                    "Could not fetch market price for this asset.");
             return null;
         }
 
@@ -568,13 +580,37 @@ public class PortfolioBean implements Serializable {
             sellMarketPrice = 0.0;
             return;
         }
-        String typeToUse = (selectedType != null && !selectedType.isBlank())
-                ? selectedType
-                : "stock";
+
+        // DETECT asset type from portfolio instead of using selectedType
+        // This fixes the bug where crypto assets (like ETH) were being priced as stocks
+        String typeToUse = detectAssetType(selectedHeldSymbol);
+
         double price = webAppService.getPriceForAsset(selectedHeldSymbol, typeToUse);
         if (price > 0.0) {
             sellMarketPrice = price;
         }
+    }
+
+    /**
+     * Detects the asset type from the portfolio's current holdings.
+     * This ensures we use the correct API (crypto vs stock/etf) for price lookups.
+     * 
+     * @param symbol The asset symbol to look up
+     * @return asset type (crypto/stock/etf) or "stock" as fallback
+     */
+    private String detectAssetType(String symbol) {
+        if (selectedPortfolioId == null || symbol == null) {
+            return "stock";
+        }
+
+        List<PortfolioAsset> holdings = webAppService.getPortfolioAssets(selectedPortfolioId);
+        for (PortfolioAsset asset : holdings) {
+            if (asset.getSymbol() != null && asset.getSymbol().equalsIgnoreCase(symbol)) {
+                return asset.getType(); // Return the actual type from portfolio
+            }
+        }
+
+        return "stock"; // Fallback if not found
     }
 
     /**
@@ -634,15 +670,18 @@ public class PortfolioBean implements Serializable {
         System.out.println("  Price: " + sellMarketPrice);
 
         if (selectedPortfolioId == null) {
-            addGlobalMessage("No portfolio selected", "Please select a portfolio first.");
+            addGlobalMessage(jakarta.faces.application.FacesMessage.SEVERITY_WARN, "No portfolio selected",
+                    "Please select a portfolio first.");
             return null;
         }
         if (selectedHeldSymbol == null || selectedHeldSymbol.isBlank()) {
-            addGlobalMessage("No asset selected", "Please select an asset to sell.");
+            addGlobalMessage(jakarta.faces.application.FacesMessage.SEVERITY_WARN, "No asset selected",
+                    "Please select an asset to sell.");
             return null;
         }
         if (sellQuantity <= 0.0) {
-            addGlobalMessage("Invalid quantity", "Sell quantity must be greater than zero.");
+            addGlobalMessage(jakarta.faces.application.FacesMessage.SEVERITY_ERROR, "Invalid quantity",
+                    "Sell quantity must be greater than zero.");
             return null;
         }
 
@@ -650,7 +689,34 @@ public class PortfolioBean implements Serializable {
             refreshSellPrice();
         }
         if (sellMarketPrice <= 0.0) {
-            addGlobalMessage("Price unavailable", "Could not fetch market price for this asset.");
+            addGlobalMessage(jakarta.faces.application.FacesMessage.SEVERITY_ERROR, "Price unavailable",
+                    "Could not fetch market price for this asset.");
+            return null;
+        }
+
+        // VALIDATION: Check if user owns enough of this asset
+        List<PortfolioAsset> currentHoldings = webAppService.getPortfolioAssets(selectedPortfolioId);
+        double ownedQuantity = 0.0;
+        boolean assetFound = false;
+
+        for (PortfolioAsset pa : currentHoldings) {
+            if (pa.getSymbol().equalsIgnoreCase(selectedHeldSymbol)) {
+                ownedQuantity = pa.getQuantity();
+                assetFound = true;
+                break;
+            }
+        }
+
+        if (!assetFound) {
+            addGlobalMessage(jakarta.faces.application.FacesMessage.SEVERITY_ERROR, "Asset not found",
+                    "You do not own this asset.");
+            return null;
+        }
+
+        if (sellQuantity > ownedQuantity) {
+            addGlobalMessage(jakarta.faces.application.FacesMessage.SEVERITY_ERROR, "Insufficient quantity",
+                    String.format("You only own %.4f of %s, cannot sell %.4f",
+                            ownedQuantity, selectedHeldSymbol, sellQuantity));
             return null;
         }
 
@@ -719,9 +785,8 @@ public class PortfolioBean implements Serializable {
         // the cost of goods sold (COGS).
         // If I use the *actual* UnitValue currently in DB (which I can't see from here
         // without fetching), I preserve the average.
-        // Let's quickly fetch the asset to get its current UnitValue (Avg Buy Price).
+        // We already fetched currentHoldings during validation, reuse it here
 
-        List<PortfolioAsset> currentHoldings = webAppService.getPortfolioAssets(selectedPortfolioId);
         double costBasis = sellMarketPrice; // Fallback
         for (PortfolioAsset pa : currentHoldings) {
             if (pa.getSymbol().equalsIgnoreCase(selectedHeldSymbol)) {
@@ -1139,10 +1204,17 @@ public class PortfolioBean implements Serializable {
      * Adds a global FacesMessage visible to the user.
      */
     private void addGlobalMessage(String summary, String detail) {
+        addGlobalMessage(jakarta.faces.application.FacesMessage.SEVERITY_INFO, summary, detail);
+    }
+
+    /**
+     * Adds a global FacesMessage with specified severity.
+     */
+    private void addGlobalMessage(jakarta.faces.application.FacesMessage.Severity severity, String summary,
+            String detail) {
         FacesContext context = FacesContext.getCurrentInstance();
         if (context != null) {
-            context.addMessage(null, new jakarta.faces.application.FacesMessage(
-                    jakarta.faces.application.FacesMessage.SEVERITY_INFO, summary, detail));
+            context.addMessage(null, new jakarta.faces.application.FacesMessage(severity, summary, detail));
         }
     }
 

@@ -1,69 +1,216 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="jakarta.faces.html">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html" xmlns:f="jakarta.faces.core">
 
-<head>
+<h:head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <!-- Link CSS -->
-    <link rel="stylesheet" type="text/css"
-          href="#{request.contextPath}/resources/css/auth-styles.css" />
+    <link rel="stylesheet" type="text/css" href="#{request.contextPath}/resources/css/auth-styles.css" />
     <title>WealthMate - Register</title>
-</head>
 
-<body>
+    <style>
+        /* Local password wrapper fix */
+        .pwd-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 0;
+        }
 
-<div class="container">
+        .pwd-container input {
+            width: 100%;
+            padding-right: 50px;
+            box-sizing: border-box;
+        }
 
-    <div class="card fade-in-up">
+        .pwd-eye {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.6);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+        }
 
-        <h1>Create Your Account</h1>
+        .pwd-eye:hover {
+            color: rgba(255, 255, 255, 1);
+        }
 
-        <!-- FORM -->
-        <h:form class="form">
+        .strength-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0 15px 0;
+        }
 
-            <label>Email Address</label>
-            <h:inputText value="#{registerBean.email}"
-                         styleClass="input"
-                         required="true"
-                         placeholder="Enter your email" />
+        .strength-bar {
+            flex: 1;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 3px;
+            overflow: hidden;
+        }
 
-            <label>First Name</label>
-            <h:inputText value="#{registerBean.firstname}"
-                         styleClass="input"
-                         required="true"
-                         placeholder="Your first name" />
+        .strength-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
 
-            <label>Last Name</label>
-            <h:inputText value="#{registerBean.lastname}"
-                         styleClass="input"
-                         required="true"
-                         placeholder="Your last name" />
+        .strength-fill.weak {
+            background: #e53935;
+        }
 
-            <label>Password</label>
-            <h:inputSecret value="#{registerBean.password}"
-                           styleClass="input"
-                           style="margin-bottom:25px;"
-                           required="true"
-                           placeholder="Enter your password" />
+        .strength-fill.medium {
+            background: #fb8c00;
+        }
 
-            <div style="width:100%; text-align:center;">
-                <h:commandButton value="Create Account"
-                                 action="#{registerBean.register}"
-                                 styleClass="login-btn"
-                                 style="width:100%; display:block; margin-top:10px;" />
+        .strength-fill.good {
+            background: #43a047;
+        }
+
+        .strength-fill.strong {
+            background: #00c853;
+        }
+
+        .strength-label {
+            font-size: 11px;
+            min-width: 60px;
+            text-align: right;
+        }
+    </style>
+</h:head>
+
+<h:body>
+    <div class="container">
+        <div class="card fade-in-up">
+
+            <!-- Logo -->
+            <div class="logo" style="text-align:center;">
+                <img src="#{request.contextPath}/resources/images/Logo-W_black.png" alt="WealthMate Logo"
+                    style="width: 100px; margin-bottom: 5px;" />
             </div>
 
-        </h:form>
+            <h1>Create Your Account</h1>
 
-        <p class="footer-text">
-            Already have an account?
-            <a href="login.xhtml">Log In</a>
-        </p>
+            <h:form id="registerForm" styleClass="form">
 
-    </div> <!-- end of .card -->
-</div> <!-- end of .container -->
+                <!-- Messages -->
+                <h:panelGroup id="messagePanel" layout="block" style="margin-bottom: 15px;">
+                    <h:messages id="msgs" globalOnly="true" styleClass="error-message-container"
+                        errorClass="error-message" layout="table" />
+                </h:panelGroup>
 
-</body>
+                <label>Email Address</label>
+                <h:inputText id="email" value="#{registerBean.email}" styleClass="input" required="true"
+                    placeholder="Enter your email" />
+
+                <label>First Name</label>
+                <h:inputText id="firstname" value="#{registerBean.firstname}" styleClass="input" required="true"
+                    placeholder="Your first name" />
+
+                <label>Last Name</label>
+                <h:inputText id="lastname" value="#{registerBean.lastname}" styleClass="input" required="true"
+                    placeholder="Your last name" />
+
+                <label>Password</label>
+                <div class="pwd-container">
+                    <h:inputSecret id="password" value="#{registerBean.password}" styleClass="input" required="true"
+                        placeholder="Create a password" onkeyup="checkStrength(this.value)" />
+                    <span class="pwd-eye" onclick="togglePwd('registerForm:password', this)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                    </span>
+                </div>
+
+                <!-- Password Strength -->
+                <div class="strength-box">
+                    <div class="strength-bar">
+                        <div id="strengthFill" class="strength-fill"></div>
+                    </div>
+                    <span id="strengthLabel" class="strength-label"></span>
+                </div>
+
+                <label>Confirm Password</label>
+                <div class="pwd-container">
+                    <h:inputSecret id="confirmPassword" value="#{registerBean.confirmPassword}" styleClass="input"
+                        required="true" placeholder="Re-enter your password" />
+                    <span class="pwd-eye" onclick="togglePwd('registerForm:confirmPassword', this)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                    </span>
+                </div>
+
+                <div style="margin-top: 25px;">
+                    <h:commandButton value="Create Account" action="#{registerBean.register}" styleClass="login-btn"
+                        style="width:100%;">
+                        <f:ajax execute="@form" render="messagePanel" />
+                    </h:commandButton>
+                </div>
+
+            </h:form>
+
+            <p class="footer-text" style="margin-top: 20px;">
+                Already have an account?
+                <h:outputLink value="#{request.contextPath}/login.xhtml">Log In</h:outputLink>
+            </p>
+
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        //<![CDATA[
+        function togglePwd(fieldId, btn) {
+            var f = document.getElementById(fieldId);
+            if (f.type === 'password') {
+                f.type = 'text';
+                btn.style.color = 'rgba(255,255,255,1)';
+            } else {
+                f.type = 'password';
+                btn.style.color = 'rgba(255,255,255,0.6)';
+            }
+        }
+
+        function checkStrength(pwd) {
+            var fill = document.getElementById('strengthFill');
+            var label = document.getElementById('strengthLabel');
+            var score = 0;
+
+            if (!pwd) { fill.style.width = '0%'; fill.className = 'strength-fill'; label.textContent = ''; return; }
+
+            if (pwd.length >= 6) score++;
+            if (pwd.length >= 8) score++;
+            if (pwd.length >= 12) score++;
+            if (/[a-z]/.test(pwd)) score++;
+            if (/[A-Z]/.test(pwd)) score++;
+            if (/[0-9]/.test(pwd)) score++;
+            if (/[^a-zA-Z0-9]/.test(pwd)) score++;
+
+            if (score <= 2) {
+                fill.style.width = '25%'; fill.className = 'strength-fill weak';
+                label.textContent = 'Weak'; label.style.color = '#e53935';
+            } else if (score <= 4) {
+                fill.style.width = '50%'; fill.className = 'strength-fill medium';
+                label.textContent = 'Medium'; label.style.color = '#fb8c00';
+            } else if (score <= 5) {
+                fill.style.width = '75%'; fill.className = 'strength-fill good';
+                label.textContent = 'Good'; label.style.color = '#43a047';
+            } else {
+                fill.style.width = '100%'; fill.className = 'strength-fill strong';
+                label.textContent = 'Strong'; label.style.color = '#00c853';
+            }
+        }
+        //]]>
+    </script>
+
+</h:body>
+
 </html>

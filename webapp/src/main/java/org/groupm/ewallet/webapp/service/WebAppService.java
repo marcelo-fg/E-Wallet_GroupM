@@ -89,8 +89,12 @@ public class WebAppService {
         return backendApi.getPortfoliosForUser(userId);
     }
 
-    public Integer createPortfolioForUser(String userId) {
-        return backendApi.createPortfolioForUser(userId);
+    public Integer createPortfolioForUser(String userId, String name) {
+        return backendApi.createPortfolioForUser(userId, name);
+    }
+
+    public org.groupm.ewallet.webapp.model.Portfolio getPortfolioById(int portfolioId) {
+        return backendApi.getPortfolioById(portfolioId);
     }
 
     public List<String> getAssetsForPortfolio(int portfolioId) {
