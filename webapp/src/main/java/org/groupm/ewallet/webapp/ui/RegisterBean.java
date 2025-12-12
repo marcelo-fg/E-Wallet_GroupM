@@ -5,6 +5,7 @@ import jakarta.inject.Named;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.application.FacesMessage;
 import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpSession;
 import org.groupm.ewallet.webapp.service.WebAppService;
 
 @Named
@@ -50,10 +51,24 @@ public class RegisterBean {
         boolean success = webAppService.registerUser(firstname, lastname, email, password);
 
         if (success) {
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_INFO,
-                            "Inscription réussie !",
-                            "Vous pouvez maintenant vous connecter."));
+            // Connexion automatique après inscription réussie
+            String userId = webAppService.login(email, password);
+
+            if (userId != null && !userId.isBlank()) {
+                // Créer la session utilisateur
+                FacesContext context = FacesContext.getCurrentInstance();
+                HttpSession session = (HttpSession) context
+                        .getExternalContext()
+                        .getSession(true);
+
+                session.setAttribute("userId", userId);
+                session.setAttribute("userEmail", email);
+
+                // Rediriger directement vers le dashboard
+                return "dashboard.xhtml?faces-redirect=true";
+            }
+
+            // Fallback: si le login automatique échoue, aller à la page login
             return "login.xhtml?faces-redirect=true";
         }
 

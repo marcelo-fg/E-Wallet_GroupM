@@ -108,21 +108,27 @@ input::placeholder {
 
 .toggle-password {
     position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
+    right: 12px;
+    top: 10px;
     cursor: pointer;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.7);
     display: flex;
     align-items: center;
     justify-content: center;
     transition: color 0.2s ease;
     z-index: 10;
     pointer-events: auto;
+    width: 24px;
+    height: 24px;
 }
 
 .toggle-password:hover {
     color: rgba(255, 255, 255, 1);
+}
+
+.toggle-password svg {
+    width: 20px;
+    height: 20px;
 }
 
 /* Password Strength Indicator */
@@ -289,4 +295,28 @@ input::placeholder {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* ==========================================================================
+   FOOTER TEXT & LINKS
+   ========================================================================== */
+
+.footer-text {
+    margin-top: 20px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.footer-text a {
+    text-decoration: none;
+    background: linear-gradient(90deg, #0062ff, #13d6b1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
+    transition: opacity 0.2s ease;
+}
+
+.footer-text a:hover {
+    opacity: 0.8;
 }

@@ -106,6 +106,36 @@ public class BackendApiService {
     }
 
     /**
+     * Updates user information in the backend.
+     */
+    public boolean updateUser(String userId, String firstname, String lastname, String email, String password) {
+        try (Client client = ClientBuilder.newClient()) {
+            WebTarget target = client.target(BASE_URL + "/users/" + userId);
+
+            var builder = Json.createObjectBuilder();
+            // Assuming the backend User object fields match these keys
+            // UserResource expects a User object. Jackson/JSON-B maps "firstName" to
+            // firstName field.
+            if (firstname != null)
+                builder.add("firstName", firstname);
+            if (lastname != null)
+                builder.add("lastName", lastname);
+            if (email != null)
+                builder.add("email", email);
+            if (password != null && !password.isEmpty())
+                builder.add("password", password);
+
+            String payload = builder.build().toString();
+
+            Response response = target.request(MediaType.APPLICATION_JSON).put(Entity.json(payload));
+            return response.getStatus() == 200;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
      * Retrieves the WealthTracker object for a given user.
      */
     public jakarta.json.JsonObject getWealthForUser(String userId) {

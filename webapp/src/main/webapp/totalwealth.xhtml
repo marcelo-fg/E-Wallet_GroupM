@@ -8,127 +8,174 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
         <style>
-            :root {
-                --glass-bg: rgba(255, 255, 255, 0.05);
-                --glass-border: rgba(255, 255, 255, 0.1);
-                --text-primary: #ffffff;
-                --text-secondary: #a0a0a0;
-                --accent-color: #f7b924;
-                /* Gold */
-                --chart-color-1: #13d6b1;
-                /* Teal */
-                --chart-color-2: #0062ff;
-                /* Blue */
-                --chart-color-3: #ffce56;
-                /* Yellow */
-            }
-
-            .wealth-dashboard {
+            .wealth-page {
                 display: flex;
                 flex-direction: column;
-                gap: 20px;
-                padding: 20px;
-                color: var(--text-primary);
-                font-family: 'Inter', sans-serif;
+                gap: 15px;
             }
 
-            /* Header Section */
+            /* Main Grid Layout - 2 columns like dashboard */
+            .wealth-grid {
+                display: grid;
+                grid-template-columns: 65% 35%;
+                gap: 15px;
+                min-height: calc(100vh - 170px);
+            }
+
+            .wealth-main {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .wealth-sidebar {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            /* Header section inside main bento box */
             .wealth-header {
                 display: flex;
-                flex-direction: column;
-                margin-bottom: 10px;
-            }
-
-            .total-label {
-                font-size: 1rem;
-                color: var(--text-secondary);
-                margin-bottom: 5px;
-            }
-
-            .total-amount {
-                font-size: 2.5rem;
-                font-weight: 700;
-                background: linear-gradient(90deg, #fff, #ccc);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-            }
-
-            /* Main Grid Layout */
-            .charts-container {
-                display: grid;
-                grid-template-columns: 2fr 1fr;
-                /* 2/3 and 1/3 ratio */
-                gap: 20px;
-                height: 500px;
-            }
-
-            /* Glassmorphism Cards */
-            .glass-card {
-                background: var(--glass-bg);
-                border: 1px solid var(--glass-border);
-                border-radius: 16px;
-                padding: 24px;
-                display: flex;
-                flex-direction: column;
-                backdrop-filter: blur(10px);
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            }
-
-            .card-title {
-                font-size: 1.1rem;
-                font-weight: 600;
+                justify-content: space-between;
+                align-items: center;
                 margin-bottom: 20px;
-                color: #e0e0e0;
             }
 
-            .chart-wrapper {
-                flex-grow: 1;
+            .wealth-title h2 {
+                margin: 0;
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: #fff;
+            }
+
+            .wealth-title p {
+                margin: 4px 0 0 0;
+                font-size: 0.85rem;
+                color: rgba(255, 255, 255, 0.6);
+            }
+
+            .wealth-amount {
+                font-size: 1.8rem;
+                font-weight: 700;
+                color: #fff;
+            }
+
+            /* Chart container */
+            .chart-container {
+                flex: 1;
                 position: relative;
+                min-height: 350px;
+            }
+
+            .chart-title {
+                font-size: 0.95rem;
+                font-weight: 500;
+                color: rgba(255, 255, 255, 0.8);
+                margin-bottom: 15px;
+            }
+
+            /* Donut chart section */
+            .donut-container {
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 width: 100%;
-                height: 100%;
+                height: 300px;
+                margin: 20px 0;
+            }
+
+            .donut-wrapper {
+                width: 260px;
+                height: 260px;
+                position: relative;
             }
 
             /* Responsive */
             @media (max-width: 900px) {
-                .charts-container {
+                .wealth-grid {
                     grid-template-columns: 1fr;
-                    /* Stack on mobile */
-                    height: auto;
-                }
-
-                .glass-card {
-                    height: 400px;
                 }
             }
         </style>
 
-        <div class="wealth-dashboard">
-            <!-- Header -->
-            <div class="wealth-header">
-                <span class="total-label">Total Net Worth</span>
-                <span class="total-amount">
-                    <h:outputText value="#{totalWealthBean.totalNetWorth}">
-                        <f:convertNumber type="currency" currencySymbol="$" maxFractionDigits="2" />
-                    </h:outputText>
-                </span>
-            </div>
+        <div class="wealth-page">
+            <!-- Main Grid -->
+            <div class="wealth-grid">
 
-            <!-- Charts Grid -->
-            <div class="charts-container">
-                <!-- 1. Left: Line Chart (Net Worth) -->
-                <div class="glass-card">
-                    <div class="card-title">Total Net Worth Evolution</div>
-                    <div class="chart-wrapper">
-                        <canvas id="netWorthChart"></canvas>
+                <!-- LEFT: Main Chart Area -->
+                <div class="wealth-main">
+                    <div class="bento-box glow-hover" style="flex: 1; display: flex; flex-direction: column;">
+                        <!-- Header -->
+                        <div class="wealth-header">
+                            <div class="wealth-title">
+                                <h2>Total Wealth</h2>
+                                <p>Overview of your complete financial portfolio</p>
+                            </div>
+                            <span class="wealth-amount">
+                                <h:outputText value="#{totalWealthBean.totalNetWorth}">
+                                    <f:convertNumber type="currency" currencySymbol="$" maxFractionDigits="2" />
+                                </h:outputText>
+                            </span>
+                        </div>
+
+                        <!-- Line Chart -->
+                        <div class="chart-title">Total Net Worth Evolution</div>
+                        <div class="chart-container">
+                            <canvas id="netWorthChart"></canvas>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 2. Right: Donut Chart (Wealth Breakdown) -->
-                <div class="glass-card">
-                    <div class="card-title">Total Wealth Breakdown</div>
-                    <div class="chart-wrapper">
-                        <canvas id="wealthDonutChart"></canvas>
+                <!-- RIGHT: Sidebar -->
+                <div class="wealth-sidebar">
+                    <!-- Wealth Breakdown Donut -->
+                    <div class="bento-box glow-hover" style="flex: 1; display: flex; flex-direction: column;">
+                        <h3 class="sidebar-title" style="text-align: center;">Wealth Breakdown</h3>
+                        <div class="donut-container">
+                            <div class="donut-wrapper">
+                                <canvas id="wealthDonutChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="bento-box glow-hover">
+                        <h3 class="sidebar-title">Asset Summary</h3>
+                        <div class="sidebar-list">
+                            <div class="list-row">
+                                <span class="row-main-text">Cash Balance</span>
+                                <span class="row-amount" style="color: #13d6b1;">
+                                    <h:outputText value="#{totalWealthBean.totalCash}">
+                                        <f:convertNumber type="currency" currencySymbol="$" maxFractionDigits="2" />
+                                    </h:outputText>
+                                </span>
+                            </div>
+                            <div class="list-row">
+                                <span class="row-main-text">Stocks</span>
+                                <span class="row-amount" style="color: #0062ff;">
+                                    <h:outputText value="#{totalWealthBean.totalStocks}">
+                                        <f:convertNumber type="currency" currencySymbol="$" maxFractionDigits="2" />
+                                    </h:outputText>
+                                </span>
+                            </div>
+                            <div class="list-row">
+                                <span class="row-main-text">Crypto</span>
+                                <span class="row-amount" style="color: #ffce56;">
+                                    <h:outputText value="#{totalWealthBean.totalCrypto}">
+                                        <f:convertNumber type="currency" currencySymbol="$" maxFractionDigits="2" />
+                                    </h:outputText>
+                                </span>
+                            </div>
+                            <div class="list-row">
+                                <span class="row-main-text">ETFs</span>
+                                <span class="row-amount" style="color: #9b59b6;">
+                                    <h:outputText value="#{totalWealthBean.totalEtf}">
+                                        <f:convertNumber type="currency" currencySymbol="$" maxFractionDigits="2" />
+                                    </h:outputText>
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -144,21 +191,20 @@
 
         <script>
             document.addEventListener("DOMContentLoaded", function () {
-                // Read JSON from hidden divs (Safe approach)
+                // Read JSON from hidden divs
                 const nwRaw = document.getElementById('netWorthData').textContent;
                 const distRaw = document.getElementById('wealthDistData').textContent;
 
                 const netWorthHistory = JSON.parse(nwRaw);
                 const wealthDistribution = JSON.parse(distRaw);
-                // [Cash, Stocks, Crypto, ETFs]
 
                 // --- 1. Net Worth Line Chart ---
                 const ctxLine = document.getElementById('netWorthChart').getContext('2d');
 
                 // Gradient for fill
-                let gradient = ctxLine.createLinearGradient(0, 0, 0, 400);
-                gradient.addColorStop(0, 'rgba(247, 185, 36, 0.2)'); // Gold alpha
-                gradient.addColorStop(1, 'rgba(247, 185, 36, 0.0)');
+                let gradient = ctxLine.createLinearGradient(0, 0, 0, 350);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
 
                 new Chart(ctxLine, {
                     type: 'line',
@@ -167,13 +213,13 @@
                         datasets: [{
                             label: 'Net Worth',
                             data: netWorthHistory.data,
-                            borderColor: '#f7b924', // Gold
+                            borderColor: 'rgba(255, 255, 255, 0.8)',
                             backgroundColor: gradient,
                             borderWidth: 2,
-                            pointRadius: 0, // Smooth line without dots usually cleaner
+                            pointRadius: 0,
                             pointHoverRadius: 5,
                             fill: true,
-                            tension: 0.4 // Smooth curve
+                            tension: 0.4
                         }]
                     },
                     options: {
@@ -188,17 +234,27 @@
                                 titleColor: '#fff',
                                 bodyColor: '#fff',
                                 borderColor: 'rgba(255,255,255,0.1)',
-                                borderWidth: 1
+                                borderWidth: 1,
+                                callbacks: {
+                                    label: function (context) {
+                                        return '$' + context.raw.toLocaleString('en-US', { minimumFractionDigits: 2 });
+                                    }
+                                }
                             }
                         },
                         scales: {
                             x: {
                                 grid: { display: false, drawBorder: false },
-                                ticks: { color: '#666', maxTicksLimit: 10 }
+                                ticks: { color: 'rgba(255,255,255,0.5)', maxTicksLimit: 10 }
                             },
                             y: {
                                 grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
-                                ticks: { color: '#666' }
+                                ticks: {
+                                    color: 'rgba(255,255,255,0.5)',
+                                    callback: function (value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
                             }
                         },
                         interaction: {
@@ -230,15 +286,25 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        cutout: '70%', // Thinner ring
+                        cutout: '70%',
                         plugins: {
                             legend: {
                                 position: 'bottom',
                                 labels: {
-                                    color: '#a0a0a0',
+                                    color: 'rgba(255,255,255,0.7)',
                                     usePointStyle: true,
-                                    padding: 20,
-                                    font: { size: 12 }
+                                    padding: 15,
+                                    font: { size: 11 }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                callbacks: {
+                                    label: function (context) {
+                                        return context.label + ': $' + context.raw.toLocaleString('en-US', { minimumFractionDigits: 2 });
+                                    }
                                 }
                             }
                         }

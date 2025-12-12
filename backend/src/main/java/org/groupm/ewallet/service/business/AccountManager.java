@@ -2,30 +2,38 @@ package org.groupm.ewallet.service.business;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import org.groupm.ewallet.model.Account;
 import org.groupm.ewallet.model.User;
 import org.groupm.ewallet.model.Transaction;
-import org.groupm.ewallet.repository.AccountRepository;
-import org.groupm.ewallet.repository.TransactionRepository;
+import org.groupm.ewallet.repository.impl.JpaAccountRepository;
+import org.groupm.ewallet.repository.impl.JpaTransactionRepository;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Service métier pour la gestion des comptes et des transactions.
  * Cette classe encapsule la logique de création, modification, suppression
  * et récupération des comptes/transactions via abstraction repository.
+ * 
+ * Toutes les méthodes de modification utilisent @Transactional pour garantir
+ * ACID.
  */
 @ApplicationScoped
 public class AccountManager {
 
     @Inject
-    private AccountRepository accountRepository;
+    private JpaAccountRepository accountRepository;
 
     @Inject
-    private TransactionRepository transactionRepository;
+    private JpaTransactionRepository transactionRepository;
 
-    // CDI will inject repositories automatically
+    @Inject
+    private EntityManager em;
 
     /**
      * Récupère tous les comptes.
@@ -42,6 +50,7 @@ public class AccountManager {
      * @param account compte à persister
      * @return compte ajouté
      */
+    @Transactional
     public Account addAccount(Account account) {
         accountRepository.save(account);
         return account;
@@ -63,6 +72,7 @@ public class AccountManager {
      * @param id identifiant du compte à supprimer
      * @return true si suppression réussie, false sinon
      */
+    @Transactional
     public boolean deleteAccount(String id) {
         Account account = accountRepository.findById(id);
         if (account != null) {
@@ -73,13 +83,14 @@ public class AccountManager {
     }
 
     /**
-     * Met à jour les informations d’un compte existant.
+     * Met à jour les informations d'un compte existant.
      * Les champs non nuls du nouvel objet remplacent ceux du compte existant.
      *
      * @param id         identifiant du compte
      * @param newAccount données à mettre à jour
      * @return true si mise à jour réussie, false sinon
      */
+    @Transactional
     public boolean updateAccount(String id, Account newAccount) {
         Account account = accountRepository.findById(id);
         if (account != null) {
@@ -87,19 +98,19 @@ public class AccountManager {
                 account.setType(newAccount.getType());
             }
             if (newAccount.getBalance() != 0) {
-                account.setBalance(newAccount.getBalance());
+                account.setBalance(newAccount.getBalanceAsBigDecimal());
             }
             if (newAccount.getName() != null) {
                 account.setName(newAccount.getName());
             }
-            accountRepository.save(account); // Update via repo
+            accountRepository.save(account);
             return true;
         }
         return false;
     }
 
     /**
-     * Liste tous les comptes d’un utilisateur donné.
+     * Liste tous les comptes d'un utilisateur donné.
      * 
      * @param user utilisateur concerné
      * @return liste de comptes
@@ -112,9 +123,10 @@ public class AccountManager {
 
     /**
      * Génère un identifiant unique de transaction si absent.
+     * Utilise UUID pour garantir l'unicité même sous forte charge.
      */
     private String generateTransactionId() {
-        return "TXN-" + System.currentTimeMillis();
+        return "TXN-" + UUID.randomUUID().toString();
     }
 
     /**
@@ -153,19 +165,20 @@ public class AccountManager {
         }
 
         String type = transaction.getType();
-        double amount = transaction.getAmount();
+        BigDecimal amount = transaction.getAmountAsBigDecimal();
+        BigDecimal currentBalance = account.getBalanceAsBigDecimal();
 
         switch (type.toLowerCase()) {
 
             case "deposit":
-                account.setBalance(account.getBalance() + amount);
+                account.setBalance(currentBalance.add(amount));
                 break;
 
             case "withdraw":
-                if (account.getBalance() < amount) {
+                if (currentBalance.compareTo(amount) < 0) {
                     throw new IllegalArgumentException("Solde insuffisant pour effectuer un retrait.");
                 }
-                account.setBalance(account.getBalance() - amount);
+                account.setBalance(currentBalance.subtract(amount));
                 break;
 
             default:
@@ -192,8 +205,23 @@ public class AccountManager {
     }
 
     /**
+     * Récupère toutes les transactions.
+     */
+    public List<Transaction> getAllTransactions() {
+        return transactionRepository.findAll();
+    }
+
+    /**
+     * Récupère les transactions d'un compte.
+     */
+    public List<Transaction> getTransactionsByAccountId(String accountId) {
+        return transactionRepository.findByAccountId(accountId);
+    }
+
+    /**
      * Supprime une transaction.
      */
+    @Transactional
     public boolean deleteTransaction(String transactionID) {
         Transaction tx = transactionRepository.findById(transactionID);
         if (tx != null) {
@@ -219,6 +247,16 @@ public class AccountManager {
      */
     @Transactional
     public boolean transfer(String fromId, String toId, double amount, String category, String description) {
+        return transfer(fromId, toId, BigDecimal.valueOf(amount), category, description);
+    }
+
+    /**
+     * Effectue un virement ATOMIQUE entre deux comptes avec BigDecimal.
+     * Utilise un verrouillage pessimiste (PESSIMISTIC_WRITE) pour éviter
+     * les problèmes de concurrence et les race conditions.
+     */
+    @Transactional
+    public boolean transfer(String fromId, String toId, BigDecimal amount, String category, String description) {
         // Validations préliminaires
         if (fromId == null || toId == null) {
             throw new IllegalArgumentException("Les identifiants de compte ne peuvent pas être null.");
@@ -226,13 +264,20 @@ public class AccountManager {
         if (fromId.equals(toId)) {
             throw new IllegalArgumentException("Impossible de transférer vers le même compte.");
         }
-        if (amount <= 0) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Le montant doit être strictement positif.");
         }
 
-        // Chargement des comptes
-        Account from = accountRepository.findById(fromId);
-        Account to = accountRepository.findById(toId);
+        // Chargement des comptes avec verrouillage pessimiste
+        // Ordre d'acquisition des locks basé sur l'ID pour éviter les deadlocks
+        Account from, to;
+        if (fromId.compareTo(toId) < 0) {
+            from = em.find(Account.class, fromId, LockModeType.PESSIMISTIC_WRITE);
+            to = em.find(Account.class, toId, LockModeType.PESSIMISTIC_WRITE);
+        } else {
+            to = em.find(Account.class, toId, LockModeType.PESSIMISTIC_WRITE);
+            from = em.find(Account.class, fromId, LockModeType.PESSIMISTIC_WRITE);
+        }
 
         if (from == null) {
             throw new IllegalArgumentException("Compte source introuvable : " + fromId);
@@ -241,29 +286,31 @@ public class AccountManager {
             throw new IllegalArgumentException("Compte destination introuvable : " + toId);
         }
 
+        BigDecimal fromBalance = from.getBalanceAsBigDecimal();
+
         // Validation du solde AVANT toute modification
-        if (from.getBalance() < amount) {
+        if (fromBalance.compareTo(amount) < 0) {
             throw new IllegalArgumentException(
-                    "Solde insuffisant. Disponible: " + from.getBalance() + "€, Demandé: " + amount + "€");
+                    "Solde insuffisant. Disponible: " + fromBalance + "€, Demandé: " + amount + "€");
         }
 
         // === TRANSACTION ATOMIQUE : Tout ou rien ===
 
         // 1. Modifier les balances
-        from.setBalance(from.getBalance() - amount);
-        to.setBalance(to.getBalance() + amount);
+        from.setBalance(fromBalance.subtract(amount));
+        to.setBalance(to.getBalanceAsBigDecimal().add(amount));
 
-        // 2. Créer les transactions (historique)
+        // 2. Créer les transactions (historique) avec relation JPA correcte
         Transaction withdrawal = new Transaction();
         withdrawal.setTransactionID(generateTransactionId());
-        withdrawal.setAccountID(fromId);
+        withdrawal.setAccount(from); // Utiliser la relation JPA
         withdrawal.setType("withdraw");
         withdrawal.setAmount(amount);
         withdrawal.setDescription("Transfer to " + toId + (description != null ? ": " + description : ""));
 
         Transaction deposit = new Transaction();
         deposit.setTransactionID(generateTransactionId());
-        deposit.setAccountID(toId);
+        deposit.setAccount(to); // Utiliser la relation JPA
         deposit.setType("deposit");
         deposit.setAmount(amount);
         deposit.setDescription("Transfer from " + fromId + (description != null ? ": " + description : ""));
@@ -273,14 +320,11 @@ public class AccountManager {
         to.addTransaction(deposit);
 
         // 4. Persister TOUT dans UNE SEULE transaction JPA
-        // Si UNE SEULE opération échoue → rollback automatique de TOUT
         accountRepository.save(from);
         accountRepository.save(to);
         transactionRepository.save(withdrawal);
         transactionRepository.save(deposit);
 
-        // Si on arrive ici, transaction JPA commit automatiquement
-        // Sinon, exception → rollback automatique via @Transactional
         return true;
     }
 

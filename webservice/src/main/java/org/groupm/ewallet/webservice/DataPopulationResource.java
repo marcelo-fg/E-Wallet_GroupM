@@ -1,7 +1,6 @@
 package org.groupm.ewallet.webservice;
 
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
@@ -192,7 +191,6 @@ public class DataPopulationResource {
             int portfoliosCreated = 0;
             int assetsCreated = 0;
             int transactionsCreated = 0;
-            int wealthTrackersCreated = 0;
 
             // Generate 1000 users
             for (int i = 0; i < 1000; i++) {
@@ -213,7 +211,7 @@ public class DataPopulationResource {
                 // Create 1-3 accounts per user
                 int numAccounts = 1 + random.nextInt(3);
                 for (int j = 0; j < numAccounts; j++) {
-                    String accountId = "demo-acc-" + UUID.randomUUID().toString().substring(0, 8);
+                    String accountId = UUID.randomUUID().toString();
                     String type = ACCOUNT_TYPES[random.nextInt(ACCOUNT_TYPES.length)];
                     String name = ACCOUNT_NAMES[random.nextInt(ACCOUNT_NAMES.length)] + " " + (j + 1);
                     double balance = 100 + random.nextDouble() * 9900; // 100 - 10000
@@ -224,7 +222,7 @@ public class DataPopulationResource {
                     // Create 2-5 transactions per account
                     int numTransactions = 2 + random.nextInt(4);
                     for (int k = 0; k < numTransactions; k++) {
-                        String txnId = "demo-txn-" + UUID.randomUUID().toString().substring(0, 8);
+                        String txnId = UUID.randomUUID().toString();
                         String txnType = TRANSACTION_TYPES[random.nextInt(TRANSACTION_TYPES.length)];
                         double amount = 10 + random.nextDouble() * 990;
                         String description = TRANSACTION_DESCRIPTIONS[random.nextInt(TRANSACTION_DESCRIPTIONS.length)];
@@ -315,7 +313,9 @@ public class DataPopulationResource {
     }
 
     /**
-     * DELETE /api/admin/clear - Clears all demo data (keeps real users).
+     * DELETE /api/admin/clear - Clears ALL data from the database.
+     * WARNING: This will delete ALL users, accounts, portfolios, assets, and
+     * transactions.
      */
     @DELETE
     @Path("/clear")
@@ -326,27 +326,20 @@ public class DataPopulationResource {
         try {
             em.getTransaction().begin();
 
-            // Use native SQL for MySQL compatibility
-            // Delete demo transactions first (due to FK constraints)
-            int txnDeleted = em.createNativeQuery("DELETE FROM transactions WHERE transaction_id LIKE 'demo-%'")
-                    .executeUpdate();
+            // Disable foreign key checks temporarily for MySQL
+            em.createNativeQuery("SET FOREIGN_KEY_CHECKS = 0").executeUpdate();
 
-            // Delete demo assets (linked to demo portfolios)
-            int assetsDeleted = em.createNativeQuery(
-                    "DELETE FROM assets WHERE portfolio_id IN (SELECT portfolio_id FROM portfolios WHERE user_id LIKE 'demo-user-%')")
-                    .executeUpdate();
+            // Delete all data from all tables
+            em.createNativeQuery("DELETE FROM wealth_history").executeUpdate();
+            int wealthTrackersDeleted = em.createNativeQuery("DELETE FROM wealth_trackers").executeUpdate();
+            int txnDeleted = em.createNativeQuery("DELETE FROM transactions").executeUpdate();
+            int assetsDeleted = em.createNativeQuery("DELETE FROM assets").executeUpdate();
+            int portfoliosDeleted = em.createNativeQuery("DELETE FROM portfolios").executeUpdate();
+            int accountsDeleted = em.createNativeQuery("DELETE FROM accounts").executeUpdate();
+            int usersDeleted = em.createNativeQuery("DELETE FROM users").executeUpdate();
 
-            // Delete demo portfolios
-            int portfoliosDeleted = em.createNativeQuery("DELETE FROM portfolios WHERE user_id LIKE 'demo-user-%'")
-                    .executeUpdate();
-
-            // Delete demo accounts
-            int accountsDeleted = em.createNativeQuery("DELETE FROM accounts WHERE account_id LIKE 'demo-%'")
-                    .executeUpdate();
-
-            // Delete demo users
-            int usersDeleted = em.createNativeQuery("DELETE FROM users WHERE user_id LIKE 'demo-user-%'")
-                    .executeUpdate();
+            // Re-enable foreign key checks
+            em.createNativeQuery("SET FOREIGN_KEY_CHECKS = 1").executeUpdate();
 
             em.getTransaction().commit();
 
@@ -356,7 +349,8 @@ public class DataPopulationResource {
             result.put("portfoliosDeleted", portfoliosDeleted);
             result.put("assetsDeleted", assetsDeleted);
             result.put("transactionsDeleted", txnDeleted);
-            result.put("message", "Demo data cleared successfully!");
+            result.put("wealthTrackersDeleted", wealthTrackersDeleted);
+            result.put("message", "All data cleared successfully!");
 
             return Response.ok(result).build();
 

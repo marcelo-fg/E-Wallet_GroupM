@@ -17,10 +17,10 @@
     </f:metadata>
 
     <ui:define name="content">
-        <div class="page-content portfolio-page" style="padding-top: 70px;">
+        <div class="portfolio-page">
 
             <!-- Header with Back Button -->
-            <div style="margin-bottom: 24px; display:flex; align-items:center; justify-content: space-between;">
+            <div style="margin-bottom: 15px; display:flex; align-items:center; justify-content: space-between;">
                 <div style="display:flex; align-items:center; gap:16px;">
                     <div onclick="window.location.href='portfolio.xhtml';"
                         style="cursor:pointer; background:rgba(255,255,255,0.1); padding:8px 16px; border-radius:12px; display:flex; align-items:center; gap:8px;">
@@ -47,7 +47,7 @@
                     .analytics-grid {
                         display: grid;
                         grid-template-columns: 3fr 1fr;
-                        gap: 16px;
+                        gap: 15px;
                     }
 
                     /* 3D Flip Container */
@@ -128,7 +128,7 @@
                                         <h:outputText value="7 Day History" style="opacity:0.6; font-size:12px;" />
                                     </div>
                                     <button type="button" class="flip-toggle-btn" onclick="toggleFlip()">
-                                        Switch to Asset View &#8594;
+                                        Switch to PnL View &#8594;
                                     </button>
                                 </div>
                                 <div style="flex:1; position:relative;">
@@ -136,22 +136,13 @@
                                 </div>
                             </div>
 
-                            <!-- BACK: ASSET PRICE -->
+                            <!-- BACK: ASSET PERFORMANCE -->
                             <div class="back">
                                 <div class="card-header"
                                     style="justify-content:space-between; display:flex; align-items:center;">
                                     <div>
-                                        <h3>Asset Price History</h3>
-                                        <h:form id="assetSelectForm" style="display:inline-block; margin-left:8px;">
-                                            <h:selectOneMenu value="#{portfolioBean.selectedAnalyticsAssetSymbol}"
-                                                styleClass="select-field"
-                                                style="width:auto; padding:4px 8px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:4px;">
-                                                <f:selectItems value="#{portfolioBean.analyticsAssets}" var="a"
-                                                    itemLabel="#{a.symbol}" itemValue="#{a.symbol}" />
-                                                <f:ajax listener="#{portfolioBean.generateAssetChartData}"
-                                                    render="chartScriptPanel" />
-                                            </h:selectOneMenu>
-                                        </h:form>
+                                        <h3>Performance Distribution</h3>
+                                        <p style="margin:0; font-size:12px; opacity:0.6;">Unrealized PnL by Asset</p>
                                     </div>
                                     <button type="button" class="flip-toggle-btn" onclick="toggleFlip()">
                                         &#8592; Back to Portfolio
@@ -160,13 +151,16 @@
                                 <div style="flex:1; position:relative;">
                                     <canvas id="assetChart"></canvas>
                                 </div>
-                            </div>
 
+
+                            </div>
                         </div>
+
                     </div>
 
+
                     <!-- RIGHT COL: METRICS SIDEBAR (Standard Position) -->
-                    <div class="bento-sidebar" style="display:flex; flex-direction:column; gap:16px;">
+                    <div class="bento-sidebar" style="display:flex; flex-direction:column; gap:15px;">
                         <!-- Total Value -->
                         <div class="bento-box glow-hover"
                             style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;">
@@ -261,7 +255,7 @@
                                 var data2 = getJsonData('assetChartJson');
                                 if (data2) {
                                     window.assetChart = new Chart(ctx2.getContext('2d'), {
-                                        type: 'line',
+                                        type: 'bar',
                                         data: data2,
                                         options: {
                                             responsive: true,
@@ -282,8 +276,8 @@
                 </h:panelGroup>
 
                 <!-- ASSETS BREAKDOWN TABLE (Bottom, Full Width) -->
-                <div class="bento-box glow-hover" style="margin-top:24px;">
-                    <h3 style="margin-bottom:16px;">Holdings Performance</h3>
+                <div class="bento-box glow-hover" style="margin-top:15px;">
+                    <h3 style="margin-bottom:15px;">Holdings Performance</h3>
                     <table style="width:100%; border-collapse:separate; border-spacing:0 8px; font-size:14px;">
                         <thead>
                             <tr style="text-align:left; opacity:0.7;">

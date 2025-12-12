@@ -1,15 +1,21 @@
 package org.groupm.ewallet.model;
 
 import jakarta.persistence.*;
+import jakarta.json.bind.annotation.JsonbTransient;
+import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Représente un portefeuille d’investissement.
+ * Représente un portefeuille d'investissement.
+ * Utilise BigDecimal pour les valeurs financières.
  */
 @Entity
 @Table(name = "portfolios")
-public class Portfolio {
+public class Portfolio implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,18 +25,30 @@ public class Portfolio {
     @Column(name = "user_id", insertable = false, updatable = false)
     private String userID;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "portfolio_id")
+    @Column(name = "name")
+    private String name;
+
+    /** Relation vers l'utilisateur propriétaire. */
+    @JsonbTransient
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @OneToMany(mappedBy = "portfolio", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Asset> assets = new ArrayList<>();
 
     @Transient // Calculé dynamiquement
-    private double totalValue;
+    private BigDecimal totalValue = BigDecimal.ZERO;
+
+    /** Version pour optimistic locking - détection des conflits concurrents. */
+    @Version
+    private Long version;
 
     // ===================== Constructeurs =====================
 
     public Portfolio() {
         this.assets = new ArrayList<>();
-        this.totalValue = 0.0;
+        this.totalValue = BigDecimal.ZERO;
     }
 
     public Portfolio(String userID) {
@@ -53,11 +71,16 @@ public class Portfolio {
     }
 
     public void setUserID(String userID) {
-        this.userID = userID;
+        // Deprecated - use setUser(User) instead
     }
 
-    @Column(name = "name")
-    private String name;
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
 
     public String getName() {
         return name;
@@ -76,14 +99,29 @@ public class Portfolio {
         recalculateTotalValue();
     }
 
-    public double getTotalValue() {
-        // Recalculer si nécessaire car @Transient
-        recalculateTotalValue();
-        return totalValue;
+    /**
+     * Retourne la valeur totale en BigDecimal.
+     */
+    public BigDecimal getTotalValueAsBigDecimal() {
+        recalculateTotalValueAsBigDecimal();
+        return totalValue != null ? totalValue : BigDecimal.ZERO;
     }
 
+    /**
+     * Retourne la valeur totale en double pour rétrocompatibilité.
+     */
+    public double getTotalValue() {
+        recalculateTotalValue();
+        return totalValue != null ? totalValue.doubleValue() : 0.0;
+    }
+
+    public void setTotalValue(BigDecimal totalValue) {
+        this.totalValue = totalValue != null ? totalValue : BigDecimal.ZERO;
+    }
+
+    @Deprecated
     public void setTotalValue(double totalValue) {
-        this.totalValue = totalValue;
+        this.totalValue = BigDecimal.valueOf(totalValue);
     }
 
     // ===================== Gestion des actifs =====================
@@ -97,31 +135,28 @@ public class Portfolio {
             if (existing.getSymbol() != null && existing.getSymbol().equalsIgnoreCase(asset.getSymbol())) {
 
                 // FOUND: Aggregate instead of adding duplicate
-                double oldQty = existing.getQuantity();
-                double oldPrice = existing.getUnitValue(); // UnitValue is explicitly the acquisition price
-                double newQty = asset.getQuantity();
-                double newPrice = asset.getUnitValue();
+                BigDecimal oldQty = existing.getQuantityAsBigDecimal();
+                BigDecimal oldPrice = existing.getUnitValueAsBigDecimal();
+                BigDecimal newQty = asset.getQuantityAsBigDecimal();
+                BigDecimal newPrice = asset.getUnitValueAsBigDecimal();
 
-                double totalQty = oldQty + newQty;
+                BigDecimal totalQty = oldQty.add(newQty);
 
                 // Weighted Average Purchase Price
-                if (totalQty > 0) {
-                    double weightedAvg = ((oldQty * oldPrice) + (newQty * newPrice)) / totalQty;
+                if (totalQty.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal weightedAvg = (oldQty.multiply(oldPrice).add(newQty.multiply(newPrice)))
+                            .divide(totalQty, 8, java.math.RoundingMode.HALF_UP);
                     existing.setUnitValue(weightedAvg);
-                    // Also update unitPrice if you added that field
-                    // (Assuming Asset.java delegates getUnitPrice to getUnitValue, setting
-                    // UnitValue is sufficient)
                 }
 
                 existing.setQuantity(totalQty);
-                // existing.calculateTotalValue(); // Not needed, calculated on getter
-
                 recalculateTotalValue();
                 return; // Done, do not add as new
             }
         }
 
         // NOT FOUND: Add as new
+        asset.setPortfolio(this); // Maintain bidirectional relationship
         assets.add(asset);
         recalculateTotalValue();
     }
@@ -133,14 +168,18 @@ public class Portfolio {
         recalculateTotalValue();
     }
 
-    public void recalculateTotalValue() {
-        double total = 0.0;
+    public void recalculateTotalValueAsBigDecimal() {
+        BigDecimal total = BigDecimal.ZERO;
         if (assets != null) {
             for (Asset asset : assets) {
-                total += asset.getTotalValue();
+                total = total.add(asset.getTotalValueAsBigDecimal());
             }
         }
         this.totalValue = total;
+    }
+
+    public void recalculateTotalValue() {
+        recalculateTotalValueAsBigDecimal();
     }
 
     @Override

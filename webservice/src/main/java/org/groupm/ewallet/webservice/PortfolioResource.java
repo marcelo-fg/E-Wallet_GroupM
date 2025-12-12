@@ -7,7 +7,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.groupm.ewallet.model.Portfolio;
 import org.groupm.ewallet.model.Asset;
-import org.groupm.ewallet.repository.PortfolioRepository;
 import org.groupm.ewallet.service.business.UserManager;
 
 import java.util.List;
@@ -26,16 +25,13 @@ public class PortfolioResource {
     @Inject
     private UserManager userManager;
 
-    @Inject
-    private PortfolioRepository portfolioRepository;
-
     /**
      * Récupère la liste de tous les portefeuilles existants.
      * Endpoint : GET /api/portfolios
      */
     @GET
     public Response getAllPortfolios() {
-        List<Portfolio> portfolios = portfolioRepository.findAll();
+        List<Portfolio> portfolios = userManager.getAllPortfolios();
         return Response.ok(portfolios).build();
     }
 

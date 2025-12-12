@@ -1,9 +1,12 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://xmlns.jcp.org/jsf/html"
-    xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+    xmlns:f="http://xmlns.jcp.org/jsf/core" xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
 
     <h:head>
         <title>WealthMate</title>
         <h:outputStylesheet library="css" name="styles.css" />
+
+        <!-- Page-specific styles injection point -->
+        <ui:insert name="pageStyle" />
 
         <!-- Chart.js CDN -->
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -19,19 +22,167 @@
             </div>
 
             <div class="nav-center">
-                <a href="dashboard.xhtml">Dashboard</a>
-                <a href="accounts.xhtml">Bank Accounts</a>
-                <a href="portfolio.xhtml">Portfolio</a>
-                <a href="transactions.xhtml">Transactions</a>
-                <a href="totalwealth.xhtml">Total Wealth</a>
+                <div class="nav-pills">
+                    <a href="dashboard.xhtml">Dashboard</a>
+                    <a href="accounts.xhtml">Accounts</a>
+                    <a href="portfolio.xhtml">Portfolio</a>
+                    <a href="transactions.xhtml">Transactions</a>
+                    <a href="totalwealth.xhtml">Total Wealth</a>
+                </div>
             </div>
 
             <div class="nav-right">
-                <h:form style="display:inline;">
-                    <h:commandButton value="Logout" action="#{loginBean.logout}" styleClass="btn-logout" />
+                <h:form id="userForm">
+                    <div class="user-dropdown">
+                        <div class="profile-btn" onclick="toggleUserDropdown(event)">
+                            #{userBean.initials}
+                        </div>
+
+                        <!-- Dropdown Menu -->
+                        <div id="userDropdownContent" class="dropdown-menu bento-box">
+                            <div class="dropdown-header">
+                                <span class="dropdown-name">#{userBean.fullName}</span>
+                                <span class="dropdown-email">#{userBean.email}</span>
+                            </div>
+
+                            <div class="dropdown-body">
+                                <div class="input-group-sm">
+                                    <h:outputLabel value="First Name" />
+                                    <h:inputText value="#{userBean.firstname}" styleClass="dark-input-sm" />
+                                </div>
+                                <div class="input-group-sm">
+                                    <h:outputLabel value="Last Name" />
+                                    <h:inputText value="#{userBean.lastname}" styleClass="dark-input-sm" />
+                                </div>
+                                <div class="input-group-sm">
+                                    <h:outputLabel value="New Password" />
+                                    <div class="pwd-container">
+                                        <h:inputSecret id="newPassword" value="#{userBean.password}"
+                                            styleClass="dark-input-sm" redisplay="true" placeholder="Min 6 chars"
+                                            onkeyup="checkStrength(this.value)" />
+                                        <span class="pwd-eye" onclick="togglePwd('userForm:newPassword', this)">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                                <circle cx="12" cy="12" r="3" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="strength-box">
+                                    <div class="strength-bar">
+                                        <div id="strengthFill" class="strength-fill"></div>
+                                    </div>
+                                    <span id="strengthLabel" class="strength-label"></span>
+                                </div>
+
+                                <div class="input-group-sm">
+                                    <h:outputLabel value="Confirm Password" />
+                                    <div class="pwd-container">
+                                        <h:inputSecret id="confirmPassword" value="#{userBean.confirmPassword}"
+                                            styleClass="dark-input-sm" redisplay="true"
+                                            placeholder="Re-type password" />
+                                        <span class="pwd-eye" onclick="togglePwd('userForm:confirmPassword', this)">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                                <circle cx="12" cy="12" r="3" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <h:commandButton value="Update Profile" action="#{userBean.updateProfile}"
+                                    styleClass="btn-update-profile">
+                                    <f:ajax execute="@form" render="@form :globalMessages" onevent="onProfileUpdate" />
+                                </h:commandButton>
+                            </div>
+
+                            <div class="dropdown-footer">
+                                <h:commandLink action="#{userBean.logout}" styleClass="logout-link">
+                                    Logout
+                                </h:commandLink>
+                            </div>
+                        </div>
+                    </div>
                 </h:form>
             </div>
         </nav>
+
+        <script>
+            //<![CDATA[
+            function toggleUserDropdown(event) {
+                event.stopPropagation();
+                var dropdown = document.getElementById("userDropdownContent");
+                if (dropdown.style.display === "block") {
+                    dropdown.style.display = "none";
+                } else {
+                    dropdown.style.display = "block";
+                }
+            }
+
+            function onProfileUpdate(data) {
+                if (data.status === 'success') {
+                    // Start fading out message after 3s? Handled by global styles maybe
+                }
+            }
+
+            function togglePwd(fieldId, btn) {
+                var f = document.getElementById(fieldId);
+                if (f) {
+                    if (f.type === 'password') {
+                        f.type = 'text';
+                        btn.style.color = 'rgba(255,255,255,0.9)';
+                    } else {
+                        f.type = 'password';
+                        btn.style.color = 'rgba(255,255,255,0.4)';
+                    }
+                }
+            }
+
+            function checkStrength(pwd) {
+                var fill = document.getElementById('strengthFill');
+                var label = document.getElementById('strengthLabel');
+                var score = 0;
+
+                if (!fill || !label) return;
+
+                if (!pwd) { fill.style.width = '0%'; fill.className = 'strength-fill'; label.textContent = ''; return; }
+
+                if (pwd.length >= 6) score++;
+                if (pwd.length >= 8) score++;
+                if (pwd.length >= 12) score++;
+                if (/[a-z]/.test(pwd)) score++;
+                if (/[A-Z]/.test(pwd)) score++;
+                if (/[0-9]/.test(pwd)) score++;
+                if (/[^a-zA-Z0-9]/.test(pwd)) score++;
+
+                if (score <= 2) {
+                    fill.style.width = '25%'; fill.className = 'strength-fill weak';
+                    label.textContent = 'Weak'; label.style.color = '#e53935';
+                } else if (score <= 4) {
+                    fill.style.width = '50%'; fill.className = 'strength-fill medium';
+                    label.textContent = 'Medium'; label.style.color = '#fb8c00';
+                } else if (score <= 5) {
+                    fill.style.width = '75%'; fill.className = 'strength-fill good';
+                    label.textContent = 'Good'; label.style.color = '#43a047';
+                } else {
+                    fill.style.width = '100%'; fill.className = 'strength-fill strong';
+                    label.textContent = 'Strong'; label.style.color = '#00c853';
+                }
+            }
+
+            window.onclick = function (event) {
+                if (!event.target.closest('.user-dropdown')) {
+                    var dropdown = document.getElementById("userDropdownContent");
+                    if (dropdown && dropdown.style.display === "block") {
+                        dropdown.style.display = "none";
+                    }
+                }
+            }
+            //]]>
+        </script>
 
         <main class="page-content">
             <!-- Global Flash Messages with Bento Box Styling -->

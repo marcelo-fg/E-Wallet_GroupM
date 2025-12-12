@@ -15,7 +15,7 @@
 
     <ui:define name="content">
         <!-- Ajout de accounts-page pour scoper le CSS -->
-        <div class="page-content accounts-page">
+        <div class="accounts-page">
 
             <!-- Grille principale 2 colonnes -->
             <div class="bento-dashboard">
@@ -57,7 +57,7 @@
                         </p>
 
                         <!-- Sélecteur type + nom de compte (création) -->
-                        <h:panelGroup id="accountTypePanel" rendered="#{accountBean.showTypeSelector}">
+                        <h:panelGroup id="accountTypePanel" layout="block" rendered="#{accountBean.showTypeSelector}">
                             <h:form id="typeSelectorForm">
                                 <div
                                     style="margin-top:16px; display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
@@ -83,7 +83,7 @@
                                         <h:commandButton value="Create" styleClass="btn-primary"
                                             action="#{accountBean.createAccount}">
                                             <f:ajax execute="@form"
-                                                render="accountsTable detailsPanel accountTypePanel" />
+                                                render="accountsTable detailsPanel accountTypePanel addActivityPanel" />
                                         </h:commandButton>
 
                                         <h:commandButton value="Cancel" styleClass="btn-ghost"
@@ -133,7 +133,7 @@
                     </h:panelGroup>
 
                     <!-- Nouvelle activité : sous la liste des comptes -->
-                    <h:panelGroup layout="block" styleClass="bento-box glow-hover"
+                    <h:panelGroup id="addActivityPanel" layout="block" styleClass="bento-box glow-hover"
                         rendered="#{not empty accountBean.accounts}">
                         <h3>Add Activity</h3>
                         <p class="bento-description">
@@ -154,7 +154,8 @@
                             </div>
 
                             <!-- Compte cible pour dépôt / retrait -->
-                            <h:panelGroup id="accountField" rendered="#{accountBean.operationType ne 'TRANSFER'}">
+                            <h:panelGroup id="accountField" layout="block"
+                                rendered="#{accountBean.operationType ne 'TRANSFER'}">
                                 <div class="form-field">
                                     <h:outputLabel value="Account" styleClass="field-label" />
                                     <h:selectOneMenu value="#{accountBean.selectedAccountId}" styleClass="select-field">
@@ -167,7 +168,8 @@
                             </h:panelGroup>
 
                             <!-- Champs spécifiques au transfert -->
-                            <h:panelGroup id="transferFields" rendered="#{accountBean.operationType eq 'TRANSFER'}">
+                            <h:panelGroup id="transferFields" layout="block"
+                                rendered="#{accountBean.operationType eq 'TRANSFER'}">
                                 <div class="form-field">
                                     <h:outputLabel value="Source Account" styleClass="field-label" />
                                     <h:selectOneMenu value="#{accountBean.transferSourceAccountId}"
@@ -229,7 +231,7 @@
                 </div>
 
                 <!-- COLONNE DROITE : historique simplifié + détails -->
-                <div class="bento-sidebar" id="detailsPanel">
+                <h:panelGroup id="detailsPanel" layout="block" styleClass="bento-sidebar">
 
                     <h:panelGroup layout="block" styleClass="bento-box glow-hover">
                         <h3>Transaction History</h3>
@@ -312,7 +314,7 @@
                             </p>
                         </h:panelGroup>
                     </h:panelGroup>
-                </div>
+                </h:panelGroup>
 
             </div>
         </div>

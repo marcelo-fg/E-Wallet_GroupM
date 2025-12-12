@@ -1,8 +1,8 @@
 package org.groupm.ewallet.repository.impl;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 import org.groupm.ewallet.model.Account;
 import org.groupm.ewallet.repository.AccountRepository;
 
@@ -10,86 +10,51 @@ import java.util.List;
 
 /**
  * JPA implementation of AccountRepository.
+ * Uses injected request-scoped EntityManager for proper transaction
+ * coordination.
  */
+@ApplicationScoped
 public class JpaAccountRepository implements AccountRepository {
 
-    private final EntityManagerFactory emf;
-
-    public JpaAccountRepository() {
-        this.emf = Persistence.createEntityManagerFactory("ewalletPU");
-        System.out.println("[JpaAccountRepository] EntityManagerFactory created successfully");
-    }
+    @Inject
+    private EntityManager em;
 
     @Override
     public void save(Account account) {
-        EntityManager em = emf.createEntityManager();
-        try {
-            em.getTransaction().begin();
-            if (account.getAccountID() == null || account.getAccountID().isEmpty()) {
+        if (account.getAccountID() == null || account.getAccountID().isEmpty()) {
+            em.persist(account);
+        } else {
+            Account existing = em.find(Account.class, account.getAccountID());
+            if (existing == null) {
                 em.persist(account);
             } else {
                 em.merge(account);
             }
-            em.getTransaction().commit();
-        } catch (Exception e) {
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
-            throw e;
-        } finally {
-            em.close();
         }
     }
 
     @Override
     public Account findById(String id) {
-        EntityManager em = emf.createEntityManager();
-        try {
-            return em.find(Account.class, id);
-        } finally {
-            em.close();
-        }
+        return em.find(Account.class, id);
     }
 
     @Override
     public List<Account> findAll() {
-        EntityManager em = emf.createEntityManager();
-        try {
-            return em.createQuery("SELECT a FROM Account a", Account.class).getResultList();
-        } finally {
-            em.close();
-        }
+        return em.createQuery("SELECT a FROM Account a", Account.class).getResultList();
     }
 
     @Override
     public void delete(String id) {
-        EntityManager em = emf.createEntityManager();
-        try {
-            em.getTransaction().begin();
-            Account account = em.find(Account.class, id);
-            if (account != null) {
-                em.remove(account);
-            }
-            em.getTransaction().commit();
-        } catch (Exception e) {
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
-            throw e;
-        } finally {
-            em.close();
+        Account account = em.find(Account.class, id);
+        if (account != null) {
+            em.remove(account);
         }
     }
 
     @Override
     public List<Account> findByUserId(String userId) {
-        EntityManager em = emf.createEntityManager();
-        try {
-            return em.createQuery("SELECT a FROM Account a WHERE a.userID = :userId", Account.class)
-                    .setParameter("userId", userId)
-                    .getResultList();
-        } finally {
-            em.close();
-        }
+        return em.createQuery("SELECT a FROM Account a WHERE a.userID = :userId", Account.class)
+                .setParameter("userId", userId)
+                .getResultList();
     }
 }

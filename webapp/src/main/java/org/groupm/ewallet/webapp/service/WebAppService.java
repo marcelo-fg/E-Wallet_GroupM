@@ -33,9 +33,6 @@ public class WebAppService {
     @Inject
     private MarketDataService marketData;
 
-    @Inject
-    private PriceCacheService priceCache;
-
     // ============================================================
     // AUTHENTICATION & USER MANAGEMENT
     // ============================================================
@@ -50,6 +47,10 @@ public class WebAppService {
 
     public JsonObject getUserDetails(String userId) {
         return backendApi.getUserDetails(userId);
+    }
+
+    public boolean updateUser(String userId, String firstname, String lastname, String email, String password) {
+        return backendApi.updateUser(userId, firstname, lastname, email, password);
     }
 
     public JsonObject getWealthForUser(String userId) {
@@ -274,20 +275,18 @@ public class WebAppService {
         return 12.5;
     }
 
-    // ============================================================
-    // PORTFOLIO METADATA
-    // ============================================================
-
     /**
-     * Simple DTO to expose portfolio id and display name to the UI.
+     * Simple DTO to expose portfolio id, display name and total value to the UI.
      */
     public static class PortfolioInfo {
         private final int id;
         private final String name;
+        private final double value;
 
-        public PortfolioInfo(int id, String name) {
+        public PortfolioInfo(int id, String name, double value) {
             this.id = id;
             this.name = name;
+            this.value = value;
         }
 
         public int getId() {
@@ -296,6 +295,10 @@ public class WebAppService {
 
         public String getName() {
             return name;
+        }
+
+        public double getValue() {
+            return value;
         }
     }
 }

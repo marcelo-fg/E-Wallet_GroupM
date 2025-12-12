@@ -1,294 +1,682 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html" xmlns:ui="jakarta.faces.facelets"
-    template="/templates/layout.xhtml">
+    xmlns:f="jakarta.faces.core" template="/templates/layout.xhtml">
 
     <ui:define name="pageStyle">
         <style>
+            /* ===== PREMIUM DASHBOARD STYLING ===== */
+
             body.dashboard-page {
                 background: url("#{request.contextPath}/resources/images/bg-dashboard_1.png") center/cover no-repeat fixed !important;
+                height: 100vh;
+                overflow: hidden !important;
             }
 
-            .chart-container {
-                position: relative;
-                height: 300px;
-                width: 100%;
-                margin-top: 20px;
-            }
-
-            /* iOS 18 Style Wealth Amount */
-            .wealth-amount {
-                font-size: 32px;
-                font-weight: 700;
-                color: rgba(255, 255, 255, 0.85);
-                letter-spacing: -0.5px;
-                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            }
-
-            /* Clickable Accounts Box */
-            .bento-box-link {
-                text-decoration: none;
-                display: block;
-                transition: all 0.2s ease;
-            }
-
-            .bento-box-link .bento-box {
-                cursor: pointer;
-                transition: transform 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .bento-box-link:hover .bento-box {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-            }
-
-            /* Accounts Summary */
-            .accounts-summary {
-                margin-top: 15px;
-            }
-
-            .account-row {
+            /* FORCE page-content to not scroll */
+            body.dashboard-page .page-content {
+                margin-top: 70px !important;
+                height: calc(100vh - 70px) !important;
+                max-height: calc(100vh - 70px) !important;
+                overflow: visible !important;
+                padding: 25px 30px 10px 30px !important;
+                box-sizing: border-box !important;
                 display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 8px 0;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            }
-
-            .account-row:last-child {
-                border-bottom: none;
-            }
-
-            .account-name {
-                font-size: 14px;
-                color: rgba(255, 255, 255, 0.7);
-            }
-
-            .account-balance {
-                font-size: 15px;
-                font-weight: 600;
-                color: rgba(255, 255, 255, 0.9);
-            }
-
-            /* Add Favorite Button */
-            .add-favorite-btn {
-                width: 32px;
-                height: 32px;
-                border-radius: 50%;
-                background: rgba(255, 255, 255, 0.15);
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                color: white;
-                font-size: 20px;
-                font-weight: 300;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                display: flex;
-                align-items: center;
                 justify-content: center;
+                align-items: flex-start;
             }
 
-            .add-favorite-btn:hover {
-                background: rgba(255, 255, 255, 0.25);
-                transform: scale(1.1);
+            .dashboard-container-custom {
+                width: 100%;
+                max-width: 1600px;
+                height: 100%;
+                max-height: 100%;
+                display: grid;
+                grid-template-columns: 67% 31%;
+                gap: 15px;
+                overflow: hidden;
             }
 
-            /* Transactions List */
-            .transactions-list {
-                margin-top: 15px;
+            /* ===== LEFT COLUMN - MAIN CHART ===== */
+            .bento-main-col {
+                height: 100%;
+                overflow: hidden;
             }
 
-            .transaction-item {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 10px 0;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            }
-
-            .transaction-item:last-child {
-                border-bottom: none;
-            }
-
-            .transaction-info {
+            .bento-main-col .bento-box {
+                height: 100%;
                 display: flex;
                 flex-direction: column;
-                gap: 4px;
+                padding: 16px;
+                background: rgba(0, 0, 0, 0.55);
+                backdrop-filter: blur(18px);
+                border-radius: 18px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+                transition: 0.25s ease;
             }
 
-            .transaction-label {
+            .bento-main-col .bento-box:hover {
+                border-color: rgba(255, 255, 255, 0.55);
+                box-shadow:
+                    0 26px 70px rgba(0, 0, 0, 0.95),
+                    0 0 0 1px rgba(255, 255, 255, 0.45);
+                transform: translateY(-2px);
+            }
+
+            /* Inner Card for Chart with Premium Shadow */
+            .chart-inner-card {
+                /* Create a darker, recessed look */
+                background: rgba(0, 0, 0, 0.4);
+                border-radius: 16px;
+                flex: 1;
+                margin-top: 20px;
+                padding: 20px;
+                border: 1px solid rgba(255, 255, 255, 0.03);
+                box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.6);
+                display: flex;
+                flex-direction: column;
+            }
+
+
+
+            canvas {
+                width: 100% !important;
+                height: 100% !important;
+            }
+
+            /* ===== RIGHT COLUMN - SIDEBAR ===== */
+            .bento-sidebar-col {
+                height: 100%;
+                max-height: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                overflow: hidden;
+            }
+
+            /* Proportions: Accounts and Portfolios (same size), Transactions (fills remaining space) */
+            .sidebar-item-accounts {
+                flex: 0.8;
+                min-height: 0;
+                overflow: hidden;
+            }
+
+            .sidebar-item-favorites {
+                flex: 0.8;
+                min-height: 0;
+                overflow: hidden;
+            }
+
+            .sidebar-item-transactions {
+                flex: 1.4;
+                min-height: 0;
+                overflow: hidden;
+            }
+
+            .sidebar-link {
+                height: 100%;
+                display: block;
+                text-decoration: none !important;
+                color: white !important;
+            }
+
+            .sidebar-link .bento-box {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                padding: 12px;
+                background: rgba(0, 0, 0, 0.55);
+                backdrop-filter: blur(18px);
+                border-radius: 18px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                transition: 0.25s ease;
+                box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+                overflow: hidden;
+            }
+
+            .sidebar-link:hover .bento-box {
+                border-color: rgba(255, 255, 255, 0.55);
+                box-shadow:
+                    0 26px 70px rgba(0, 0, 0, 0.95),
+                    0 0 0 1px rgba(255, 255, 255, 0.45);
+            }
+
+            /* Glow effect on main box */
+            .glow-hover {
+                position: relative;
+            }
+
+            .glow-hover::before {
+                content: '';
+                position: absolute;
+                top: -2px;
+                left: -2px;
+                right: -2px;
+                bottom: -2px;
+                background: linear-gradient(135deg,
+                        rgba(99, 179, 237, 0.15),
+                        rgba(168, 85, 247, 0.15));
+                border-radius: 18px;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                z-index: -1;
+                filter: blur(8px);
+            }
+
+            .glow-hover:hover::before {
+                opacity: 1;
+            }
+
+            /* ===== SCROLLBAR CUSTOMIZATION ===== */
+            .sidebar-list {
+                flex: 1;
+                overflow-y: auto;
+                margin-top: 16px;
+                padding-right: 8px;
+            }
+
+            .sidebar-list::-webkit-scrollbar {
+                width: 5px;
+            }
+
+            .sidebar-list::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.03);
+                border-radius: 3px;
+            }
+
+            .sidebar-list::-webkit-scrollbar-thumb {
+                background: linear-gradient(180deg,
+                        rgba(99, 179, 237, 0.4),
+                        rgba(168, 85, 247, 0.4));
+                border-radius: 3px;
+            }
+
+            .sidebar-list::-webkit-scrollbar-thumb:hover {
+                background: linear-gradient(180deg,
+                        rgba(99, 179, 237, 0.6),
+                        rgba(168, 85, 247, 0.6));
+            }
+
+            /* ===== TYPOGRAPHY ===== */
+            .text-title {
+                font-size: 26px;
+                font-weight: 700;
+                color: #fff;
+                margin: 0;
+                letter-spacing: -0.5px;
+                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            }
+
+            /* ===== TITLE &amp; AMOUNT ===== */
+            .dashboard-title {
                 font-size: 14px;
-                color: rgba(255, 255, 255, 0.8);
+                color: rgba(255, 255, 255, 0.5);
+                margin: 0 0 4px 0;
                 font-weight: 500;
+                letter-spacing: 0.5px;
             }
 
-            .transaction-date {
+            .dashboard-amount {
+                font-size: 28px;
+                color: #fff;
+                font-weight: 800;
+                margin: 0 0 8px 0;
+                letter-spacing: -0.5px;
+                background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            }
+
+            .text-subtitle {
+                font-size: 11px;
+                color: rgba(255, 255, 255, 0.4);
+                margin: 0 0 6px 0;
+                font-weight: 400;
+                letter-spacing: 0.3px;
+            }
+
+            /* ===== SIDEBAR TITLES ===== */
+            .sidebar-title {
+                font-size: 14px;
+                margin: 0 0 6px 0;
+                font-weight: 700;
+                color: #fff;
+                letter-spacing: -0.3px;
+            }
+
+            /* ===== LISTS ===== */
+            .sidebar-list {
+                flex: 1;
+                overflow-y: auto;
+                overflow-x: hidden;
+                margin-top: 6px;
+                padding-right: 4px;
+            }
+
+            .list-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 6px 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+                transition: all 0.2s ease;
+            }
+
+            .list-row:last-child {
+                border-bottom: none;
+            }
+
+            .list-row:hover {
+                background: rgba(255, 255, 255, 0.02);
+                border-radius: 6px;
+                padding-left: 6px;
+                padding-right: 6px;
+            }
+
+            .row-main-text {
                 font-size: 12px;
+                font-weight: 600;
+                color: #fff;
+                margin-bottom: 2px;
+            }
+
+            .row-sub-text {
+                font-size: 10px;
                 color: rgba(255, 255, 255, 0.4);
             }
 
-            .transaction-amount {
-                font-size: 15px;
+            .row-amount {
+                font-size: 13px;
+                font-weight: 700;
+                color: #fff;
+            }
+
+            /* ===== PROGRESS BAR (for Accounts) ===== */
+            .progress-bar-container {
+                height: 6px;
+                width: 100%;
+                background: rgba(255, 255, 255, 0.08);
+                border-radius: 3px;
+                margin-top: 8px;
+                margin-bottom: 6px;
+                overflow: hidden;
+                position: relative;
+            }
+
+            .progress-bar-fill {
+                height: 100%;
+                background: linear-gradient(90deg, #32d74b 0%, #30d158 100%);
+                border-radius: 3px;
+                transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: 0 0 12px rgba(50, 215, 75, 0.6);
+                position: relative;
+            }
+
+            .progress-bar-fill::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(90deg,
+                        transparent 0%,
+                        rgba(255, 255, 255, 0.3) 50%,
+                        transparent 100%);
+                animation: shimmer 2s infinite;
+            }
+
+            @keyframes shimmer {
+                0% {
+                    transform: translateX(-100%);
+                }
+
+                100% {
+                    transform: translateX(100%);
+                }
+            }
+
+            /* ===== ASSET ICONS ===== */
+            .asset-icon {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                font-weight: 700;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            }
+
+            .asset-icon.tesla {
+                background: linear-gradient(135deg, #ff3b30 0%, #c02426 100%);
+            }
+
+            .asset-icon.bitcoin {
+                background: linear-gradient(135deg, #f7931a 0%, #c97616 100%);
+            }
+
+            .asset-icon.vti {
+                background: linear-gradient(135deg, #8e44ad 0%, #6c3483 100%);
+            }
+
+            /* ===== TRANSACTION ICON ===== */
+            .transaction-icon {
+                background: linear-gradient(135deg,
+                        rgba(99, 179, 237, 0.2) 0%,
+                        rgba(168, 85, 247, 0.2) 100%);
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            /* ===== MINI SPARKLINE CANVAS ===== */
+            .mini-sparkline {
+                width: 60px;
+                height: 24px;
+                opacity: 0.8;
+            }
+
+            /* ===== ADD BUTTON ===== */
+            .add-button {
+                background: rgba(255, 255, 255, 0.12);
+                width: 28px;
+                height: 28px;
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                font-weight: 300;
+                transition: all 0.2s ease;
+                cursor: pointer;
+                border: 1px solid rgba(255, 255, 255, 0.15);
+            }
+
+            .add-button:hover {
+                background: rgba(99, 179, 237, 0.25);
+                border-color: rgba(99, 179, 237, 0.4);
+                transform: scale(1.1);
+            }
+
+            /* ===== TOTAL WEALTH LARGE TEXT ===== */
+            .text-amount-lg {
+                font-size: 56px;
+                line-height: 1.1;
                 font-weight: 600;
+                /* font-family removed to match other numbers (Poppins default) */
+                background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                margin-top: 15px;
+                margin-bottom: 10px;
+                letter-spacing: -2px;
+                text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             }
 
-            .transaction-amount.positive {
-                color: #30d158;
+            /* ===== RESPONSIVE ===== */
+            @media (max-width: 1200px) {
+                .dashboard-container-custom {
+                    grid-template-columns: 1fr;
+                    height: auto;
+                    gap: 16px;
+                }
+
+                .bento-sidebar-col {
+                    flex-direction: row;
+                    height: auto;
+                }
+
+                .sidebar-item-accounts,
+                .sidebar-item-favorites,
+                .sidebar-item-transactions {
+                    flex: 1;
+                }
             }
 
-            .transaction-amount.negative {
-                color: rgba(255, 255, 255, 0.7);
+            @media (max-width: 768px) {
+                .bento-sidebar-col {
+                    flex-direction: column;
+                }
+
+                .text-amount-lg {
+                    font-size: 36px;
+                }
             }
         </style>
     </ui:define>
 
-    <ui:define name="title">
-        Dashboard - WealthMate
-    </ui:define>
+    <ui:define name="title">Dashboard - WealthMate</ui:define>
 
     <ui:define name="content">
-        <div class="bento-dashboard">
+        <div class="dashboard-container-custom">
 
-            <!-- COLONNE GAUCHE : Total Wealth + GRAPHIQUE -->
-            <div class="bento-box bento-main">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <h2>Total Wealth</h2>
-                        <p class="bento-description">Overview of your complete financial portfolio</p>
+            <!-- LEFT BOX -->
+            <div class="bento-main-col">
+                <div class="bento-box glow-hover">
+                    <div style="display: flex; flex-direction: column; justify-content: flex-start;">
+                        <div>
+                            <h2 class="text-title">Total Wealth</h2>
+                            <p class="text-subtitle">Overview of your complete financial portfolio</p>
+                        </div>
+                        <div class="text-amount-lg">
+                            <h:outputText value="#{totalWealthBean.totalNetWorth}">
+                                <f:convertNumber type="currency" currencyCode="USD" />
+                            </h:outputText>
+                        </div>
                     </div>
-                    <div class="wealth-amount">
-                        $#{totalWealthBean.totalNetWorth}
-                    </div>
-                </div>
 
-                <div class="chart-container">
-                    <canvas id="assetChart"></canvas>
+                    <!-- Inner Dark Card for Chart -->
+                    <div class="chart-inner-card">
+                        <p style="margin:0 0 10px 0; font-size:13px; opacity:0.7;">Total Net Worth Evolution</p>
+                        <div style="flex:1; position:relative; height:calc(100% - 30px);">
+                            <canvas id="mainChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- COLONNE DROITE : Cards existantes -->
-            <div class="bento-sidebar">
-                <!-- ACCOUNTS BOX - Cliquable -->
-                <h:form>
-                    <h:commandLink action="accounts" styleClass="bento-box-link">
-                        <div class="bento-box">
-                            <h3>Accounts</h3>
-                            <div class="accounts-summary">
+            <!-- RIGHT SIDEBAR -->
+            <div class="bento-sidebar-col">
+
+                <!-- 1. ACCOUNTS (Smallest) -->
+                <h:form styleClass="sidebar-item-accounts">
+                    <h:commandLink action="accounts" styleClass="sidebar-link">
+                        <div class="bento-box glow-hover">
+                            <h3 class="sidebar-title">Accounts</h3>
+                            <div class="sidebar-list">
                                 <ui:repeat value="#{accountBean.accounts}" var="account" varStatus="status">
-                                    <ui:fragment rendered="#{status.index lt 3}">
-                                        <div class="account-row">
-                                            <span class="account-name">#{account.name}</span>
-                                            <span class="account-balance">$#{account.balance}</span>
+                                    <ui:fragment rendered="#{status.index lt 2}">
+                                        <div class="list-row">
+                                            <span class="row-main-text">#{account.name}</span>
+                                            <span class="row-amount">
+                                                <h:outputText value="#{account.balance}">
+                                                    <f:convertNumber type="currency" currencyCode="USD" />
+                                                </h:outputText>
+                                            </span>
+                                        </div>
+                                        <!-- Animated Progress Bar - width based on percentage of displayed accounts -->
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar-fill"
+                                                style="width: #{accountBean.totalDisplayedBalance > 0 ? (account.balance / accountBean.totalDisplayedBalance * 100) : 100}%;">
+                                            </div>
                                         </div>
                                     </ui:fragment>
                                 </ui:repeat>
-                                <ui:fragment rendered="#{accountBean.accounts.size() gt 3}">
-                                    <p style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.5);">
-                                        +#{accountBean.accounts.size() - 3} more accounts
-                                    </p>
-                                </ui:fragment>
-                                <ui:fragment rendered="#{empty accountBean.accounts}">
-                                    <p
-                                        style="text-align: center; color: rgba(255,255,255,0.4); margin-top: 20px; font-size: 14px;">
-                                        No accounts yet
-                                    </p>
-                                </ui:fragment>
                             </div>
                         </div>
                     </h:commandLink>
                 </h:form>
 
-                <!-- FAVORITE ASSETS BOX -->
-                <div class="bento-box" style="position: relative;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3>Favorite Assets</h3>
-                        <button class="add-favorite-btn"
-                            onclick="alert('Feature coming soon: Add favorite assets!'); return false;">+</button>
-                    </div>
-                    <p class="bento-description" style="margin-top: 10px;">Your watched investments</p>
-                    <p style="text-align: center; color: rgba(255,255,255,0.4); margin-top: 20px; font-size: 14px;">
-                        No favorites yet. Click + to add!
-                    </p>
-                </div>
+                <!-- 2. PORTFOLIOS (Same size as Accounts) -->
+                <h:form styleClass="sidebar-item-favorites">
+                    <h:commandLink action="portfolio" styleClass="sidebar-link">
+                        <div class="bento-box glow-hover">
+                            <h3 class="sidebar-title">Portfolios</h3>
+                            <div class="sidebar-list">
+                                <!-- Portfolio items from database -->
+                                <ui:repeat value="#{portfolioBean.portfolioInfos}" var="portfolio" varStatus="status">
+                                    <ui:fragment rendered="#{status.index lt 2}">
+                                        <div class="list-row">
+                                            <span class="row-main-text">#{portfolio.name}</span>
+                                            <span class="row-amount">
+                                                <h:outputText value="#{portfolio.value}">
+                                                    <f:convertNumber type="currency" currencyCode="USD" />
+                                                </h:outputText>
+                                            </span>
+                                        </div>
+                                        <!-- Animated Progress Bar - width based on percentage of total -->
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar-fill"
+                                                style="width: #{portfolioBean.totalPortfoliosValue > 0 ? (portfolio.value / portfolioBean.totalPortfoliosValue * 100) : 100}%; background: linear-gradient(90deg, #667eea, #764ba2);">
+                                            </div>
+                                        </div>
+                                    </ui:fragment>
+                                </ui:repeat>
 
-                <!-- RECENT TRANSACTIONS BOX -->
-                <div class="bento-box">
-                    <h3>Recent Transactions</h3>
-                    <div class="transactions-list">
-                        <ui:repeat value="#{transactionBean.allTransactions}" var="tx" varStatus="status">
-                            <ui:fragment rendered="#{status.index lt 5}">
-                                <div class="transaction-item">
-                                    <div class="transaction-info">
-                                        <span class="transaction-label">#{tx.sourceLabel}</span>
-                                        <span class="transaction-date">#{tx.formattedDateTime}</span>
+                                <!-- Empty state -->
+                                <h:panelGroup rendered="#{empty portfolioBean.portfolioInfos}">
+                                    <div class="list-row" style="opacity: 0.6;">
+                                        <span class="row-main-text">No portfolios yet</span>
+                                        <span class="row-amount">Click +</span>
                                     </div>
-                                    <span class="transaction-amount #{tx.type == 'deposit' ? 'positive' : 'negative'}">
-                                        #{tx.type == 'deposit' ? '+' : '-'}$#{tx.amount}
-                                    </span>
-                                </div>
-                            </ui:fragment>
-                        </ui:repeat>
-                        <ui:fragment rendered="#{empty transactionBean.allTransactions}">
-                            <p
-                                style="text-align: center; color: rgba(255,255,255,0.4); margin-top: 20px; font-size: 14px;">
-                                No transactions yet
-                            </p>
-                        </ui:fragment>
-                    </div>
-                </div>
+                                </h:panelGroup>
+                            </div>
+                        </div>
+                    </h:commandLink>
+                </h:form>
+
+                <!-- 3. TRANSACTIONS (Largest) -->
+                <h:form styleClass="sidebar-item-transactions">
+                    <h:commandLink action="transactions" styleClass="sidebar-link">
+                        <div class="bento-box glow-hover">
+                            <h3 class="sidebar-title">Recent Transactions</h3>
+                            <div class="sidebar-list">
+                                <ui:repeat value="#{transactionBean.allTransactions}" var="tx" varStatus="status">
+                                    <ui:fragment rendered="#{status.index lt 6}">
+                                        <div class="list-row">
+                                            <div style="display:flex; align-items:center; gap:12px;">
+                                                <div class="transaction-icon">
+                                                    <span style="font-size:18px; opacity:0.8;">⇄</span>
+                                                </div>
+                                                <div>
+                                                    <div class="row-main-text">#{tx.sourceLabel}</div>
+                                                    <div class="row-sub-text">#{tx.formattedDateTime}</div>
+                                                </div>
+                                            </div>
+                                            <span class="row-amount"
+                                                style="color: #{tx.type == 'deposit' ? '#30d158' : '#ff453a'};">
+                                                #{tx.type == 'deposit' ? '+' : '-'}
+                                                <h:outputText value="#{tx.amount}">
+                                                    <f:convertNumber type="currency" currencyCode="USD" />
+                                                </h:outputText>
+                                            </span>
+                                        </div>
+                                    </ui:fragment>
+                                </ui:repeat>
+                            </div>
+                        </div>
+                    </h:commandLink>
+                </h:form>
+
             </div>
 
         </div>
 
-        <!-- Chart.js from CDN -->
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <h:outputText id="netWorthData" value="#{totalWealthBean.netWorthHistoryJson}" style="display:none;" />
 
-        <!-- Script pour initialiser le graphique -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                var ctx = document.getElementById('assetChart');
+                // ===== MAIN CHART =====
+                var nwRaw = document.getElementById('netWorthData').textContent;
+                var netWorthHistory = { labels: [], data: [] };
+                try {
+                    netWorthHistory = JSON.parse(nwRaw);
+                } catch (e) { }
+
+                var ctx = document.getElementById('mainChart');
                 if (ctx) {
-                    var chart = new Chart(ctx.getContext('2d'), {
-                        type: 'doughnut',
+                    var chartCtx = ctx.getContext('2d');
+
+                    // Create sophisticated gradient for area fill
+                    var gradient = chartCtx.createLinearGradient(0, 0, 0, 400);
+                    gradient.addColorStop(0, 'rgba(180, 180, 180, 0.25)');
+                    gradient.addColorStop(0.5, 'rgba(140, 140, 140, 0.12)');
+                    gradient.addColorStop(1, 'rgba(100, 100, 100, 0.02)');
+
+                    new Chart(ctx, {
+                        type: 'line',
                         data: {
-                            labels: ['Cash', 'Stocks', 'Crypto', 'ETFs'],
+                            labels: netWorthHistory.labels,
                             datasets: [{
-                                data: [
-                                    #{ totalWealthBean.totalCash },
-                                    #{ totalWealthBean.totalStocks },
-                                    #{ totalWealthBean.totalCrypto },
-                                    #{ totalWealthBean.totalEtf }
-                                ],
-                                backgroundColor: ['#13d6b1', '#0062ff', '#ffce56', '#ff6384'],
-                                borderWidth: 0
+                                label: 'Net Worth',
+                                data: netWorthHistory.data,
+                                borderColor: '#9ca3af',
+                                backgroundColor: gradient,
+                                borderWidth: 2.5,
+                                pointRadius: 0,
+                                pointHoverRadius: 6,
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: '#9ca3af',
+                                pointHoverBorderWidth: 2,
+                                fill: true,
+                                tension: 0.4
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
+                            interaction: {
+                                intersect: false,
+                                mode: 'index'
+                            },
                             plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: {
-                                        color: 'white',
-                                        padding: 15,
-                                        font: {
-                                            size: 12,
-                                            family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                                        }
-                                    }
-                                },
+                                legend: { display: false },
                                 tooltip: {
-                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    backgroundColor: 'rgba(20, 25, 35, 0.95)',
+                                    titleColor: '#fff',
+                                    bodyColor: '#e5e7eb',
+                                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                                    borderWidth: 1,
                                     padding: 12,
-                                    cornerRadius: 8,
-                                    titleFont: {
-                                        size: 14
-                                    },
-                                    bodyFont: {
-                                        size: 13
-                                    },
+                                    displayColors: false,
                                     callbacks: {
                                         label: function (context) {
-                                            return context.label + ': $' + context.parsed.toFixed(2);
+                                            return '$' + context.parsed.y.toFixed(2);
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    display: true,
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        color: '#6b7280',
+                                        font: { size: 11 },
+                                        maxRotation: 0
+                                    }
+                                },
+                                y: {
+                                    position: 'left',
+                                    grid: {
+                                        color: 'rgba(255,255,255,0.04)',
+                                        drawBorder: false
+                                    },
+                                    ticks: {
+                                        color: '#6b7280',
+                                        font: { size: 11 },
+                                        callback: function (value) {
+                                            return '$' + value.toLocaleString();
                                         }
                                     }
                                 }
@@ -296,9 +684,51 @@
                         }
                     });
                 }
+
+                // ===== MINI SPARKLINE CHARTS =====
+                function createSparkline(canvasId, data, color) {
+                    var sparkCanvas = document.getElementById(canvasId);
+                    if (!sparkCanvas) return;
+
+                    var sparkCtx = sparkCanvas.getContext('2d');
+
+                    // Create gradient for sparkline
+                    var sparkGradient = sparkCtx.createLinearGradient(0, 0, 0, 24);
+                    sparkGradient.addColorStop(0, color + '40'); // 25% opacity
+                    sparkGradient.addColorStop(1, color + '00'); // 0% opacity
+
+                    new Chart(sparkCanvas, {
+                        type: 'line',
+                        data: {
+                            labels: data.map((_, i) => i),
+                            datasets: [{
+                                data: data,
+                                borderColor: color,
+                                backgroundColor: sparkGradient,
+                                borderWidth: 1.5,
+                                pointRadius: 0,
+                                fill: true,
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: false,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                            scales: {
+                                x: { display: false },
+                                y: { display: false }
+                            }
+                        }
+                    });
+                }
+
+                // Create sparklines with sample data
+                createSparkline('sparkTSLA', [65, 70, 68, 75, 78, 72, 80, 85, 82, 88], '#30d158');
+                createSparkline('sparkBTC', [100, 95, 98, 92, 88, 85, 90, 87, 85, 82], '#ff9f0a');
+                createSparkline('sparkVTI', [50, 52, 51, 49, 48, 47, 48, 46, 47, 45], '#bf5af2');
             });
         </script>
-
     </ui:define>
 
 </ui:composition>

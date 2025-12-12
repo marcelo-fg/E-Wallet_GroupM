@@ -7,8 +7,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.groupm.ewallet.model.Transaction;
 import org.groupm.ewallet.model.Account;
-import org.groupm.ewallet.repository.TransactionRepository;
-import org.groupm.ewallet.repository.AccountRepository;
 import org.groupm.ewallet.service.business.AccountManager;
 
 import java.util.List;
@@ -25,15 +23,8 @@ import java.util.ArrayList;
 @RequestScoped
 public class TransactionResource {
 
-    // Managers / repositories partagés du backend
     @Inject
     private AccountManager accountManager;
-
-    @Inject
-    private TransactionRepository transactionRepository;
-
-    @Inject
-    private AccountRepository accountRepository;
 
     /**
      * Récupère la liste complète des transactions enregistrées.
@@ -41,7 +32,7 @@ public class TransactionResource {
      */
     @GET
     public Response getAllTransactions() {
-        List<Transaction> transactions = transactionRepository.findAll();
+        List<Transaction> transactions = accountManager.getAllTransactions();
         return Response.ok(transactions).build();
     }
 
@@ -78,7 +69,7 @@ public class TransactionResource {
     @GET
     @Path("/{id}")
     public Response getTransactionById(@PathParam("id") String id) {
-        Transaction transaction = transactionRepository.findById(id);
+        Transaction transaction = accountManager.getTransactionById(id);
         if (transaction == null) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity("Transaction non trouvée")
@@ -101,14 +92,14 @@ public class TransactionResource {
         }
 
         // Vérifie que le compte existe
-        Account account = accountRepository.findById(accountId);
+        Account account = accountManager.getAccountById(accountId);
         if (account == null) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity("Aucun compte trouvé pour l'identifiant : " + accountId)
                     .build();
         }
 
-        List<Transaction> transactions = transactionRepository.findByAccountId(accountId);
+        List<Transaction> transactions = accountManager.getTransactionsByAccountId(accountId);
         return Response.ok(transactions).build();
     }
 
@@ -125,9 +116,12 @@ public class TransactionResource {
                     .build();
         }
 
-        // Récupère tous les comptes de l'utilisateur
-        List<Account> userAccounts = accountRepository.findByUserId(userId);
-        if (userAccounts == null || userAccounts.isEmpty()) {
+        // Récupère tous les comptes de l'utilisateur via AccountManager
+        List<Account> userAccounts = accountManager.getAllAccounts().stream()
+                .filter(a -> userId.equals(a.getUserID()))
+                .toList();
+
+        if (userAccounts.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity("Aucun compte trouvé pour l'utilisateur : " + userId)
                     .build();
@@ -136,7 +130,7 @@ public class TransactionResource {
         // Agrège toutes les transactions
         List<Transaction> allTransactions = new ArrayList<>();
         for (Account acc : userAccounts) {
-            List<Transaction> txList = transactionRepository.findByAccountId(acc.getAccountID());
+            List<Transaction> txList = accountManager.getTransactionsByAccountId(acc.getAccountID());
             if (txList != null && !txList.isEmpty()) {
                 allTransactions.addAll(txList);
             }

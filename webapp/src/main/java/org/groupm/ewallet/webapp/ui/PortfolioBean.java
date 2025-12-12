@@ -231,7 +231,8 @@ public class PortfolioBean implements Serializable {
     }
 
     /**
-     * Returns a JSF-friendly list of portfolio id + label for the current user.
+     * Returns a JSF-friendly list of portfolio id + label + value for the current
+     * user.
      */
     public List<WebAppService.PortfolioInfo> getPortfolioInfos() {
         List<WebAppService.PortfolioInfo> out = new ArrayList<>();
@@ -240,9 +241,24 @@ public class PortfolioBean implements Serializable {
         }
         for (Integer id : portfolioIds) {
             String name = portfolioNames.getOrDefault(id, "Portfolio " + id);
-            out.add(new WebAppService.PortfolioInfo(id, name));
+            // Calculate total value for this portfolio
+            double value = webAppService.getPortfolioAssets(id).stream()
+                    .mapToDouble(PortfolioAsset::getTotalValue)
+                    .sum();
+            out.add(new WebAppService.PortfolioInfo(id, name, value));
         }
         return out;
+    }
+
+    /**
+     * Returns the total value of the first 2 portfolios for percentage calculations
+     * on dashboard.
+     */
+    public double getTotalPortfoliosValue() {
+        return getPortfolioInfos().stream()
+                .limit(2) // Only first 2 portfolios (displayed on dashboard)
+                .mapToDouble(WebAppService.PortfolioInfo::getValue)
+                .sum();
     }
 
     /**
@@ -725,7 +741,7 @@ public class PortfolioBean implements Serializable {
         // Update backend with the sale (negative quantity)
         // Note: Backend now handles aggregation. Adding -quantity effectively reduces
         // the holding.
-        boolean success = webAppService.addAssetToPortfolio(
+        webAppService.addAssetToPortfolio(
                 selectedPortfolioId,
                 name,
                 "sold", // Type might not matter for update, but keep it safe
@@ -759,26 +775,9 @@ public class PortfolioBean implements Serializable {
         // Ideally we should have a dedicated "sell" or "reduce" endpoint, but reusing
         // 'add' with negative qty requires passing the OLD price to preserve weighted
         // avg.
-        // Let's accept this complexity for now or simple assume the user accepts the
-        // slight averaging drift if we use market price?
-        // No, user complained about PnL.
-        // Let's try to find the current avg price from the in-memory list.
-        double currentAvgPrice = 0.0;
-        if (assets != null) {
-            for (String aStr : assets) {
-                if (aStr.contains(selectedHeldSymbol)) {
-                    // Extract price from string? Risky.
-                    // Better to iterate the rich objects if possible, but 'assets' is a list of
-                    // Strings.
-                    // The rich objects are in
-                    // 'webAppService.getPortfolioAssets(selectedPortfolioId)' but not cached in
-                    // 'assets' specific variable here except as strings.
-                    // However, we can fetch them.
-                }
-            }
-        }
         // Simplified approach: Create a dedicated remove/reduce endpoint or just be
         // careful.
+        // We already fetched currentHoldings during validation, reuse it here
         // Actually, let's call the backend with the Sell Price but realized that my
         // backend logic MIGHT be flawed for valid negative updates.
         // IF newQty is negative, the "cost" of that negative quantity is conceptually
@@ -934,13 +933,10 @@ public class PortfolioBean implements Serializable {
                     this.selectedAnalyticsAssetSymbol = analyticsAssets.get(0).getSymbol();
                 }
             }
-            if (portfolioChartJson == null || portfolioChartJson.isBlank()) {
-                calculatePortfolioAnalytics();
-                generatePortfolioChartData();
-            }
-            if (assetChartJson == null || assetChartJson.isBlank()) {
-                generateAssetChartData();
-            }
+            // Always refresh analytics and charts
+            calculatePortfolioAnalytics();
+            generatePortfolioChartData();
+            generateAssetChartData();
         }
     }
 
@@ -1031,73 +1027,65 @@ public class PortfolioBean implements Serializable {
     }
 
     public void generateAssetChartData() {
-        // GENERATE SIMULATED ASSET HISTORY
-        if (selectedAnalyticsAssetSymbol == null) {
-            this.assetChartJson = "{}";
+        // GENERATE PnL DISTRIBUTION CHART (Bar Chart of all assets)
+        System.out.println("[PortfolioBean] Generating PnL Distribution Chart");
+
+        if (analyticsAssets == null || analyticsAssets.isEmpty()) {
+            this.assetChartJson = "{\"labels\":[],\"datasets\":[]}";
             return;
         }
 
         StringBuilder sb = new StringBuilder();
         sb.append("{");
-        sb.append("\"labels\": [\"Day 1\", \"Day 2\", \"Day 3\", \"Day 4\", \"Day 5\", \"Day 6\", \"Today\"],");
-        sb.append("\"datasets\": [{");
-        sb.append("\"label\": \"Price Evolution: " + selectedAnalyticsAssetSymbol + "\",");
-        sb.append("\"borderColor\": \"#00d2ff\",");
-        sb.append("\"backgroundColor\": \"rgba(0, 210, 255, 0.1)\",");
-        sb.append("\"data\": [");
 
-        // Fetch Real History (7 days)
-        String assetType = "stock"; // Default
-        if (analyticsAssets != null) {
-            for (PortfolioAsset a : analyticsAssets) {
-                if (a.getSymbol().equals(selectedAnalyticsAssetSymbol)) {
-                    assetType = a.getType();
-                    break;
-                }
-            }
+        // LABELS: Asset Symbols
+        sb.append("\"labels\": [");
+        for (int i = 0; i < analyticsAssets.size(); i++) {
+            sb.append("\"").append(analyticsAssets.get(i).getSymbol()).append("\"");
+            if (i < analyticsAssets.size() - 1)
+                sb.append(",");
         }
-
-        List<Double> history = webAppService.getHistoricalPrices(selectedAnalyticsAssetSymbol, assetType, 7);
-
-        // If history is empty (e.g. API error), fallback to random walk around current
-        // price
-        if (history.isEmpty()) {
-            // Fallback logic
-            double basePrice = 100.0;
-            if (analyticsAssets != null) {
-                for (PortfolioAsset a : analyticsAssets) {
-                    if (a.getSymbol().equals(selectedAnalyticsAssetSymbol)) {
-                        basePrice = a.getUnitPrice() > 0 ? a.getUnitPrice() : 100.0;
-                        break;
-                    }
-                }
-            }
-            Random r = new Random();
-            history = new ArrayList<>();
-            double[] fallbackPrices = new double[7];
-            fallbackPrices[6] = basePrice;
-            for (int i = 5; i >= 0; i--) {
-                double change = 0.90 + (r.nextDouble() * 0.20);
-                fallbackPrices[i] = fallbackPrices[i + 1] / change;
-            }
-            for (double d : fallbackPrices)
-                history.add(d);
-        }
-
-        for (int i = 0; i < history.size(); i++) {
-            sb.append(String.format("%.2f", history.get(i)));
-            if (i < history.size() - 1)
-                sb.append(", ");
-        }
-
         sb.append("],");
-        sb.append("\"fill\": true,");
-        sb.append("\"tension\": 0.4");
+
+        sb.append("\"datasets\": [{");
+        sb.append("\"label\": \"Unrealized PnL (USD)\",");
+
+        // COLORS: Array of colors based on PnL value
+        sb.append("\"backgroundColor\": [");
+        for (int i = 0; i < analyticsAssets.size(); i++) {
+            double pnl = analyticsAssets.get(i).getPnl();
+            // Green for positive, Red for negative, formatted as string
+            sb.append(pnl >= 0 ? "\"rgba(48, 209, 88, 0.7)\"" : "\"rgba(255, 69, 58, 0.7)\"");
+            if (i < analyticsAssets.size() - 1)
+                sb.append(",");
+        }
+        sb.append("],");
+
+        sb.append("\"borderColor\": [");
+        for (int i = 0; i < analyticsAssets.size(); i++) {
+            double pnl = analyticsAssets.get(i).getPnl();
+            sb.append(pnl >= 0 ? "\"#30d158\"" : "\"#ff453a\"");
+            if (i < analyticsAssets.size() - 1)
+                sb.append(",");
+        }
+        sb.append("],");
+
+        sb.append("\"borderWidth\": 1,");
+
+        // DATA: PnL Values
+        sb.append("\"data\": [");
+        for (int i = 0; i < analyticsAssets.size(); i++) {
+            sb.append(String.format(java.util.Locale.US, "%.2f", analyticsAssets.get(i).getPnl()));
+            if (i < analyticsAssets.size() - 1)
+                sb.append(",");
+        }
+        sb.append("]");
+
         sb.append("}]");
         sb.append("}");
+
         this.assetChartJson = sb.toString();
-        System.out
-                .println("Generated Asset Chart JSON for " + selectedAnalyticsAssetSymbol + ": " + this.assetChartJson);
+        System.out.println("Generated PnL Bar Chart JSON: " + this.assetChartJson);
     }
 
     // Getters / Setters for new fields

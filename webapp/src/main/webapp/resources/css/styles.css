@@ -316,21 +316,53 @@ input::placeholder {
     font-weight: 600;
 }
 
-.nav-center a {
-    color: rgba(255, 255, 255, 0.8);
+.nav-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-pills {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50px;
+    padding: 6px 8px;
+}
+
+.nav-pills a {
+    color: rgba(255, 255, 255, 0.6);
     text-decoration: none;
-    font-size: 15px;
+    font-size: 14px;
+    font-weight: 500;
     padding: 8px 16px;
-    border-radius: 12px;
+    border-radius: 50px;
     transition: all 0.25s ease;
     position: relative;
 }
 
-.nav-center a:hover {
+.nav-pills a:hover {
     color: rgba(255, 255, 255, 1);
     background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
-    box-shadow: 0 0 22px rgba(255, 255, 255, 0.35);
+}
+
+.nav-pills a.active,
+.nav-pills a:focus {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Active indicator dot */
+.nav-pills a.active::before {
+    content: '•';
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: #fff;
 }
 
 .profile-btn {
@@ -349,19 +381,32 @@ input::placeholder {
    -------------------------------------------------------- */
 
 .page-content {
-    padding-top: 80px;
+    padding-top: 85px;
     padding-left: 40px;
     padding-right: 40px;
-    padding-bottom: 40px;
-    min-height: calc(100vh - 80px);
+    padding-bottom: 20px;
+    min-height: calc(100vh - 70px);
     box-sizing: border-box;
+}
+
+/* Dashboard page specific overrides */
+body.dashboard-page .page-content {
+    padding-top: 25px;
+    padding-left: 30px;
+    padding-right: 30px;
+    padding-bottom: 10px;
+    margin-top: 70px;
+    min-height: 0;
+    height: calc(100vh - 70px);
+    max-height: calc(100vh - 70px);
+    overflow: visible;
 }
 
 /* Main grid: left 70%, right 30% */
 .bento-dashboard {
     display: grid;
     grid-template-columns: 7fr 3fr;
-    gap: 25px;
+    gap: 15px;
     height: calc(100vh - 160px);
 }
 
@@ -391,7 +436,7 @@ input::placeholder {
 .bento-sidebar {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 15px;
     height: 100%;
 }
 
@@ -456,7 +501,7 @@ input::placeholder {
 .portfolio-page {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 15px;
     /* vertical gap between top bar and 2-column grid */
     width: 100%;
 }
@@ -490,34 +535,122 @@ input::placeholder {
 }
 
 /* --------------------------------------------------------------------------
-   Two-column layout for portfolio content
+   NEW 3-Column Grid Layout for Portfolio
    -------------------------------------------------------------------------- */
 
-/* Remove extra padding around the grid to avoid double left/right gaps */
+.portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    width: 100%;
+    align-items: stretch;
+}
+
+.portfolio-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* First column stretches full height */
+.portfolio-column:first-child {
+    height: 100%;
+}
+
+/* Make assets box stretch to fill column */
+.portfolio-assets-box {
+    flex: 1;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+.portfolio-assets-box .assets-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Compact form styling */
+.form-grid.compact {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.form-row-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.mt-10 {
+    margin-top: 10px;
+}
+
+/* --------------------------------------------------------------------------
+   Collapsible Section Styles
+   -------------------------------------------------------------------------- */
+
+.collapsible-section {
+    overflow: hidden;
+}
+
+.collapsible-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.collapsible-header:hover {
+    opacity: 0.85;
+}
+
+.collapsible-header h3 {
+    margin: 0;
+}
+
+.collapsible-icon {
+    font-size: 12px;
+    transition: transform 0.3s ease;
+    opacity: 0.7;
+}
+
+.collapsible-content {
+    max-height: 500px;
+    opacity: 1;
+    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+    padding-top: 10px;
+}
+
+.collapsible-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    overflow: hidden;
+}
+
+/* Keep old layout classes for backwards compat */
 .portfolio-layout {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    /* equal columns */
-    column-gap: 16px;
-    /* consistent horizontal gap between columns */
+    column-gap: 12px;
     row-gap: 0;
-    /* no vertical gap at top, handled by flex */
     width: 100%;
-    align-items: start;
+    align-items: stretch;
     box-sizing: border-box;
 }
 
-/* Both columns use the same internal vertical rhythm */
 .portfolio-left,
 .portfolio-right {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    /* consistent vertical gap between boxes */
+    gap: 12px;
     width: 100%;
 }
 
-/* Right column: no scroll, aligned with top card */
 .portfolio-right {
     align-items: flex-start;
 }
@@ -528,8 +661,11 @@ input::placeholder {
 
 .selected-portfolio-bar {
     width: 100%;
-    padding: 16px 24px;
-    margin-bottom: 16px;
+    padding: 24px 28px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    min-height: 70px;
 }
 
 .selected-portfolio-form {
@@ -879,7 +1015,7 @@ input::placeholder {
 .accounts-page .bento-dashboard {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 20px;
+    gap: 15px;
     align-items: flex-start;
 }
 
@@ -887,14 +1023,14 @@ input::placeholder {
 .accounts-page .bento-main {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 15px;
 }
 
 /* Right column (history) */
 .accounts-page .bento-sidebar {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 15px;
 }
 
 /* Glass-like cards for accounts */
@@ -1047,4 +1183,328 @@ input::placeholder {
     font-weight: 500;
     opacity: 0.8;
     padding: 6px 10px;
+}/* User Profile Dropdown */
+.user-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-btn {
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6441ff, #8a64ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(100, 65, 255, 0.5);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 55px;
+    width: 280px;
+    background: rgba(18, 18, 20, 0.95) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    z-index: 1001;
+    overflow: hidden;
+    padding: 0;
+}
+
+/* Arrow indicator */
+.dropdown-menu::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    right: 14px;
+    width: 12px;
+    height: 12px;
+    background: rgba(18, 18, 20, 0.95);
+    transform: rotate(45deg);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-header {
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: center;
+}
+
+.dropdown-name {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.dropdown-email {
+    display: block;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.dropdown-body {
+    padding: 20px;
+}
+
+.input-group-sm {
+    margin-bottom: 15px;
+}
+
+.input-group-sm label {
+    display: block;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 6px;
+    margin-left: 4px;
+}
+
+.dark-input-sm {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: white;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.dark-input-sm:focus {
+    border-color: #6441ff;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.btn-update-profile {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, #6441ff, #8a64ff);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 5px;
+}
+
+.btn-update-profile:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(100, 65, 255, 0.3);
+}
+
+.dropdown-footer {
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: center;
+}
+
+.logout-link {
+    color: #ff4757;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.logout-link:hover {
+    color: #ff6b81;
+}/* Password Strength & Eye toggle */
+.pwd-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.pwd-container input {
+    width: 100%;
+    padding-right: 40px !important;
+    /* Make room for eye */
+}
+
+.pwd-eye {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.4);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.pwd-eye:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.strength-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0 15px 0;
+}
+
+.strength-bar {
+    flex: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.strength-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.strength-fill.weak {
+    background: #e53935;
+}
+
+.strength-fill.medium {
+    background: #fb8c00;
+}
+
+.strength-fill.good {
+    background: #43a047;
+}
+
+.strength-fill.strong {
+    background: #00c853;
+}
+
+.strength-label {
+    font-size: 10px;
+    min-width: 50px;
+    text-align: right;
+    color: rgba(255, 255, 255, 0.5);
+}/* Fix for User Profile Dropdown Password Fields */
+.user-dropdown .pwd-container {
+    position: relative !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
+    display: block !important;
+}
+
+.user-dropdown .pwd-container input.dark-input-sm {
+    padding-right: 35px !important;
+    /* Space for icon */
+    width: 100% !important;
+    box-sizing: border-box !important;
+    height: 40px !important;
+    /* Enforce height */
+    line-height: normal !important;
+}
+
+.user-dropdown .pwd-eye {
+    position: absolute !important;
+    top: 50% !important;
+    right: 10px !important;
+    transform: translateY(-50%) !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 20px !important;
+    /* Constrain size */
+    width: 20px !important;
+    pointer-events: auto !important;
+}
+
+.user-dropdown .pwd-eye:hover {
+    color: #fff !important;
+}
+
+.user-dropdown .strength-box {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    margin-top: 8px !important;
+    gap: 10px !important;
+}
+
+.user-dropdown .strength-bar {
+    flex-grow: 1 !important;
+    height: 4px !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 2px !important;
+}
+
+.user-dropdown .strength-label {
+    min-width: unset !important;
+    font-size: 11px !important;
+    /* Color handled by JS */
+    white-space: nowrap !important;
+    margin-left: 0 !important;
+}/* Profile Button Esthetic Update */
+.profile-btn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #fff !important;
+    box-shadow: none !important;
+    font-weight: 500 !important;
+    /* Move to the left by adding visual margin from the right edge of container */
+    margin-right: 15px !important;
+}
+
+.profile-btn:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Ensure navbar centers items vertically */
+.top-nav,
+.nav-right {
+    align-items: center !important;
+}
+
+.nav-right {
+    display: flex !important;
+    height: 100% !important;
+}/* Adjust User Logo Position (Left and Down) */
+.profile-btn {
+    /* Move significantly more to the left */
+    margin-right: 45px !important;
+
+    /* Move down */
+    position: relative !important;
+    top: 6px !important;
+
+    /* Ensure no other margins interfere */
+    margin-top: 4px !important;
 }

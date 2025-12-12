@@ -2,28 +2,30 @@ package org.groupm.ewallet.service.business;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import org.groupm.ewallet.model.*;
-import org.groupm.ewallet.repository.UserRepository;
-import org.groupm.ewallet.repository.PortfolioRepository;
+import org.groupm.ewallet.repository.impl.JpaUserRepository;
+import org.groupm.ewallet.repository.impl.JpaPortfolioRepository;
 
 import java.util.List;
 import java.util.UUID;
 
 /**
  * Service métier de gestion des utilisateurs et de leurs portefeuilles
- * d’investissement.
+ * d'investissement.
  * Supporte désormais plusieurs portefeuilles par utilisateur.
+ * 
+ * Toutes les méthodes de modification utilisent @Transactional pour garantir
+ * ACID.
  */
 @ApplicationScoped
 public class UserManager {
 
     @Inject
-    private UserRepository userRepository;
+    private JpaUserRepository userRepository;
 
     @Inject
-    private PortfolioRepository portfolioRepository;
-
-    // CDI will inject repositories automatically - no constructor needed
+    private JpaPortfolioRepository portfolioRepository;
 
     // =====================================================================
     // USERS
@@ -34,6 +36,7 @@ public class UserManager {
      * Génère un identifiant unique si absent.
      * Ne crée pas de portefeuille automatiquement (multi-portefeuilles).
      */
+    @Transactional
     public User registerUser(User user) {
 
         if (user.getUserID() == null || user.getUserID().isBlank()) {
@@ -65,6 +68,7 @@ public class UserManager {
         return userRepository.findById(userId);
     }
 
+    @Transactional
     public boolean deleteUser(String userId) {
         User user = userRepository.findById(userId);
         if (user != null) {
@@ -74,6 +78,7 @@ public class UserManager {
         return false;
     }
 
+    @Transactional
     public boolean updateUser(String userId, User newUser) {
         User user = userRepository.findById(userId);
         if (user != null) {
@@ -98,6 +103,7 @@ public class UserManager {
     /**
      * Ajoute un portefeuille ou met à jour un portefeuille existant.
      */
+    @Transactional
     public Portfolio addOrUpdatePortfolio(Portfolio portfolio) {
 
         if (portfolio == null) {
@@ -137,6 +143,14 @@ public class UserManager {
         return portfolioRepository.findById(id);
     }
 
+    /**
+     * Récupère tous les portefeuilles.
+     */
+    public List<Portfolio> getAllPortfolios() {
+        return portfolioRepository.findAll();
+    }
+
+    @Transactional
     public boolean deletePortfolio(int id) {
         Portfolio portfolio = portfolioRepository.findById(id);
         if (portfolio != null) {
@@ -155,6 +169,7 @@ public class UserManager {
      * tous ses comptes bancaires
      * ainsi que la valeur totale de tous ses portefeuilles.
      */
+    @Transactional
     public WealthTracker calculateWealthForUser(String userId) {
 
         User user = userRepository.findById(userId);

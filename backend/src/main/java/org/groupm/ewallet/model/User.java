@@ -1,16 +1,20 @@
 package org.groupm.ewallet.model;
 
 import jakarta.persistence.*;
+import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Représente un utilisateur du système, incluant ses informations
- * personnelles, ses comptes bancaires et ses portefeuilles d’investissement.
+ * personnelles, ses comptes bancaires et ses portefeuilles d'investissement.
  */
 @Entity
 @Table(name = "users")
-public class User {
+public class User implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /** Identifiant unique de l'utilisateur. */
     @Id
@@ -28,17 +32,20 @@ public class User {
     @Column(name = "last_name")
     private String lastName;
 
-    /** Solde total cumulé de tous les comptes de l’utilisateur. */
+    /** Version pour optimistic locking - détection des conflits concurrents. */
+    @Version
+    private Long version;
+
+    /** Solde total cumulé de tous les comptes de l'utilisateur. */
     @Transient // Calculé, pas stocké
-    private double totalBalance;
+    private BigDecimal totalBalance = BigDecimal.ZERO;
 
     /** Liste des comptes bancaires associés à l'utilisateur. */
-    /** Liste des comptes bancaires associés à l'utilisateur. */
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Account> accounts;
 
     /** Liste des portefeuilles d'investissement associés à l'utilisateur. */
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(name = "user_id") // Clé étrangère dans la table portfolio
     private List<Portfolio> portfolios;
 
@@ -47,7 +54,7 @@ public class User {
     public User() {
         this.accounts = new ArrayList<>();
         this.portfolios = new ArrayList<>();
-        this.totalBalance = 0.0;
+        this.totalBalance = BigDecimal.ZERO;
     }
 
     public User(String userID, String email, String password,
@@ -59,7 +66,7 @@ public class User {
         this.lastName = lastName;
         this.accounts = new ArrayList<>();
         this.portfolios = new ArrayList<>();
-        this.totalBalance = 0.0;
+        this.totalBalance = BigDecimal.ZERO;
     }
 
     // ===================== Getters =====================
@@ -84,6 +91,10 @@ public class User {
         return lastName;
     }
 
+    public Long getVersion() {
+        return version;
+    }
+
     public List<Account> getAccounts() {
         return accounts;
     }
@@ -92,9 +103,21 @@ public class User {
         return portfolios;
     }
 
+    /**
+     * Retourne le solde total en BigDecimal.
+     */
+    public BigDecimal getTotalBalanceAsBigDecimal() {
+        return initiateTotalBalanceAsBigDecimal();
+    }
+
+    /**
+     * Retourne le solde total en double pour rétrocompatibilité.
+     * 
+     * @deprecated Utiliser getTotalBalanceAsBigDecimal() pour précision financière.
+     */
+    @Deprecated
     public double getTotalBalance() {
-        // Recalculer si nécessaire car @Transient
-        return initiateTotalBalance();
+        return getTotalBalanceAsBigDecimal().doubleValue();
     }
 
     // ===================== Setters =====================
@@ -121,7 +144,7 @@ public class User {
 
     public void setAccounts(List<Account> accounts) {
         this.accounts = (accounts != null) ? accounts : new ArrayList<>();
-        this.totalBalance = initiateTotalBalance();
+        this.totalBalance = initiateTotalBalanceAsBigDecimal();
     }
 
     public void setPortfolios(List<Portfolio> portfolios) {
@@ -138,8 +161,13 @@ public class User {
         }
     }
 
+    public void setTotalBalance(BigDecimal totalBalance) {
+        this.totalBalance = totalBalance != null ? totalBalance : BigDecimal.ZERO;
+    }
+
+    @Deprecated
     public void setTotalBalance(double totalBalance) {
-        this.totalBalance = totalBalance;
+        this.totalBalance = BigDecimal.valueOf(totalBalance);
     }
 
     // ===================== Méthodes principales =====================
@@ -147,7 +175,7 @@ public class User {
     public void addAccount(Account account) {
         if (account != null) {
             accounts.add(account);
-            this.totalBalance = initiateTotalBalance();
+            this.totalBalance = initiateTotalBalanceAsBigDecimal();
         }
     }
 
@@ -157,14 +185,19 @@ public class User {
         }
     }
 
-    public double initiateTotalBalance() {
-        double total = 0.0;
+    public BigDecimal initiateTotalBalanceAsBigDecimal() {
+        BigDecimal total = BigDecimal.ZERO;
         if (accounts != null) {
             for (Account account : accounts) {
-                total += account.getBalance();
+                total = total.add(account.getBalanceAsBigDecimal());
             }
         }
         return total;
+    }
+
+    @Deprecated
+    public double initiateTotalBalance() {
+        return initiateTotalBalanceAsBigDecimal().doubleValue();
     }
 
     @Override

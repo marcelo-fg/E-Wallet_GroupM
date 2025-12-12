@@ -190,6 +190,19 @@ public class AccountBean implements Serializable {
         return total;
     }
 
+    // Returns the total balance of the first N accounts (displayed on dashboard)
+    public double getTotalDisplayedBalance() {
+        double total = 0.0;
+        int count = 0;
+        for (AccountDTO acc : getAccounts()) {
+            if (count >= 2)
+                break; // Only first 2 accounts
+            total += acc.getBalance();
+            count++;
+        }
+        return total;
+    }
+
     /*
      * ==========================================================
      * Account creation management
