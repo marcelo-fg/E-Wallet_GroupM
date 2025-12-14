@@ -36,7 +36,7 @@
 
                 <label>Email Address</label>
                 <h:inputText id="email" value="#{loginBean.email}" styleClass="input" required="true"
-                    requiredMessage="Veuillez entrer votre adresse email" validatorMessage="Format d'email invalide"
+                    requiredMessage="Please enter your email address" validatorMessage="Invalid email format"
                     placeholder="Enter your email">
                     <f:validateRegex pattern="^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$" />
                 </h:inputText>
@@ -44,7 +44,7 @@
                 <label>Password</label>
                 <div class="password-wrapper">
                     <h:inputSecret id="password" value="#{loginBean.password}" styleClass="input password-input"
-                        required="true" requiredMessage="Veuillez entrer votre mot de passe"
+                        required="true" requiredMessage="Please enter your password"
                         placeholder="Enter your password" />
                     <span class="toggle-password" onclick="togglePassword()">
                         <!-- Eye icon (visible by default - password hidden) -->
@@ -69,7 +69,7 @@
                 <div style="text-align:center; margin-top: 35px;">
                     <h:commandButton value="Log In" action="#{loginBean.login}" styleClass="login-btn"
                         style="display:inline-block; margin:0 auto;">
-                        <f:ajax execute="@form" render="messagePanel" />
+                        <f:ajax execute="@form" render="messagePanel" onevent="onLoginSubmit" />
                     </h:commandButton>
                 </div>
             </h:form>
@@ -84,7 +84,7 @@
         </div> <!-- end of .card -->
     </div> <!-- end of .container -->
 
-    <!-- JavaScript for password toggle -->
+    <!-- JavaScript for password toggle and error animations -->
     <script type="text/javascript">
         //<![CDATA[
         function togglePassword() {
@@ -100,6 +100,43 @@
                 passwordField.type = 'password';
                 eyeIcon.style.display = 'block';
                 eyeOffIcon.style.display = 'none';
+            }
+        }
+
+        function onLoginSubmit(data) {
+            if (data.status === 'success') {
+                // Check if there are error messages
+                var msgPanel = document.getElementById('loginForm:messagePanel');
+                if (msgPanel && msgPanel.querySelector('.error-message')) {
+                    // Find which field has error and add shake animation
+                    var errorText = msgPanel.textContent.toLowerCase();
+
+                    if (errorText.includes('email')) {
+                        shakeInput('loginForm:email');
+                    }
+                    if (errorText.includes('password') || errorText.includes('credentials')) {
+                        shakeInput('loginForm:password');
+                    }
+
+                    // Auto-dismiss after 5 seconds
+                    setTimeout(function () {
+                        var messages = msgPanel.querySelectorAll('.error-message, .warning-message');
+                        messages.forEach(function (msg) {
+                            msg.classList.add('message-fadeout');
+                        });
+                    }, 5000);
+                }
+            }
+        }
+
+        function shakeInput(inputId) {
+            var input = document.getElementById(inputId);
+            if (input) {
+                input.classList.add('input-error');
+                // Remove the class after animation completes
+                setTimeout(function () {
+                    input.classList.remove('input-error');
+                }, 600);
             }
         }
         //]]>

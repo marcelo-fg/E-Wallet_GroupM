@@ -11,19 +11,29 @@
                 <h:form id="portfolioSelectForm" styleClass="selected-portfolio-form">
                     <div class="portfolio-dropdown-section">
                         <h:panelGroup id="portfolioSelectPanel">
-                            <h:selectOneMenu id="portfolioSelect" value="#{portfolioBean.selectedPortfolioId}"
-                                styleClass="select-field portfolio-dropdown">
-                                <f:ajax listener="#{portfolioBean.loadAssets}"
-                                    render="portfolioSelectPanel assetsPanel portfolioValueDisplay sellPanel" />
-                                <f:selectItem itemValue="" itemLabel="-- Select Portfolio --" />
-                                <f:selectItems value="#{portfolioBean.portfolioInfos}" var="pInfo"
-                                    itemValue="#{pInfo.id}" itemLabel="#{pInfo.name}" />
-                            </h:selectOneMenu>
+                            <!-- Show dropdown only if portfolios exist -->
+                            <h:panelGroup rendered="#{not empty portfolioBean.portfolioInfos}">
+                                <h:selectOneMenu id="portfolioSelect" value="#{portfolioBean.selectedPortfolioId}"
+                                    styleClass="select-field portfolio-dropdown">
+                                    <f:ajax listener="#{portfolioBean.loadAssets}"
+                                        render="portfolioSelectPanel assetsPanel portfolioValueDisplay sellPanel" />
+                                    <f:selectItems value="#{portfolioBean.portfolioInfos}" var="pInfo"
+                                        itemValue="#{pInfo.id}" itemLabel="#{pInfo.name}" />
+                                </h:selectOneMenu>
 
-                            <h:commandLink action="#{portfolioBean.goToAnalytics}" styleClass="analytics-link"
-                                rendered="#{not empty portfolioBean.selectedPortfolioId}">
-                                View Analytics &#8594;
-                            </h:commandLink>
+                                <h:commandLink action="#{portfolioBean.goToAnalytics}" styleClass="analytics-link"
+                                    rendered="#{not empty portfolioBean.selectedPortfolioId}">
+                                    View Analytics &#8594;
+                                </h:commandLink>
+                            </h:panelGroup>
+
+                            <!-- Show message when no portfolios exist -->
+                            <h:panelGroup rendered="#{empty portfolioBean.portfolioInfos}"
+                                styleClass="no-portfolio-message">
+                                <span style="color: rgba(255,255,255,0.6); font-style: italic;">
+                                    Create your first portfolio to get started
+                                </span>
+                            </h:panelGroup>
                         </h:panelGroup>
                     </div>
 

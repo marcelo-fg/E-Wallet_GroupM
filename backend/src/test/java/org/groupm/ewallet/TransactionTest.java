@@ -31,7 +31,10 @@ public class TransactionTest {
 
     @Test
     void testTransactionWithAccountID() {
-        Transaction txn = new Transaction("TXN-2", "withdraw", 75.0, "Retrait guichet", "A001");
+        Transaction txn = new Transaction("TXN-2", "withdraw", 75.0, "Retrait guichet");
+        org.groupm.ewallet.model.Account account = new org.groupm.ewallet.model.Account();
+        account.setAccountID("A001");
+        txn.setAccount(account);
 
         System.out.println("=== Test de transaction avec accountID ===");
         System.out.println("ID : " + txn.getTransactionID());

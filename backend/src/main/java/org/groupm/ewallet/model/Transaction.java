@@ -43,6 +43,14 @@ public class Transaction implements Serializable {
     @JoinColumn(name = "account_id")
     private Account account;
 
+    /**
+     * Transient field to capture accountID from JSON deserialization.
+     * Not persisted - used only for JSON binding when creating transactions via
+     * REST API.
+     */
+    @Transient
+    private String accountIdFromJson;
+
     /** Version pour optimistic locking - détection des conflits concurrents. */
     @Version
     private Long version;
@@ -142,6 +150,10 @@ public class Transaction implements Serializable {
     }
 
     public String getAccountID() {
+        // First check the transient field (from JSON), then the entity relationship
+        if (accountIdFromJson != null && !accountIdFromJson.isEmpty()) {
+            return accountIdFromJson;
+        }
         return account != null ? account.getAccountID() : null;
     }
 
@@ -189,11 +201,12 @@ public class Transaction implements Serializable {
     }
 
     /**
-     * @deprecated Use setAccount(Account) for proper JPA relationship.
+     * Sets the accountID from JSON deserialization.
+     * This stores the ID in a transient field for later use by AccountManager.
+     * For proper JPA relationship, use setAccount(Account) instead.
      */
-    @Deprecated
     public void setAccountID(String accountID) {
-        // Kept for backward compatibility - prefer setAccount()
+        this.accountIdFromJson = accountID;
     }
 
     // ===================== Méthodes utilitaires =====================

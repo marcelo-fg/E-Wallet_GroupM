@@ -39,17 +39,17 @@ public class LoginBean implements Serializable {
     public String login() {
         // Validation du format email
         if (email == null || email.isBlank()) {
-            addErrorMessage("Email requis", "Veuillez entrer votre adresse email.");
+            addErrorMessage("Email required", "Please enter your email address.");
             return null;
         }
 
         if (!isValidEmail(email)) {
-            addErrorMessage("Email invalide", "Le format de l'adresse email n'est pas valide.");
+            addErrorMessage("Invalid email", "The email format is not valid.");
             return null;
         }
 
         if (password == null || password.isBlank()) {
-            addErrorMessage("Mot de passe requis", "Veuillez entrer votre mot de passe.");
+            addErrorMessage("Password required", "Please enter your password.");
             return null;
         }
 
@@ -58,8 +58,8 @@ public class LoginBean implements Serializable {
         boolean success = (userId != null && !userId.isBlank());
 
         if (!success) {
-            addErrorMessage("Échec de connexion",
-                    "Email ou mot de passe incorrect. Veuillez réessayer.");
+            addErrorMessage("Wrong credentials",
+                    "Invalid email or password. Please try again.");
             return null;
         }
 

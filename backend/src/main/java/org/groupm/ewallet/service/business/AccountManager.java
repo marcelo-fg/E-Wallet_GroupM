@@ -141,22 +141,22 @@ public class AccountManager {
 
         // Validation complète (centralisée dans Manager)
         if (transaction == null) {
-            throw new IllegalArgumentException("Transaction ne peut pas être null.");
+            throw new IllegalArgumentException("Transaction cannot be null.");
         }
         if (transaction.getAccountID() == null || transaction.getAccountID().isEmpty()) {
-            throw new IllegalArgumentException("Aucun 'accountID' fourni pour la transaction.");
+            throw new IllegalArgumentException("No accountID provided for the transaction.");
         }
         if (transaction.getType() == null || transaction.getType().isEmpty()) {
-            throw new IllegalArgumentException("Le type de transaction est obligatoire.");
+            throw new IllegalArgumentException("Transaction type is required.");
         }
         if (transaction.getAmount() <= 0) {
-            throw new IllegalArgumentException("Le montant doit être strictement supérieur à zéro.");
+            throw new IllegalArgumentException("Amount must be greater than zero.");
         }
 
         Account account = accountRepository.findById(transaction.getAccountID());
 
         if (account == null) {
-            throw new IllegalArgumentException("Le compte spécifié n'existe pas : " + transaction.getAccountID());
+            throw new IllegalArgumentException("Account not found: " + transaction.getAccountID());
         }
 
         // Génération automatique de l'ID si absent
@@ -176,13 +176,13 @@ public class AccountManager {
 
             case "withdraw":
                 if (currentBalance.compareTo(amount) < 0) {
-                    throw new IllegalArgumentException("Solde insuffisant pour effectuer un retrait.");
+                    throw new IllegalArgumentException("Insufficient balance for withdrawal.");
                 }
                 account.setBalance(currentBalance.subtract(amount));
                 break;
 
             default:
-                throw new IllegalArgumentException("Type de transaction non supporté : " + type);
+                throw new IllegalArgumentException("Unsupported transaction type: " + type);
         }
 
         // Ajout de la transaction au modèle du compte
@@ -259,17 +259,17 @@ public class AccountManager {
     public boolean transfer(String fromId, String toId, BigDecimal amount, String category, String description) {
         // Validations préliminaires
         if (fromId == null || toId == null) {
-            throw new IllegalArgumentException("Les identifiants de compte ne peuvent pas être null.");
+            throw new IllegalArgumentException("Account IDs cannot be null.");
         }
         if (fromId.equals(toId)) {
-            throw new IllegalArgumentException("Impossible de transférer vers le même compte.");
+            throw new IllegalArgumentException("Cannot transfer to the same account.");
         }
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Le montant doit être strictement positif.");
+            throw new IllegalArgumentException("Amount must be greater than zero.");
         }
 
-        // Chargement des comptes avec verrouillage pessimiste
-        // Ordre d'acquisition des locks basé sur l'ID pour éviter les deadlocks
+        // Load accounts with pessimistic locking
+        // Lock acquisition order based on ID to prevent deadlocks
         Account from, to;
         if (fromId.compareTo(toId) < 0) {
             from = em.find(Account.class, fromId, LockModeType.PESSIMISTIC_WRITE);
@@ -280,18 +280,18 @@ public class AccountManager {
         }
 
         if (from == null) {
-            throw new IllegalArgumentException("Compte source introuvable : " + fromId);
+            throw new IllegalArgumentException("Source account not found: " + fromId);
         }
         if (to == null) {
-            throw new IllegalArgumentException("Compte destination introuvable : " + toId);
+            throw new IllegalArgumentException("Destination account not found: " + toId);
         }
 
         BigDecimal fromBalance = from.getBalanceAsBigDecimal();
 
-        // Validation du solde AVANT toute modification
+        // Validate balance BEFORE any modification
         if (fromBalance.compareTo(amount) < 0) {
             throw new IllegalArgumentException(
-                    "Solde insuffisant. Disponible: " + fromBalance + "€, Demandé: " + amount + "€");
+                    "Insufficient balance. Available: " + fromBalance + " CHF, Requested: " + amount + " CHF");
         }
 
         // === TRANSACTION ATOMIQUE : Tout ou rien ===

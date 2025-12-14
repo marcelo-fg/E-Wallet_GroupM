@@ -107,7 +107,7 @@ public class UserManager {
     public Portfolio addOrUpdatePortfolio(Portfolio portfolio) {
 
         if (portfolio == null) {
-            throw new IllegalArgumentException("Le portefeuille ne peut pas être null.");
+            throw new IllegalArgumentException("Portfolio cannot be null.");
         }
 
         // Mise à jour si le portefeuille existe déjà
@@ -121,7 +121,7 @@ public class UserManager {
 
         // Sinon → création
         if (portfolio.getUserID() == null) {
-            throw new IllegalArgumentException("UserID manquant pour ce portefeuille.");
+            throw new IllegalArgumentException("UserID is missing for this portfolio.");
         }
 
         portfolioRepository.save(portfolio);

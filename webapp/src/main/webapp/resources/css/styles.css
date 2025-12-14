@@ -86,17 +86,16 @@ body.dashboard-page::before {
 }
 
 /* ==========================================================================
-   ERROR MESSAGES - BENTO BOX STYLE
+   TOAST NOTIFICATIONS - Bento Box Style
    ========================================================================== */
 
 .error-message-container {
     position: fixed;
-    top: 90px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 85px;
+    right: 20px;
     z-index: 2000;
-    width: 90%;
-    max-width: 600px;
+    width: auto;
+    max-width: 320px;
     list-style: none;
     padding: 0;
     margin: 0;
@@ -110,79 +109,209 @@ body.dashboard-page::before {
 
 .error-message-container td {
     display: block;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
-.error-message {
-    background: rgba(229, 57, 53, 0.35);
-    backdrop-filter: blur(18px);
-    border-radius: 18px;
-    padding: 18px 24px;
-    border: 2px solid rgba(229, 57, 53, 0.7);
-    color: #ffcdd2;
-    font-family: 'Poppins', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    box-shadow: 0 8px 32px rgba(229, 57, 53, 0.5);
-    animation: slideInDown 0.4s ease-out;
-    line-height: 1.5;
-}
-
-.warning-message {
-    background: rgba(120, 120, 120, 0.35);
-    backdrop-filter: blur(18px);
-    border-radius: 18px;
-    padding: 18px 24px;
-    border: 2px solid rgba(255, 193, 7, 0.6);
-    color: #ffe082;
-    font-family: 'Poppins', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    box-shadow: 0 8px 32px rgba(255, 193, 7, 0.4);
-    animation: slideInDown 0.4s ease-out;
-    line-height: 1.5;
-}
-
+/* Shared bento-style toast */
+.error-message,
+.warning-message,
 .success-message {
-    background: rgba(48, 209, 88, 0.35);
-    backdrop-filter: blur(18px);
-    border-radius: 18px;
-    padding: 18px 24px;
-    border: 2px solid rgba(48, 209, 88, 0.7);
-    color: #a5d6a7;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 16px 20px;
     font-family: 'Poppins', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    box-shadow: 0 8px 32px rgba(48, 209, 88, 0.5);
-    animation: slideInDown 0.4s ease-out;
-    line-height: 1.5;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideInRight 0.35s cubic-bezier(0.4, 0, 0.2, 1), fadeOutRight 0.4s ease-out 3s forwards;
+    transition: all 0.25s ease;
 }
 
-@keyframes slideInDown {
+/* Error toast - Red glow */
+.error-message {
+    border: 1px solid rgba(229, 57, 53, 0.6);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        0 0 20px rgba(229, 57, 53, 0.3),
+        inset 0 0 20px rgba(229, 57, 53, 0.05);
+}
+
+.error-message:hover {
+    border-color: rgba(229, 57, 53, 0.9);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        0 0 30px rgba(229, 57, 53, 0.5);
+}
+
+.error-message::before {
+    content: "";
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    background: linear-gradient(135deg, rgba(229, 57, 53, 0.3), rgba(229, 57, 53, 0.1));
+    border: 1px solid rgba(229, 57, 53, 0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23ff6b6b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='6' x2='6' y2='18'%3E%3C/line%3E%3Cline x1='6' y1='6' x2='18' y2='18'%3E%3C/line%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Warning toast - Amber glow */
+.warning-message {
+    border: 1px solid rgba(255, 193, 7, 0.5);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        0 0 20px rgba(255, 193, 7, 0.25),
+        inset 0 0 20px rgba(255, 193, 7, 0.05);
+}
+
+.warning-message:hover {
+    border-color: rgba(255, 193, 7, 0.9);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        0 0 30px rgba(255, 193, 7, 0.4);
+}
+
+.warning-message::before {
+    content: "";
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.3), rgba(255, 193, 7, 0.1));
+    border: 1px solid rgba(255, 193, 7, 0.5);
+    border-radius: 50%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23ffc107' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'%3E%3C/path%3E%3Cline x1='12' y1='9' x2='12' y2='13'%3E%3C/line%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'%3E%3C/line%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Success toast - Green glow */
+.success-message {
+    border: 1px solid rgba(48, 209, 88, 0.5);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        0 0 20px rgba(48, 209, 88, 0.25),
+        inset 0 0 20px rgba(48, 209, 88, 0.05);
+}
+
+.success-message:hover {
+    border-color: rgba(48, 209, 88, 0.9);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        0 0 30px rgba(48, 209, 88, 0.4);
+}
+
+.success-message::before {
+    content: "";
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    background: linear-gradient(135deg, rgba(48, 209, 88, 0.3), rgba(48, 209, 88, 0.1));
+    border: 1px solid rgba(48, 209, 88, 0.5);
+    border-radius: 50%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2330d158' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Slide in from right animation */
+@keyframes slideInRight {
     from {
         opacity: 0;
-        transform: translateY(-30px);
+        transform: translateX(80px) scale(0.95);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateX(0) scale(1);
     }
 }
 
-/* Responsive adjustments for error messages */
+/* Fade out to right animation (after 3s) */
+@keyframes fadeOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(40px) scale(0.95);
+        visibility: hidden;
+    }
+}
+
+/* Shake animation for error feedback */
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+        transform: translateX(-8px);
+    }
+
+    20%,
+    40%,
+    60%,
+    80% {
+        transform: translateX(8px);
+    }
+}
+
+/* Input error state - red border with shake */
+.input-error {
+    border: 2px solid rgba(229, 57, 53, 0.8) !important;
+    box-shadow: 0 0 12px rgba(229, 57, 53, 0.4) !important;
+    animation: shake 0.5s ease-in-out;
+}
+
+/* Auto-dismiss animation for messages */
+@keyframes fadeOutUp {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+.message-fadeout {
+    animation: fadeOutUp 0.4s ease-out forwards;
+}
+
+/* Responsive adjustments for toast notifications */
 @media (max-width: 768px) {
     .error-message-container {
-        top: 80px;
-        width: 95%;
-        max-width: 95%;
+        top: 75px;
+        right: 10px;
+        left: 10px;
+        max-width: calc(100% - 20px);
     }
 
     .error-message,
     .warning-message,
     .success-message {
-        padding: 14px 18px;
-        font-size: 13px;
+        padding: 12px 16px;
+        font-size: 12px;
     }
 }
 
@@ -694,6 +823,8 @@ body.dashboard-page .page-content {
     text-decoration: none;
     font-size: 14px;
     transition: color 0.2s ease;
+    display: block;
+    margin-top: 10px;
 }
 
 .analytics-link:hover {
@@ -716,10 +847,7 @@ body.dashboard-page .page-content {
 .portfolio-value-amount {
     font-size: 24px;
     font-weight: 700;
-    background: linear-gradient(90deg, #667eea, #764ba2);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #ffffff;
 }
 
 /* --------------------------------------------------------------------------
@@ -1183,7 +1311,9 @@ body.dashboard-page .page-content {
     font-weight: 500;
     opacity: 0.8;
     padding: 6px 10px;
-}/* User Profile Dropdown */
+}
+
+/* User Profile Dropdown */
 .user-dropdown {
     position: relative;
     display: inline-block;
@@ -1335,7 +1465,9 @@ body.dashboard-page .page-content {
 
 .logout-link:hover {
     color: #ff6b81;
-}/* Password Strength & Eye toggle */
+}
+
+/* Password Strength & Eye toggle */
 .pwd-container {
     position: relative;
     width: 100%;
@@ -1408,7 +1540,9 @@ body.dashboard-page .page-content {
     min-width: 50px;
     text-align: right;
     color: rgba(255, 255, 255, 0.5);
-}/* Fix for User Profile Dropdown Password Fields */
+}
+
+/* Fix for User Profile Dropdown Password Fields */
 .user-dropdown .pwd-container {
     position: relative !important;
     width: 100% !important;
@@ -1469,7 +1603,9 @@ body.dashboard-page .page-content {
     /* Color handled by JS */
     white-space: nowrap !important;
     margin-left: 0 !important;
-}/* Profile Button Esthetic Update */
+}
+
+/* Profile Button Esthetic Update */
 .profile-btn {
     background: rgba(255, 255, 255, 0.1) !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -1496,7 +1632,9 @@ body.dashboard-page .page-content {
 .nav-right {
     display: flex !important;
     height: 100% !important;
-}/* Adjust User Logo Position (Left and Down) */
+}
+
+/* Adjust User Logo Position (Left and Down) */
 .profile-btn {
     /* Move significantly more to the left */
     margin-right: 45px !important;
@@ -1507,4 +1645,45 @@ body.dashboard-page .page-content {
 
     /* Ensure no other margins interfere */
     margin-top: 4px !important;
+}
+
+/* ==========================================================================
+   BUTTON VARIANTS
+   ========================================================================== */
+
+/* Small button variant */
+.btn-small {
+    padding: 6px 12px !important;
+    font-size: 11px !important;
+    border-radius: 8px !important;
+    min-width: auto !important;
+}
+
+/* Danger button (red) */
+.btn-danger {
+    background: rgba(229, 57, 53, 0.2) !important;
+    border: 1px solid rgba(229, 57, 53, 0.5) !important;
+    color: #ff6b6b !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+    background: rgba(229, 57, 53, 0.4) !important;
+    border-color: rgba(229, 57, 53, 0.8) !important;
+    box-shadow: 0 0 12px rgba(229, 57, 53, 0.3) !important;
+}
+
+/* Secondary button */
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #fff !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
 }

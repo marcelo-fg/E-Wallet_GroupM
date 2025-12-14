@@ -26,16 +26,16 @@ public class RegisterBean {
         if (password == null || password.isBlank()) {
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                            "Mot de passe requis",
-                            "Veuillez entrer un mot de passe."));
+                            "Password required",
+                            "Please enter a password."));
             return null;
         }
 
         if (confirmPassword == null || !password.equals(confirmPassword)) {
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                            "Les mots de passe ne correspondent pas",
-                            "Veuillez vérifier que les deux mots de passe sont identiques."));
+                            "Passwords do not match",
+                            "Please make sure both passwords are identical."));
             return null;
         }
 
@@ -43,19 +43,19 @@ public class RegisterBean {
         if (password.length() < 6) {
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                            "Mot de passe trop court",
-                            "Le mot de passe doit contenir au moins 6 caractères."));
+                            "Password too short",
+                            "Password must be at least 6 characters long."));
             return null;
         }
 
         boolean success = webAppService.registerUser(firstname, lastname, email, password);
 
         if (success) {
-            // Connexion automatique après inscription réussie
+            // Automatic login after successful registration
             String userId = webAppService.login(email, password);
 
             if (userId != null && !userId.isBlank()) {
-                // Créer la session utilisateur
+                // Create user session
                 FacesContext context = FacesContext.getCurrentInstance();
                 HttpSession session = (HttpSession) context
                         .getExternalContext()
@@ -64,20 +64,20 @@ public class RegisterBean {
                 session.setAttribute("userId", userId);
                 session.setAttribute("userEmail", email);
 
-                // Rediriger directement vers le dashboard
+                // Redirect directly to dashboard
                 return "dashboard.xhtml?faces-redirect=true";
             }
 
-            // Fallback: si le login automatique échoue, aller à la page login
+            // Fallback: if automatic login fails, go to login page
             return "login.xhtml?faces-redirect=true";
         }
 
         FacesContext.getCurrentInstance().addMessage(null,
                 new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                        "Erreur",
-                        "Impossible de créer le compte."));
+                        "Registration failed",
+                        "Unable to create the account. Please try again."));
 
-        return null; // rester sur la page
+        return null; // stay on page
     }
 
     // GETTERS / SETTERS

@@ -491,8 +491,7 @@
                         <div class="bento-box glow-hover">
                             <h3 class="sidebar-title">Accounts</h3>
                             <div class="sidebar-list">
-                                <ui:repeat value="#{accountBean.accounts}" var="account" varStatus="status">
-                                    <ui:fragment rendered="#{status.index lt 2}">
+                                <ui:repeat value="#{accountBean.accounts}" var="account">
                                         <div class="list-row">
                                             <span class="row-main-text">#{account.name}</span>
                                             <span class="row-amount">
@@ -501,13 +500,12 @@
                                                 </h:outputText>
                                             </span>
                                         </div>
-                                        <!-- Animated Progress Bar - width based on percentage of displayed accounts -->
+                                        <!-- Animated Progress Bar - width based on percentage of total balance -->
                                         <div class="progress-bar-container">
                                             <div class="progress-bar-fill"
-                                                style="width: #{accountBean.totalDisplayedBalance > 0 ? (account.balance / accountBean.totalDisplayedBalance * 100) : 100}%;">
+                                                style="width: #{accountBean.totalBalance > 0 ? (account.balance / accountBean.totalBalance * 100) : 100}%;">
                                             </div>
                                         </div>
-                                    </ui:fragment>
                                 </ui:repeat>
                             </div>
                         </div>

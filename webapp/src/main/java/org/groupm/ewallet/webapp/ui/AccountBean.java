@@ -417,8 +417,8 @@ public class AccountBean implements Serializable {
     public void confirmOperation() {
         if (amount <= 0) {
             addGlobalMessage(FacesMessage.SEVERITY_ERROR,
-                    "Montant invalide",
-                    "Le montant doit être strictement positif (supérieur à 0).");
+                    "Invalid amount",
+                    "Amount must be greater than 0.");
             return;
         }
 
@@ -427,8 +427,8 @@ public class AccountBean implements Serializable {
         if ("DEPOSIT".equalsIgnoreCase(operationType)) {
             if (selectedAccountId == null || selectedAccountId.isBlank()) {
                 addGlobalMessage(FacesMessage.SEVERITY_WARN,
-                        "Aucun compte sélectionné",
-                        "Veuillez choisir un compte avant d'effectuer un dépôt.");
+                        "No account selected",
+                        "Please select an account before making a deposit.");
                 return;
             }
             ok = service.depositToAccount(selectedAccountId, amount);
@@ -436,18 +436,18 @@ public class AccountBean implements Serializable {
         } else if ("WITHDRAWAL".equalsIgnoreCase(operationType)) {
             if (selectedAccountId == null || selectedAccountId.isBlank()) {
                 addGlobalMessage(FacesMessage.SEVERITY_WARN,
-                        "Aucun compte sélectionné",
-                        "Veuillez choisir un compte avant d'effectuer un retrait.");
+                        "No account selected",
+                        "Please select an account before making a withdrawal.");
                 return;
             }
 
-            // Vérifier les fonds suffisants avant le retrait
+            // Check sufficient funds before withdrawal
             LocalAccount account = service.getAccountById(selectedAccountId);
             if (account != null && account.getBalance() < amount) {
                 addGlobalMessage(FacesMessage.SEVERITY_ERROR,
-                        "Fonds insuffisants",
-                        String.format("Solde actuel : %.2f CHF. Montant demandé : %.2f CHF. " +
-                                "Il vous manque %.2f CHF.",
+                        "Insufficient funds",
+                        String.format("Current balance: %.2f CHF. Requested amount: %.2f CHF. " +
+                                "You need an additional %.2f CHF.",
                                 account.getBalance(), amount, (amount - account.getBalance())));
                 return;
             }
@@ -462,24 +462,24 @@ public class AccountBean implements Serializable {
             if (transferSourceAccountId == null || transferTargetAccountId == null
                     || transferSourceAccountId.isBlank() || transferTargetAccountId.isBlank()) {
                 addGlobalMessage(FacesMessage.SEVERITY_WARN,
-                        "Transfert incomplet",
-                        "Veuillez sélectionner à la fois un compte source et un compte de destination.");
+                        "Incomplete transfer",
+                        "Please select both a source and destination account.");
                 return;
             }
             if (transferSourceAccountId.equals(transferTargetAccountId)) {
                 addGlobalMessage(FacesMessage.SEVERITY_WARN,
-                        "Transfert invalide",
-                        "Le compte source et le compte de destination doivent être différents.");
+                        "Invalid transfer",
+                        "Source and destination accounts must be different.");
                 return;
             }
 
-            // Vérifier les fonds suffisants sur le compte source
+            // Check sufficient funds on source account
             LocalAccount sourceAccount = service.getAccountById(transferSourceAccountId);
             if (sourceAccount != null && sourceAccount.getBalance() < amount) {
                 addGlobalMessage(FacesMessage.SEVERITY_ERROR,
-                        "Fonds insuffisants pour le transfert",
-                        String.format("Solde du compte source : %.2f CHF. Montant du transfert : %.2f CHF. " +
-                                "Il vous manque %.2f CHF.",
+                        "Insufficient funds for transfer",
+                        String.format("Source balance: %.2f CHF. Transfer amount: %.2f CHF. " +
+                                "You need an additional %.2f CHF.",
                                 sourceAccount.getBalance(), amount, (amount - sourceAccount.getBalance())));
                 return;
             }
@@ -494,8 +494,8 @@ public class AccountBean implements Serializable {
 
         if (!ok) {
             addGlobalMessage(FacesMessage.SEVERITY_ERROR,
-                    "Opération rejetée",
-                    "L'opération n'a pas pu être effectuée. Veuillez vérifier le solde et les paramètres.");
+                    "Operation failed",
+                    "The operation could not be completed. Please check your balance and parameters.");
             return;
         }
 

@@ -198,6 +198,12 @@ public class PortfolioBean implements Serializable {
                     portfolioNames.putIfAbsent(id, "Portfolio " + id);
                 }
             }
+
+            // Auto-select the first portfolio if none selected and portfolios exist
+            if (selectedPortfolioId == null && !portfolioIds.isEmpty()) {
+                selectedPortfolioId = portfolioIds.get(0);
+                loadAssets();
+            }
         }
     }
 
@@ -864,7 +870,7 @@ public class PortfolioBean implements Serializable {
      * @return Formatted portfolio value string
      */
     public String getFormattedTotalPortfolioValue() {
-        return String.format("%.2f USD", getTotalPortfolioValue());
+        return String.format("$%,.2f", getTotalPortfolioValue());
     }
 
     /**
