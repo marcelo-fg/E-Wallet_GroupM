@@ -1,6 +1,7 @@
 package org.groupm.ewallet.webapp.ui;
 
 import jakarta.enterprise.context.SessionScoped;
+import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -398,6 +399,34 @@ public class PortfolioBean implements Serializable {
         return null;
     }
 
+    /**
+     * Deletes the currently selected portfolio from the database.
+     */
+    public String deleteSelectedPortfolio() {
+        if (selectedPortfolioId == null) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_WARN, "No portfolio selected",
+                            "Please select a portfolio to delete."));
+            return null;
+        }
+
+        boolean success = webAppService.deletePortfolio(selectedPortfolioId);
+
+        if (success) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Portfolio deleted",
+                            "The portfolio has been deleted successfully."));
+            selectedPortfolioId = null;
+            assets = new ArrayList<>();
+            loadPortfolios();
+        } else {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Deletion failed",
+                            "Could not delete the portfolio. Please try again."));
+        }
+        return null;
+    }
+
     // -------------------------------------------------------------------------
     // MANUAL ASSET ADD
     // -------------------------------------------------------------------------
@@ -744,55 +773,8 @@ public class PortfolioBean implements Serializable {
 
         String name = (selectedHeldName != null) ? selectedHeldName : selectedHeldSymbol;
 
-        // Update backend with the sale (negative quantity)
-        // Note: Backend now handles aggregation. Adding -quantity effectively reduces
-        // the holding.
-        webAppService.addAssetToPortfolio(
-                selectedPortfolioId,
-                name,
-                "sold", // Type might not matter for update, but keep it safe
-                -sellQuantity,
-                sellMarketPrice, // This price will be used to update weighted average, which is technically
-                                 // correct for remaining lots in some accounting views, or we could pass 0 to
-                                 // not affect it?
-                // Actually, for weighted average cost basis, selling shouldn't change the
-                // per-unit cost of the REMAINING assets.
-                // But my backend logic updates cost basis on every add.
-                // If I pass the SAME average price as existing, it won't change.
-                // However, I don't have the existing average price handy easily without looking
-                // it up.
-                // Let's rely on the backend check.
-                // Wait, if I pass a different price (sell price), it WILL change the avg cost
-                // of remaining assets, which is WRONG for FIFO/AvgCost accounting.
-                // Selling should ONLY reduce quantity, not change the unit cost of the
-                // remaining units.
-                // My backend "upsert" logic does: weightedAvg = ((oldQty * oldPrice) + (newQty
-                // * newPrice)) / totalQty;
-                // If newQty is negative, this math is: ((10 * 100) + (-5 * 200)) / 5 = (1000 -
-                // 1000) / 5 = 0 !
-                // DO NOT USE BACKEND AGGREGATION FOR SELLING IF IT UPDATES PRICE.
-                // I need to be careful. If I pass current AvgPrice, then ((10*100) +
-                // (-5*100))/5 = 500/5 = 100. Correct.
-                // So I MUST pass the current Average Buy Price, NOT the Sell Market Price, to
-                // the backend.
-                // But I don't have it easily here? I can find it in 'assets' list.
-                selectedHeldSymbol);
-
-        // Ideally we should have a dedicated "sell" or "reduce" endpoint, but reusing
-        // 'add' with negative qty requires passing the OLD price to preserve weighted
-        // avg.
-        // Simplified approach: Create a dedicated remove/reduce endpoint or just be
-        // careful.
-        // We already fetched currentHoldings during validation, reuse it here
-        // Actually, let's call the backend with the Sell Price but realized that my
-        // backend logic MIGHT be flawed for valid negative updates.
-        // IF newQty is negative, the "cost" of that negative quantity is conceptually
-        // the cost of goods sold (COGS).
-        // If I use the *actual* UnitValue currently in DB (which I can't see from here
-        // without fetching), I preserve the average.
-        // We already fetched currentHoldings during validation, reuse it here
-
-        double costBasis = sellMarketPrice; // Fallback
+        // Get the current cost basis (average purchase price) for proper accounting
+        double costBasis = sellMarketPrice; // Fallback to sell price if not found
         for (PortfolioAsset pa : currentHoldings) {
             if (pa.getSymbol().equalsIgnoreCase(selectedHeldSymbol)) {
                 costBasis = pa.getUnitPrice();
@@ -800,12 +782,15 @@ public class PortfolioBean implements Serializable {
             }
         }
 
+        // Update backend with the sale (negative quantity)
+        // Pass the CURRENT AVG PRICE (cost basis) to preserve it during quantity
+        // reduction
         webAppService.addAssetToPortfolio(
                 selectedPortfolioId,
                 name,
                 "sold",
                 -sellQuantity,
-                costBasis, // Pass the CURRENT AVG PRICE to preserve it during reduction
+                costBasis,
                 selectedHeldSymbol);
 
         webAppService.recordPortfolioTrade(

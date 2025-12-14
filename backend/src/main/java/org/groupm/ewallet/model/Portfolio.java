@@ -71,7 +71,7 @@ public class Portfolio implements Serializable {
     }
 
     public void setUserID(String userID) {
-        // Deprecated - use setUser(User) instead
+        this.userID = userID;
     }
 
     public User getUser() {
@@ -142,12 +142,20 @@ public class Portfolio implements Serializable {
 
                 BigDecimal totalQty = oldQty.add(newQty);
 
-                // Weighted Average Purchase Price
-                if (totalQty.compareTo(BigDecimal.ZERO) > 0) {
+                // PROTECTION: If quantity becomes zero or negative, remove the asset
+                if (totalQty.compareTo(BigDecimal.ZERO) <= 0) {
+                    assets.remove(existing);
+                    recalculateTotalValue();
+                    return;
+                }
+
+                // Weighted Average Purchase Price (only recalculate if adding, not selling)
+                if (newQty.compareTo(BigDecimal.ZERO) > 0 && totalQty.compareTo(BigDecimal.ZERO) > 0) {
                     BigDecimal weightedAvg = (oldQty.multiply(oldPrice).add(newQty.multiply(newPrice)))
                             .divide(totalQty, 8, java.math.RoundingMode.HALF_UP);
                     existing.setUnitValue(weightedAvg);
                 }
+                // When selling (negative qty), keep the existing unit price unchanged
 
                 existing.setQuantity(totalQty);
                 recalculateTotalValue();
@@ -155,10 +163,12 @@ public class Portfolio implements Serializable {
             }
         }
 
-        // NOT FOUND: Add as new
-        asset.setPortfolio(this); // Maintain bidirectional relationship
-        assets.add(asset);
-        recalculateTotalValue();
+        // NOT FOUND: Add as new (only if quantity is positive)
+        if (asset.getQuantityAsBigDecimal().compareTo(BigDecimal.ZERO) > 0) {
+            asset.setPortfolio(this); // Maintain bidirectional relationship
+            assets.add(asset);
+            recalculateTotalValue();
+        }
     }
 
     public void removeAsset(String assetName) {

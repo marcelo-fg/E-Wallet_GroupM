@@ -133,6 +133,37 @@ public class UserBean implements Serializable {
         return "login.xhtml?faces-redirect=true";
     }
 
+    /**
+     * Deletes the user account permanently after confirmation.
+     * Invalidates the session and redirects to login page.
+     */
+    public String deleteAccount() {
+        if (userId == null) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "User not identified"));
+            return null;
+        }
+
+        boolean success = webAppService.deleteUser(userId);
+
+        if (success) {
+            // Invalidate session
+            FacesContext context = FacesContext.getCurrentInstance();
+            if (context != null) {
+                HttpSession session = (HttpSession) context.getExternalContext().getSession(false);
+                if (session != null) {
+                    session.invalidate();
+                }
+            }
+            // Redirect to login page
+            return "login.xhtml?faces-redirect=true";
+        } else {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "Failed to delete account"));
+            return null;
+        }
+    }
+
     // Getters and Setters
 
     public String getFirstname() {

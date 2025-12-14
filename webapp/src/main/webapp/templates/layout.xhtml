@@ -100,6 +100,9 @@
                             </div>
 
                             <div class="dropdown-footer">
+                                <h:commandButton value="Delete Account" styleClass="btn-danger-sm"
+                                    onclick="return confirmDeleteAccount();" action="#{userBean.deleteAccount}" />
+
                                 <h:commandLink action="#{userBean.logout}" styleClass="logout-link">
                                     Logout
                                 </h:commandLink>
@@ -126,6 +129,10 @@
                 if (data.status === 'success') {
                     // Start fading out message after 3s? Handled by global styles maybe
                 }
+            }
+
+            function confirmDeleteAccount() {
+                return confirm('Are you sure you want to delete your account?\n\nThis action is PERMANENT and cannot be undone. All your data including accounts, portfolios, and transactions will be deleted.');
             }
 
             function togglePwd(fieldId, btn) {

@@ -124,13 +124,17 @@ public class UserManager {
             throw new IllegalArgumentException("UserID is missing for this portfolio.");
         }
 
-        portfolioRepository.save(portfolio);
-
-        // Ajouter le portefeuille à l'utilisateur correspondant
+        // Find user and associate BEFORE persisting so that JPA sets user_id correctly
         User user = userRepository.findById(portfolio.getUserID());
         if (user != null) {
+            portfolio.setUser(user);
             user.addPortfolio(portfolio);
+            portfolioRepository.save(portfolio);
             userRepository.save(user);
+        } else {
+            // User doesn't exist, but we still save portfolio with userID for backward
+            // compat
+            portfolioRepository.save(portfolio);
         }
 
         return portfolio;

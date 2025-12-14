@@ -51,6 +51,14 @@ public class Transaction implements Serializable {
     @Transient
     private String accountIdFromJson;
 
+    /**
+     * ID of the linked transaction for transfers.
+     * When a transfer is made, two transactions are created (debit and credit).
+     * This field links them together so they can be deleted together.
+     */
+    @Column(name = "linked_transaction_id")
+    private String linkedTransactionId;
+
     /** Version pour optimistic locking - détection des conflits concurrents. */
     @Version
     private Long version;
@@ -207,6 +215,14 @@ public class Transaction implements Serializable {
      */
     public void setAccountID(String accountID) {
         this.accountIdFromJson = accountID;
+    }
+
+    public String getLinkedTransactionId() {
+        return linkedTransactionId;
+    }
+
+    public void setLinkedTransactionId(String linkedTransactionId) {
+        this.linkedTransactionId = linkedTransactionId;
     }
 
     // ===================== Méthodes utilitaires =====================

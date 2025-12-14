@@ -526,6 +526,97 @@ public class AccountBean implements Serializable {
         return service.getTransactionsForAccount(selectedAccountId);
     }
 
+    /**
+     * Deletes the currently selected account from the database.
+     */
+    public void deleteSelectedAccount() {
+        if (selectedAccountId == null || selectedAccountId.isBlank()) {
+            addGlobalMessage(FacesMessage.SEVERITY_WARN,
+                    "No account selected",
+                    "Please select an account to delete.");
+            return;
+        }
+
+        boolean success = service.deleteAccount(selectedAccountId);
+
+        if (success) {
+            addGlobalMessage(FacesMessage.SEVERITY_INFO,
+                    "Account deleted",
+                    "The account has been deleted successfully.");
+            selectedAccount = null;
+            selectedAccountId = null;
+            refreshAccounts();
+        } else {
+            addGlobalMessage(FacesMessage.SEVERITY_ERROR,
+                    "Deletion failed",
+                    "Could not delete the account. Please try again.");
+        }
+    }
+
+    /**
+     * Deletes a specific account by ID.
+     */
+    public void deleteAccountById(String accountId) {
+        if (accountId == null || accountId.isBlank()) {
+            addGlobalMessage(FacesMessage.SEVERITY_WARN,
+                    "Invalid account",
+                    "No account ID provided.");
+            return;
+        }
+
+        boolean success = service.deleteAccount(accountId);
+
+        if (success) {
+            addGlobalMessage(FacesMessage.SEVERITY_INFO,
+                    "Account deleted",
+                    "The account has been deleted successfully.");
+            if (accountId.equals(selectedAccountId)) {
+                selectedAccount = null;
+                selectedAccountId = null;
+            }
+            refreshAccounts();
+        } else {
+            addGlobalMessage(FacesMessage.SEVERITY_ERROR,
+                    "Deletion failed",
+                    "Could not delete the account. Please try again.");
+        }
+    }
+
+    /**
+     * Deletes the currently selected transaction from the database.
+     * For transfers, this will delete both related transactions (debit and credit).
+     */
+    public void deleteSelectedTransaction() {
+        if (selectedTransaction == null) {
+            addGlobalMessage(FacesMessage.SEVERITY_WARN,
+                    "No transaction selected",
+                    "Please select a transaction to delete.");
+            return;
+        }
+
+        String txnId = selectedTransaction.getTransactionID();
+        boolean success = service.deleteTransaction(txnId);
+
+        if (success) {
+            addGlobalMessage(FacesMessage.SEVERITY_INFO,
+                    "Transaction deleted",
+                    "The transaction has been deleted successfully.");
+            selectedTransaction = null;
+            // Refresh the selected account to update balance
+            if (selectedAccountId != null) {
+                LocalAccount acc = service.getAccountById(selectedAccountId);
+                if (acc != null && selectedAccount != null) {
+                    selectedAccount.setBalance(acc.getBalance());
+                }
+            }
+            refreshAccounts();
+        } else {
+            addGlobalMessage(FacesMessage.SEVERITY_ERROR,
+                    "Deletion failed",
+                    "Could not delete the transaction. Please try again.");
+        }
+    }
+
     /*
      * ==========================================================
      * Internal utilities

@@ -220,12 +220,25 @@ public class AccountManager {
 
     /**
      * Supprime une transaction.
+     * For transfers, this will also delete the linked transaction.
      */
     @Transactional
     public boolean deleteTransaction(String transactionID) {
         Transaction tx = transactionRepository.findById(transactionID);
         if (tx != null) {
+            // Check if this transaction has a linked transaction (transfer)
+            String linkedId = tx.getLinkedTransactionId();
+
+            // Delete the main transaction
             transactionRepository.delete(transactionID);
+
+            // If there's a linked transaction, delete it too
+            if (linkedId != null && !linkedId.isEmpty()) {
+                Transaction linkedTx = transactionRepository.findById(linkedId);
+                if (linkedTx != null) {
+                    transactionRepository.delete(linkedId);
+                }
+            }
             return true;
         }
         return false;
@@ -300,26 +313,34 @@ public class AccountManager {
         from.setBalance(fromBalance.subtract(amount));
         to.setBalance(to.getBalanceAsBigDecimal().add(amount));
 
+        // Get account names for better descriptions (fallback to ID if no name)
+        String fromName = (from.getName() != null && !from.getName().isBlank()) ? from.getName() : fromId;
+        String toName = (to.getName() != null && !to.getName().isBlank()) ? to.getName() : toId;
+
         // 2. Créer les transactions (historique) avec relation JPA correcte
         Transaction withdrawal = new Transaction();
         withdrawal.setTransactionID(generateTransactionId());
         withdrawal.setAccount(from); // Utiliser la relation JPA
         withdrawal.setType("withdraw");
         withdrawal.setAmount(amount);
-        withdrawal.setDescription("Transfer to " + toId + (description != null ? ": " + description : ""));
+        withdrawal.setDescription("Transfer to " + toName + (description != null ? ": " + description : ""));
 
         Transaction deposit = new Transaction();
         deposit.setTransactionID(generateTransactionId());
         deposit.setAccount(to); // Utiliser la relation JPA
         deposit.setType("deposit");
         deposit.setAmount(amount);
-        deposit.setDescription("Transfer from " + fromId + (description != null ? ": " + description : ""));
+        deposit.setDescription("Transfer from " + fromName + (description != null ? ": " + description : ""));
 
-        // 3. Ajouter les transactions aux modèles de compte
+        // 3. Link the transactions together (for cascade deletion)
+        withdrawal.setLinkedTransactionId(deposit.getTransactionID());
+        deposit.setLinkedTransactionId(withdrawal.getTransactionID());
+
+        // 4. Ajouter les transactions aux modèles de compte
         from.addTransaction(withdrawal);
         to.addTransaction(deposit);
 
-        // 4. Persister TOUT dans UNE SEULE transaction JPA
+        // 5. Persister TOUT dans UNE SEULE transaction JPA
         accountRepository.save(from);
         accountRepository.save(to);
         transactionRepository.save(withdrawal);

@@ -85,6 +85,20 @@ public class BackendApiService {
     }
 
     /**
+     * Deletes a user account from the backend.
+     */
+    public boolean deleteUser(String userId) {
+        try (Client client = ClientBuilder.newClient()) {
+            WebTarget target = client.target(BASE_URL + "/users/" + userId);
+            Response response = target.request().delete();
+            return response.getStatus() == 200 || response.getStatus() == 204;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
      * Retrieves the full user details (including accounts and portfolios) as a
      * JsonObject.
      */
@@ -216,6 +230,34 @@ public class BackendApiService {
     public boolean deleteAccount(String accountId) {
         try (Client client = ClientBuilder.newClient()) {
             WebTarget target = client.target(BASE_URL + "/accounts/" + accountId);
+            Response response = target.request().delete();
+            return response.getStatus() == 200 || response.getStatus() == 204;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Deletes a portfolio from the backend.
+     */
+    public boolean deletePortfolio(int portfolioId) {
+        try (Client client = ClientBuilder.newClient()) {
+            WebTarget target = client.target(BASE_URL + "/portfolios/" + portfolioId);
+            Response response = target.request().delete();
+            return response.getStatus() == 200 || response.getStatus() == 204;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Deletes a transaction from the backend.
+     */
+    public boolean deleteTransaction(String transactionId) {
+        try (Client client = ClientBuilder.newClient()) {
+            WebTarget target = client.target(BASE_URL + "/transactions/" + transactionId);
             Response response = target.request().delete();
             return response.getStatus() == 200 || response.getStatus() == 204;
         } catch (Exception e) {
@@ -632,6 +674,99 @@ public class BackendApiService {
             System.err.println("[BackendApiService] Exception adding asset: " + e.getMessage());
             e.printStackTrace();
             return false;
+        }
+    }
+
+    // ============================================================
+    // PORTFOLIO TRANSACTION OPERATIONS (BUY/SELL TRADES)
+    // ============================================================
+
+    /**
+     * Records a portfolio transaction (BUY or SELL) in the backend.
+     */
+    public boolean recordPortfolioTransaction(int portfolioId, String assetName, String symbol,
+            String type, double quantity, double unitPrice) {
+        try (Client client = ClientBuilder.newClient()) {
+            WebTarget target = client.target(BASE_URL + "/portfolio-transactions");
+
+            String payload = String.format(
+                    "{\"portfolioId\":%d,\"assetName\":\"%s\",\"symbol\":\"%s\",\"type\":\"%s\",\"quantity\":%f,\"unitPrice\":%f}",
+                    portfolioId,
+                    assetName != null ? assetName : symbol,
+                    symbol,
+                    type,
+                    quantity,
+                    unitPrice);
+
+            System.out.println("[BackendApiService] Recording portfolio transaction: " + payload);
+
+            Response response = target.request(MediaType.APPLICATION_JSON)
+                    .post(Entity.json(payload));
+
+            int status = response.getStatus();
+            System.out.println("[BackendApiService] Portfolio transaction response status: " + status);
+
+            if (status != 200 && status != 201) {
+                String responseBody = response.readEntity(String.class);
+                System.err.println("[BackendApiService] Failed to record portfolio transaction: " + responseBody);
+            }
+
+            return status == 200 || status == 201;
+
+        } catch (Exception e) {
+            System.err.println("[BackendApiService] Exception recording portfolio transaction: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Retrieves all portfolio transactions for a given portfolio.
+     */
+    public List<org.groupm.ewallet.webapp.model.PortfolioTrade> getPortfolioTransactions(int portfolioId) {
+        try (Client client = ClientBuilder.newClient()) {
+            WebTarget target = client.target(BASE_URL + "/portfolio-transactions/portfolio/" + portfolioId);
+            Response res = target.request(MediaType.APPLICATION_JSON_TYPE).get();
+
+            if (res.getStatus() != 200) {
+                return List.of();
+            }
+
+            String json = res.readEntity(String.class);
+            var array = Json.createReader(new StringReader(json)).readArray();
+            List<org.groupm.ewallet.webapp.model.PortfolioTrade> out = new ArrayList<>();
+
+            for (var tVal : array) {
+                var t = tVal.asJsonObject();
+
+                int pId = t.getInt("portfolioId");
+                String assetName = t.getString("assetName", "");
+                String symbol = t.getString("symbol", "");
+                String type = t.getString("type", "");
+                double quantity = t.getJsonNumber("quantity").doubleValue();
+                double unitPrice = t.getJsonNumber("unitPrice").doubleValue();
+
+                java.time.LocalDateTime dateTime;
+                try {
+                    if (t.containsKey("timestamp") && t.get("timestamp") instanceof jakarta.json.JsonString) {
+                        String tsStr = t.getString("timestamp").replace(" ", "T");
+                        dateTime = java.time.LocalDateTime.parse(tsStr);
+                    } else {
+                        dateTime = java.time.LocalDateTime.now();
+                    }
+                } catch (Exception e) {
+                    dateTime = java.time.LocalDateTime.now();
+                }
+
+                out.add(new org.groupm.ewallet.webapp.model.PortfolioTrade(
+                        pId, assetName, symbol, type, quantity, unitPrice, dateTime));
+            }
+
+            return out;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
         }
     }
 

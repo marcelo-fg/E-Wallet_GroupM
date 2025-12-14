@@ -82,7 +82,8 @@
                                         <h:commandButton value="Create" styleClass="btn-primary"
                                             action="#{accountBean.createAccount}">
                                             <f:ajax execute="@form"
-                                                render="accountsTable detailsPanel accountTypePanel addActivityPanel" />
+                                                render=":accountsTable :detailsPanel accountTypePanel :addActivityPanel :globalMessages"
+                                                onevent="onAccountCreated" />
                                         </h:commandButton>
 
                                         <h:commandButton value="Cancel" styleClass="btn-ghost"
@@ -115,11 +116,19 @@
                                                     <f:convertNumber maxFractionDigits="2" groupingUsed="true" />
                                                 </h:outputText>
                                             </td>
-                                            <td style="text-align:right;">
+                                            <td
+                                                style="text-align:right; display:flex; gap:6px; justify-content:flex-end;">
                                                 <!-- Sélectionne le compte -->
                                                 <h:commandButton value="Details" styleClass="btn-secondary"
                                                     action="#{accountBean.selectAccount(c.id)}">
                                                     <f:ajax execute="@this" render="detailsPanel" />
+                                                </h:commandButton>
+                                                <!-- Supprimer le compte -->
+                                                <h:commandButton value="Delete" styleClass="btn-danger-sm"
+                                                    onclick="return confirm('Are you sure you want to delete this account? All transactions will be lost.');"
+                                                    action="#{accountBean.deleteAccountById(c.id)}">
+                                                    <f:ajax execute="@this"
+                                                        render=":accountsTable :detailsPanel :addActivityPanel :globalMessages" />
                                                 </h:commandButton>
                                             </td>
                                         </tr>
@@ -143,7 +152,8 @@
                             <!-- Type d'opération : dépôt / retrait / transfert -->
                             <div class="form-field">
                                 <h:outputLabel value="Operation Type" styleClass="field-label" />
-                                <h:selectOneMenu value="#{accountBean.operationType}" styleClass="select-field">
+                                <h:selectOneMenu id="operationTypeSelect" value="#{accountBean.operationType}"
+                                    styleClass="select-field">
                                     <f:selectItem itemValue="DEPOSIT" itemLabel="Deposit" />
                                     <f:selectItem itemValue="WITHDRAWAL" itemLabel="Withdrawal" />
                                     <f:selectItem itemValue="TRANSFER" itemLabel="Transfer" />
@@ -219,7 +229,8 @@
                             <div style="margin-top:16px;">
                                 <h:commandButton value="Confirm Activity" styleClass="btn-primary full-width"
                                     action="#{accountBean.confirmOperation}">
-                                    <f:ajax execute="@form" render=":globalMessages detailsPanel accountsTable" />
+                                    <f:ajax execute="@form" render=":globalMessages :detailsPanel :accountsTable"
+                                        onevent="onTransactionCreated" />
                                 </h:commandButton>
                             </div>
 
@@ -309,11 +320,77 @@
                                 <strong>Comment:</strong>
                                 #{accountBean.selectedTransaction.description}
                             </p>
+
+                            <!-- Delete Transaction Button -->
+                            <div style="margin-top:12px; text-align:right;">
+                                <h:commandButton value="Delete Transaction" styleClass="btn-danger-sm"
+                                    onclick="return confirm('Are you sure you want to delete this transaction? For transfers, both transactions will be deleted.');"
+                                    action="#{accountBean.deleteSelectedTransaction}">
+                                    <f:ajax execute="@this" render=":detailsPanel :accountsTable :globalMessages" />
+                                </h:commandButton>
+                            </div>
                         </h:panelGroup>
                     </h:panelGroup>
                 </h:panelGroup>
 
             </div>
         </div>
+
+        <!-- JavaScript for toast notifications -->
+        <script type="text/javascript">
+            function showNotification(message, type) {
+                var notification = document.createElement('div');
+                notification.className = 'toast-notification ' + (type || 'success');
+                notification.innerHTML = message;
+                document.body.appendChild(notification);
+                setTimeout(function () { notification.classList.add('show'); }, 10);
+                setTimeout(function () {
+                    notification.classList.remove('show');
+                    setTimeout(function () { notification.remove(); }, 300);
+                }, 3000);
+            }
+
+            function onAccountCreated(data) {
+                if (data.status === 'success') {
+                    showNotification('Account created successfully!', 'success');
+                }
+            }
+
+            function onTransactionCreated(data) {
+                if (data.status === 'success') {
+                    showNotification('Transaction recorded successfully!', 'success');
+                }
+            }
+        </script>
+
+        <style>
+            .toast-notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 16px 24px;
+                border-radius: 12px;
+                color: white;
+                font-weight: 500;
+                z-index: 9999;
+                opacity: 0;
+                transform: translateX(50px);
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            }
+
+            .toast-notification.show {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            .toast-notification.success {
+                background: linear-gradient(135deg, #10b981, #059669);
+            }
+
+            .toast-notification.error {
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+            }
+        </style>
     </ui:define>
 </ui:composition>

@@ -1449,10 +1449,34 @@ body.dashboard-page .page-content {
     background: rgba(0, 0, 0, 0.2);
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.btn-danger-sm {
+    width: 100%;
+    padding: 8px 14px;
+    background: rgba(229, 57, 53, 0.15);
+    border: 1px solid rgba(229, 57, 53, 0.4);
+    color: #ff6b6b;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-danger-sm:hover {
+    background: rgba(229, 57, 53, 0.3);
+    border-color: rgba(229, 57, 53, 0.7);
+    box-shadow: 0 0 15px rgba(229, 57, 53, 0.25);
+    color: #ff8a8a;
 }
 
 .logout-link {
-    color: #ff4757;
+    color: rgba(255, 255, 255, 0.6);
     text-decoration: none;
     font-size: 13px;
     font-weight: 500;
@@ -1464,7 +1488,7 @@ body.dashboard-page .page-content {
 }
 
 .logout-link:hover {
-    color: #ff6b81;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 /* Password Strength & Eye toggle */

@@ -25,6 +25,15 @@
                                     rendered="#{not empty portfolioBean.selectedPortfolioId}">
                                     View Analytics &#8594;
                                 </h:commandLink>
+
+                                <!-- Delete Portfolio Button -->
+                                <h:commandButton value="Delete Portfolio" styleClass="btn-danger-sm"
+                                    rendered="#{not empty portfolioBean.selectedPortfolioId}"
+                                    onclick="return confirm('Are you sure you want to delete this portfolio? All assets will be lost.');"
+                                    action="#{portfolioBean.deleteSelectedPortfolio}">
+                                    <f:ajax execute="@this"
+                                        render=":portfolioSelectForm:portfolioSelectPanel :portfolioSelectForm:portfolioValueDisplay assetsPanel sellPanel :globalMessages" />
+                                </h:commandButton>
                             </h:panelGroup>
 
                             <!-- Show message when no portfolios exist -->
@@ -88,7 +97,9 @@
                         </div>
                         <h:commandButton value="Create" styleClass="btn-primary full-width mt-10"
                             action="#{portfolioBean.createPortfolio}">
-                            <f:ajax execute="@form" render="portfolioSelectPanel assetsPanel portfolioValueDisplay" />
+                            <f:ajax execute="@form"
+                                render=":portfolioSelectForm:portfolioSelectPanel :portfolioSelectForm:portfolioValueDisplay assetsPanel sellPanel :globalMessages"
+                                onevent="onPortfolioCreated" />
                         </h:commandButton>
                     </h:form>
 
@@ -135,7 +146,9 @@
                         </div>
                         <h:commandButton value="Add to Portfolio" styleClass="btn-primary full-width mt-10"
                             action="#{portfolioBean.addAssetFromApi}">
-                            <f:ajax execute="@form" render="assetsPanel portfolioValueDisplay sellPanel" />
+                            <f:ajax execute="@form"
+                                render="assetsPanel :portfolioSelectForm:portfolioValueDisplay sellPanel :globalMessages"
+                                onevent="onAssetAdded" />
                         </h:commandButton>
                     </h:form>
                 </div>
@@ -235,7 +248,7 @@
             </div>
         </div>
 
-        <!-- JavaScript for collapsible functionality -->
+        <!-- JavaScript for collapsible functionality and notifications -->
         <script type="text/javascript">
             function toggleCollapsible(header) {
                 var section = header.closest('.collapsible-section');
@@ -250,7 +263,70 @@
                     icon.textContent = '▼';
                 }
             }
+
+            function showNotification(message, type) {
+                // Create notification element
+                var notification = document.createElement('div');
+                notification.className = 'toast-notification ' + (type || 'success');
+                notification.innerHTML = message;
+                document.body.appendChild(notification);
+
+                // Animate in
+                setTimeout(function () { notification.classList.add('show'); }, 10);
+
+                // Auto-remove after 3 seconds
+                setTimeout(function () {
+                    notification.classList.remove('show');
+                    setTimeout(function () { notification.remove(); }, 300);
+                }, 3000);
+            }
+
+            function onPortfolioCreated(data) {
+                if (data.status === 'success') {
+                    showNotification('Portfolio created successfully!', 'success');
+                }
+            }
+
+            function onAssetAdded(data) {
+                if (data.status === 'success') {
+                    showNotification('Asset added to portfolio!', 'success');
+                }
+            }
         </script>
+
+        <style>
+            .toast-notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 16px 24px;
+                border-radius: 12px;
+                color: white;
+                font-weight: 500;
+                z-index: 9999;
+                opacity: 0;
+                transform: translateX(50px);
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            }
+
+            .toast-notification.show {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            .toast-notification.success {
+                background: linear-gradient(135deg, #10b981, #059669);
+            }
+
+            .toast-notification.error {
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+            }
+
+            .toast-notification.info {
+                background: linear-gradient(135deg, #3b82f6, #2563eb);
+            }
+        </style>
     </ui:define>
 
 </ui:composition>

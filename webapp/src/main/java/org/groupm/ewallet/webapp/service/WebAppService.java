@@ -53,6 +53,10 @@ public class WebAppService {
         return backendApi.updateUser(userId, firstname, lastname, email, password);
     }
 
+    public boolean deleteUser(String userId) {
+        return backendApi.deleteUser(userId);
+    }
+
     public JsonObject getWealthForUser(String userId) {
         return backendApi.getWealthForUser(userId);
     }
@@ -165,6 +169,14 @@ public class WebAppService {
         return backendApi.deleteAccount(id);
     }
 
+    public boolean deletePortfolio(int portfolioId) {
+        return backendApi.deletePortfolio(portfolioId);
+    }
+
+    public boolean deleteTransaction(String transactionId) {
+        return backendApi.deleteTransaction(transactionId);
+    }
+
     public boolean depositToAccount(String id, double amount) {
         return backendApi.createTransaction(id, amount, "deposit", "Dépôt via WebApp");
     }
@@ -188,15 +200,27 @@ public class WebAppService {
     }
 
     // ============================================================
-    // PORTFOLIO TRADES (IN-MEMORY)
+    // PORTFOLIO TRADES (PERSISTED TO BACKEND + IN-MEMORY CACHE)
     // ============================================================
 
     public void recordPortfolioTrade(int portfolioId, String assetName, String symbol,
             String type, double quantity, double unitPrice) {
+        // Store in memory for immediate display (cache)
         mockData.recordPortfolioTrade(portfolioId, assetName, symbol, type, quantity, unitPrice);
+
+        // ALSO persist to backend database
+        backendApi.recordPortfolioTransaction(portfolioId, assetName, symbol, type, quantity, unitPrice);
     }
 
     public List<PortfolioTrade> getTradesForPortfolio(int portfolioId) {
+        // Try to get from backend first
+        List<PortfolioTrade> backendTrades = backendApi.getPortfolioTransactions(portfolioId);
+
+        if (backendTrades != null && !backendTrades.isEmpty()) {
+            return backendTrades;
+        }
+
+        // Fallback to in-memory mock data
         return mockData.getTradesForPortfolio(portfolioId);
     }
 
