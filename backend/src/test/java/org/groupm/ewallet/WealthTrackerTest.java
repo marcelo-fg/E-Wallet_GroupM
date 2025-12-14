@@ -34,11 +34,15 @@ public class WealthTrackerTest {
 
         // === Portefeuille ===
         Portfolio portfolio = new Portfolio(user.getUserID());
-        portfolio.addAsset(new Asset("AAPL", "stock", "Apple", 200.0));
-        portfolio.getAssets().get(0).setQuantity(10);
 
-        portfolio.addAsset(new Asset("BTC", "crypto", "Bitcoin", 60000.0));
-        portfolio.getAssets().get(1).setQuantity(0.1);
+        // Set quantity BEFORE adding to portfolio (as addAsset now rejects qty <= 0)
+        Asset appleStock = new Asset("AAPL", "stock", "Apple", 200.0);
+        appleStock.setQuantity(10);
+        portfolio.addAsset(appleStock);
+
+        Asset bitcoin = new Asset("BTC", "crypto", "Bitcoin", 60000.0);
+        bitcoin.setQuantity(0.1);
+        portfolio.addAsset(bitcoin);
 
         user.addPortfolio(portfolio);
 
@@ -50,7 +54,8 @@ public class WealthTrackerTest {
         System.out.println("Richesse CHF : " + tracker.getTotalWealthChf());
         System.out.println("Croissance : " + tracker.getGrowthRate() + "%");
 
-        // Pas de valeur fixe attendue, on vérifie juste que le calcul ne renvoie pas zéro
+        // Pas de valeur fixe attendue, on vérifie juste que le calcul ne renvoie pas
+        // zéro
         assertEquals(false, tracker.getTotalWealthUsd() == 0);
     }
 }
