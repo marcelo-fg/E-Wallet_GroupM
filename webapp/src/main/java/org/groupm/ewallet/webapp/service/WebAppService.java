@@ -264,14 +264,37 @@ public class WebAppService {
                         tx.getCategory(),
                         tx.getDescription()));
             }
-        }
 
-        // 2. Add mock portfolio transactions (keep existing mock behavior for
-        // portfolios for now)
-        List<MockDataService.UnifiedTransaction> mocks = mockData.getAllUnifiedTransactions();
-        for (MockDataService.UnifiedTransaction ut : mocks) {
-            if ("PORTFOLIO".equals(ut.getSource())) {
-                list.add(ut);
+            // 2. Get real portfolio transactions from backend
+            List<Integer> portfolioIds = getPortfoliosForUser(userId);
+            for (Integer portfolioId : portfolioIds) {
+                List<org.groupm.ewallet.webapp.model.PortfolioTrade> trades = backendApi
+                        .getPortfolioTransactions(portfolioId);
+
+                for (org.groupm.ewallet.webapp.model.PortfolioTrade trade : trades) {
+                    // Format: "AssetName (SYMBOL)" as source label
+                    String assetLabel = trade.getAssetName() + " (" + trade.getSymbol() + ")";
+
+                    // Description includes portfolio ID, type, quantity, and price
+                    String description = String.format("Portfolio %d %s %.2f @ %.2f",
+                            trade.getPortfolioId(),
+                            trade.getType(),
+                            trade.getQuantity(),
+                            trade.getUnitPrice());
+
+                    // Use getSignedNotional() which already handles BUY (+) / SELL (-)
+                    double signedAmount = trade.getSignedNotional();
+
+                    list.add(new MockDataService.UnifiedTransaction(
+                            "PORTFOLIO",
+                            String.valueOf(trade.getPortfolioId()),
+                            assetLabel,
+                            trade.getDateTime(),
+                            signedAmount,
+                            trade.getType(),
+                            "PORTFOLIO_TRADE",
+                            description));
+                }
             }
         }
 

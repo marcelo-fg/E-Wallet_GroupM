@@ -155,6 +155,8 @@ public class DataPopulationResource {
             Long portfolioCount = em.createQuery("SELECT COUNT(p) FROM Portfolio p", Long.class).getSingleResult();
             Long assetCount = em.createQuery("SELECT COUNT(a) FROM Asset a", Long.class).getSingleResult();
             Long transactionCount = em.createQuery("SELECT COUNT(t) FROM Transaction t", Long.class).getSingleResult();
+            Long portfolioTxnCount = em.createQuery("SELECT COUNT(pt) FROM PortfolioTransaction pt", Long.class)
+                    .getSingleResult();
             Long wealthTrackerCount = em.createQuery("SELECT COUNT(w) FROM WealthTracker w", Long.class)
                     .getSingleResult();
 
@@ -163,9 +165,11 @@ public class DataPopulationResource {
             stats.put("portfolios", portfolioCount);
             stats.put("assets", assetCount);
             stats.put("transactions", transactionCount);
+            stats.put("portfolioTransactions", portfolioTxnCount);
             stats.put("wealthTrackers", wealthTrackerCount);
             stats.put("totalRecords",
-                    userCount + accountCount + portfolioCount + assetCount + transactionCount + wealthTrackerCount);
+                    userCount + accountCount + portfolioCount + assetCount + transactionCount + portfolioTxnCount
+                            + wealthTrackerCount);
 
             return Response.ok(stats).build();
         } finally {
@@ -191,6 +195,7 @@ public class DataPopulationResource {
             int portfoliosCreated = 0;
             int assetsCreated = 0;
             int transactionsCreated = 0;
+            int portfolioTransactionsCreated = 0;
 
             // Generate 1000 users
             for (int i = 0; i < 1000; i++) {
@@ -288,6 +293,57 @@ public class DataPopulationResource {
                 }
             }
 
+            // Final flush to ensure all users are persisted
+            em.flush();
+
+            // Now create PortfolioTransactions for all portfolios
+            // We need to query the portfolios since they now have IDs
+            @SuppressWarnings("unchecked")
+            List<Portfolio> allPortfolios = em.createQuery("SELECT p FROM Portfolio p").getResultList();
+
+            LocalDateTime baseDate = LocalDateTime.of(2025, 12, 8, 0, 0);
+            long hoursRange = 7 * 24; // 7 days
+
+            for (Portfolio portfolio : allPortfolios) {
+                // Create 3-6 BUY/SELL transactions per portfolio
+                int numTrades = 3 + random.nextInt(4);
+                for (int t = 0; t < numTrades; t++) {
+                    // Choose random asset type
+                    String[] symbols;
+                    int typeChoice = random.nextInt(3);
+                    if (typeChoice == 0) {
+                        symbols = CRYPTO_SYMBOLS;
+                    } else if (typeChoice == 1) {
+                        symbols = STOCK_SYMBOLS;
+                    } else {
+                        symbols = ETF_SYMBOLS;
+                    }
+
+                    String symbol = symbols[random.nextInt(symbols.length)];
+                    String tradeType = random.nextBoolean() ? "BUY" : "SELL";
+                    double quantity = 0.1 + random.nextDouble() * 5;
+                    double unitPrice = 10 + random.nextDouble() * 1000;
+
+                    PortfolioTransaction ptxn = new PortfolioTransaction(
+                            portfolio.getId(),
+                            symbol,
+                            symbol + " Asset",
+                            tradeType,
+                            quantity,
+                            unitPrice);
+                    ptxn.setTimestamp(baseDate.plusHours(random.nextLong(hoursRange)).plusMinutes(random.nextInt(60)));
+
+                    em.persist(ptxn);
+                    portfolioTransactionsCreated++;
+                }
+
+                // Flush every 100 portfolios to avoid memory issues
+                if (portfolioTransactionsCreated % 500 == 0) {
+                    em.flush();
+                    em.clear();
+                }
+            }
+
             em.getTransaction().commit();
 
             result.put("success", true);
@@ -296,6 +352,7 @@ public class DataPopulationResource {
             result.put("portfoliosCreated", portfoliosCreated);
             result.put("assetsCreated", assetsCreated);
             result.put("transactionsCreated", transactionsCreated);
+            result.put("portfolioTransactionsCreated", portfolioTransactionsCreated);
             result.put("message", "Database populated successfully with demo data!");
 
             return Response.ok(result).build();
@@ -333,6 +390,7 @@ public class DataPopulationResource {
             em.createNativeQuery("DELETE FROM wealth_history").executeUpdate();
             int wealthTrackersDeleted = em.createNativeQuery("DELETE FROM wealth_trackers").executeUpdate();
             int txnDeleted = em.createNativeQuery("DELETE FROM transactions").executeUpdate();
+            int portfolioTxnDeleted = em.createNativeQuery("DELETE FROM portfolio_transactions").executeUpdate();
             int assetsDeleted = em.createNativeQuery("DELETE FROM assets").executeUpdate();
             int portfoliosDeleted = em.createNativeQuery("DELETE FROM portfolios").executeUpdate();
             int accountsDeleted = em.createNativeQuery("DELETE FROM accounts").executeUpdate();
@@ -349,6 +407,7 @@ public class DataPopulationResource {
             result.put("portfoliosDeleted", portfoliosDeleted);
             result.put("assetsDeleted", assetsDeleted);
             result.put("transactionsDeleted", txnDeleted);
+            result.put("portfolioTransactionsDeleted", portfolioTxnDeleted);
             result.put("wealthTrackersDeleted", wealthTrackersDeleted);
             result.put("message", "All data cleared successfully!");
 
