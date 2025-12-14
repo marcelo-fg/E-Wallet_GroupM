@@ -41,7 +41,8 @@
                         <h:panelGroup
                             rendered="#{not empty portfolioBean.selectedPortfolioId and not empty portfolioBean.assets}">
                             <span class="portfolio-value-label">TOTAL VALUE</span>
-                            <span class="portfolio-value-amount">#{portfolioBean.formattedTotalPortfolioValue}</span>
+                            <span
+                                class="portfolio-value-amount animate-count">#{portfolioBean.formattedTotalPortfolioValue}</span>
                         </h:panelGroup>
                         <h:panelGroup rendered="#{empty portfolioBean.selectedPortfolioId}">
                             <span class="portfolio-value-label">NO PORTFOLIO SELECTED</span>

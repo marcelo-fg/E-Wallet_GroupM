@@ -32,11 +32,10 @@
                         </p>
 
                         <!-- Total calculé à partir de la liste des comptes -->
-                        <h3 style="font-size:32px; margin:10px 0 20px 0;">
-                            <h:outputText value="#{accountBean.totalBalance}">
-                                <f:convertNumber maxFractionDigits="2" type="number" />
+                        <h3 style="font-size:32px; margin:10px 0 20px 0;" class="animate-count">
+                            $<h:outputText value="#{accountBean.totalBalance}">
+                                <f:convertNumber maxFractionDigits="2" groupingUsed="true" />
                             </h:outputText>
-                            <span>CHF</span>
                         </h3>
 
                         <!-- Bouton création d’un nouveau compte -->
@@ -112,10 +111,9 @@
                                             <td>#{c.type}</td>
                                             <td>#{empty c.name ? c.number : c.name}</td>
                                             <td>
-                                                <h:outputText value="#{c.balance}">
-                                                    <f:convertNumber maxFractionDigits="2" type="number" />
+                                                $<h:outputText value="#{c.balance}">
+                                                    <f:convertNumber maxFractionDigits="2" groupingUsed="true" />
                                                 </h:outputText>
-                                                <span>CHF</span>
                                             </td>
                                             <td style="text-align:right;">
                                                 <!-- Sélectionne le compte -->
@@ -273,10 +271,9 @@
                                                     value="#{accountBean.findAccountById(tx.accountId).name}" />
                                             </td>
                                             <td style="text-align:right;">
-                                                <h:outputText value="#{tx.amount}">
-                                                    <f:convertNumber maxFractionDigits="2" type="number" />
+                                                $<h:outputText value="#{tx.amount}">
+                                                    <f:convertNumber maxFractionDigits="2" groupingUsed="true" />
                                                 </h:outputText>
-                                                <span>CHF</span>
                                             </td>
                                             <td style="text-align:right;">
                                                 <h:commandButton value="Details" styleClass="btn-secondary"

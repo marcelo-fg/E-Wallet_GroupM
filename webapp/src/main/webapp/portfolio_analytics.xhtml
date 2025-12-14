@@ -41,48 +41,17 @@
             <h:panelGroup rendered="#{not empty portfolioBean.selectedPortfolioId}" layout="block"
                 class="portfolio-dashboard">
 
-                <!-- Styles for Flip Effect -->
+                <!-- Chart Card Styles -->
                 <style>
-                    /* The external grid matches the previous style */
                     .analytics-grid {
                         display: grid;
                         grid-template-columns: 3fr 1fr;
                         gap: 15px;
                     }
 
-                    /* 3D Flip Container */
-                    .flip-container {
-                        perspective: 1000px;
+                    .chart-card {
                         width: 100%;
                         height: 450px;
-                        /* Fixed height for consistent flip */
-                        position: relative;
-                    }
-
-                    /* The Flipper (Inner) */
-                    .flipper {
-                        width: 100%;
-                        height: 100%;
-                        transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                        transform-style: preserve-3d;
-                        position: relative;
-                    }
-
-                    /* Flip State */
-                    .flip-container.flipped .flipper {
-                        transform: rotateY(180deg);
-                    }
-
-                    /* Common Face Styles */
-                    .front,
-                    .back {
-                        backface-visibility: hidden;
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        /* Inherit bento styles manually since we are inside f:panelGroup */
                         background: rgba(20, 20, 30, 0.8);
                         backdrop-filter: blur(10px);
                         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -90,72 +59,26 @@
                         padding: 20px;
                         display: flex;
                         flex-direction: column;
+                        transition: all 0.3s ease;
                     }
 
-                    .back {
-                        transform: rotateY(180deg);
-                    }
-
-                    /* Toggle Button Style */
-                    .flip-toggle-btn {
-                        cursor: pointer;
-                        background: rgba(255, 255, 255, 0.1);
-                        border: 1px solid rgba(255, 255, 255, 0.2);
-                        color: white;
-                        padding: 6px 12px;
-                        border-radius: 8px;
-                        font-size: 13px;
-                        transition: all 0.2s;
-                    }
-
-                    .flip-toggle-btn:hover {
-                        background: rgba(255, 255, 255, 0.2);
+                    .chart-card:hover {
+                        border-color: rgba(255, 255, 255, 0.3);
+                        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
                     }
                 </style>
 
                 <div class="analytics-grid">
 
-                    <!-- LEFT COL: FLIPPABLE CHART CARD -->
-                    <div class="flip-container" id="chartFlipCard">
-                        <div class="flipper">
-
-                            <!-- FRONT: PORTFOLIO VALUE -->
-                            <div class="front">
-                                <div class="card-header"
-                                    style="justify-content:space-between; display:flex; align-items:center;">
-                                    <div>
-                                        <h3>Portfolio Value Evolution</h3>
-                                        <h:outputText value="7 Day History" style="opacity:0.6; font-size:12px;" />
-                                    </div>
-                                    <button type="button" class="flip-toggle-btn" onclick="toggleFlip()">
-                                        Switch to PnL View &#8594;
-                                    </button>
-                                </div>
-                                <div style="flex:1; position:relative;">
-                                    <canvas id="portfolioChart"></canvas>
-                                </div>
-                            </div>
-
-                            <!-- BACK: ASSET PERFORMANCE -->
-                            <div class="back">
-                                <div class="card-header"
-                                    style="justify-content:space-between; display:flex; align-items:center;">
-                                    <div>
-                                        <h3>Performance Distribution</h3>
-                                        <p style="margin:0; font-size:12px; opacity:0.6;">Unrealized PnL by Asset</p>
-                                    </div>
-                                    <button type="button" class="flip-toggle-btn" onclick="toggleFlip()">
-                                        &#8592; Back to Portfolio
-                                    </button>
-                                </div>
-                                <div style="flex:1; position:relative;">
-                                    <canvas id="assetChart"></canvas>
-                                </div>
-
-
-                            </div>
+                    <!-- LEFT COL: PORTFOLIO VALUE CHART -->
+                    <div class="chart-card">
+                        <div class="card-header" style="margin-bottom: 15px;">
+                            <h3>Portfolio Value Evolution</h3>
+                            <p style="margin: 5px 0 0 0; opacity:0.6; font-size:12px;">7 Day History</p>
                         </div>
-
+                        <div style="flex:1; position:relative;">
+                            <canvas id="portfolioChart"></canvas>
+                        </div>
                     </div>
 
 
@@ -166,14 +89,14 @@
                             style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;">
                             <h3 style="font-size:16px; opacity:0.8; margin-bottom:8px;">Total Valuation</h3>
                             <h:outputText value="#{portfolioBean.formattedTotalPortfolioValue}"
-                                style="font-size:32px; font-weight:700; background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" />
+                                styleClass="animate-count" style="font-size:32px; font-weight:700; color: #ffffff;" />
                         </div>
 
                         <!-- Realized PnL -->
                         <div class="bento-box glow-hover"
                             style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;">
                             <h3 style="font-size:16px; opacity:0.8; margin-bottom:8px;">Realized PnL</h3>
-                            <h:outputText value="#{portfolioBean.realizedPnl}"
+                            <h:outputText value="#{portfolioBean.realizedPnl}" styleClass="animate-count"
                                 style="font-size:28px; font-weight:600; color: #{portfolioBean.realizedPnl >= 0 ? '#30d158' : '#ff453a'};">
                                 <f:convertNumber type="currency" currencyCode="USD" />
                             </h:outputText>
@@ -182,19 +105,11 @@
                     </div>
                 </div>
 
-                <script>
-                    function toggleFlip() {
-                        var card = document.getElementById('chartFlipCard');
-                        card.classList.toggle('flipped');
-                    }
-                </script>
-
                 <!-- JAVASCRIPT FOR CHARTS -->
                 <h:panelGroup id="chartScriptPanel">
 
                     <!-- Hidden inputs to pass JSON safely -->
                     <h:inputHidden id="pfChartJson" value="#{portfolioBean.portfolioChartJson}" />
-                    <h:inputHidden id="assetChartJson" value="#{portfolioBean.assetChartJson}" />
 
                     <script type="text/javascript">
                         //<![CDATA[
@@ -208,7 +123,7 @@
                         }
 
                         function initCharts() {
-                            console.log('Initializing charts...');
+                            console.log('Initializing portfolio chart...');
 
                             // Helper to read JSON from hidden field by partial ID
                             function getJsonData(partialId) {
@@ -234,29 +149,6 @@
                                     window.pfChart = new Chart(ctx1.getContext('2d'), {
                                         type: 'line',
                                         data: data1,
-                                        options: {
-                                            responsive: true,
-                                            maintainAspectRatio: false,
-                                            interaction: { mode: 'index', intersect: false },
-                                            plugins: { legend: { labels: { color: 'white' } } },
-                                            scales: {
-                                                x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: 'rgba(255,255,255,0.7)' } },
-                                                y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: 'rgba(255,255,255,0.7)' } }
-                                            }
-                                        }
-                                    });
-                                }
-                            }
-
-                            // ASSET CHART
-                            var ctx2 = document.getElementById('assetChart');
-                            if (ctx2) {
-                                if (window.assetChart) { window.assetChart.destroy(); }
-                                var data2 = getJsonData('assetChartJson');
-                                if (data2) {
-                                    window.assetChart = new Chart(ctx2.getContext('2d'), {
-                                        type: 'bar',
-                                        data: data2,
                                         options: {
                                             responsive: true,
                                             maintainAspectRatio: false,

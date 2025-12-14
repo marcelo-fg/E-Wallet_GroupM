@@ -1,7 +1,7 @@
 package org.groupm.ewallet.webapp.ui;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.servlet.http.HttpSession;
@@ -17,7 +17,7 @@ import java.util.List;
 import org.groupm.ewallet.webapp.model.LocalAccount;
 
 @Named
-@RequestScoped
+@SessionScoped
 public class TotalWealthBean implements Serializable {
 
     private double totalCash;
@@ -27,43 +27,61 @@ public class TotalWealthBean implements Serializable {
     private double totalNetWorth;
 
     private String cashHistoryJson;
-    private String netWorthHistoryJson; // Replaces cryptoHistory for logic, but we'll add getter
-    private String portfolioHistoryJson; // Replaces stocksHistory for logic
+    private String netWorthHistoryJson;
+    private String portfolioHistoryJson;
+
+    // Period selection for Total Wealth page
+    private int selectedPeriod = 30; // Default 30 days
+
+    // Dashboard always shows 7 days
+    private String netWorthHistoryJson7Days;
 
     @Inject
     private WebAppService webAppService;
 
     @PostConstruct
     public void init() {
-        // 1. Fetch Real Data (Current Values)
+        loadData();
+    }
+
+    /**
+     * Loads or reloads all wealth data for the current period.
+     */
+    public void loadData() {
         String userId = fetchRealData();
 
         if (userId == null) {
-            // Fallback for unauthenticated or error state
-            this.cashHistoryJson = convertMapToJson(new TreeMap<>()); // Empty map for no data
+            this.cashHistoryJson = convertMapToJson(new TreeMap<>());
             this.netWorthHistoryJson = convertMapToJson(new TreeMap<>());
             this.portfolioHistoryJson = convertMapToJson(new TreeMap<>());
+            this.netWorthHistoryJson7Days = convertMapToJson(new TreeMap<>());
             return;
         }
 
-        // 2. Get Histories (30 Days)
-        int days = 30;
+        // Generate chart data for selected period (Total Wealth page)
+        generateChartData(userId, selectedPeriod);
 
-        // A. Real Cash History (from DB transactions)
+        // Always generate 7-day data for dashboard
+        Map<LocalDate, Double> cashMap7 = webAppService.getCashHistory(userId, 7);
+        Map<LocalDate, Double> portfolioMap7 = webAppService.getPortfolioHistory(userId, 7);
+        Map<LocalDate, Double> netWorthMap7 = new TreeMap<>();
+        LocalDate today = LocalDate.now();
+        for (int i = 0; i < 7; i++) {
+            LocalDate date = today.minusDays(i);
+            double c = cashMap7.getOrDefault(date, 0.0);
+            double p = portfolioMap7.getOrDefault(date, 0.0);
+            netWorthMap7.put(date, c + p);
+        }
+        this.netWorthHistoryJson7Days = convertMapToJson(netWorthMap7);
+    }
+
+    /**
+     * Generates chart data for a specific number of days.
+     */
+    private void generateChartData(String userId, int days) {
         Map<LocalDate, Double> cashMap = webAppService.getCashHistory(userId, days);
-
-        // B. Real Portfolio History (from DB Transactions)
         Map<LocalDate, Double> portfolioMap = webAppService.getPortfolioHistory(userId, days);
 
-        // Simulating crypto/stocks breakdown is no longer accurate if we use aggregated
-        // history.
-        // We will just feed the aggregated map to the charts or stick to one main
-        // chart.
-        // The user wants: Net Worth, Cash, Portfolio.
-        // We have Cash Map. We have Portfolio Map.
-        // Net Worth Map = Cash + Portfolio.
-
-        // C. Calculate Total Net Worth History (Cash + Portfolio)
         Map<LocalDate, Double> netWorthMap = new TreeMap<>();
         LocalDate today = LocalDate.now();
         for (int i = 0; i < days; i++) {
@@ -73,10 +91,32 @@ public class TotalWealthBean implements Serializable {
             netWorthMap.put(date, c + p);
         }
 
-        // 3. Convert to JSON for Charts
         this.cashHistoryJson = convertMapToJson(cashMap);
         this.netWorthHistoryJson = convertMapToJson(netWorthMap);
         this.portfolioHistoryJson = convertMapToJson(portfolioMap);
+    }
+
+    /**
+     * Changes the period and reloads data.
+     */
+    public void changePeriod(int days) {
+        this.selectedPeriod = days;
+        loadData();
+    }
+
+    public int getSelectedPeriod() {
+        return selectedPeriod;
+    }
+
+    public void setSelectedPeriod(int selectedPeriod) {
+        this.selectedPeriod = selectedPeriod;
+    }
+
+    /**
+     * Returns the 7-day net worth history JSON for the dashboard.
+     */
+    public String getNetWorthHistoryJson7Days() {
+        return netWorthHistoryJson7Days;
     }
 
     // Helper: Fetch real data and return userId

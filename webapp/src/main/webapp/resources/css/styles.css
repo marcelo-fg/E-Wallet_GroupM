@@ -1687,3 +1687,252 @@ body.dashboard-page .page-content {
     background: rgba(255, 255, 255, 0.2) !important;
     border-color: rgba(255, 255, 255, 0.4) !important;
 }
+
+/* ==========================================================================
+   ANIMATIONS
+   ========================================================================== */
+
+/* Keyframe: Fade in and slide up */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Keyframe: Fade in */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Keyframe: Scale in */
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Keyframe: Subtle pulse */
+@keyframes subtlePulse {
+
+    0%,
+    100% {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+    }
+
+    50% {
+        box-shadow: 0 4px 25px rgba(102, 126, 234, 0.3);
+    }
+}
+
+/* Keyframe: Glow pulse for CTA buttons */
+@keyframes glowPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 4px 30px rgba(102, 126, 234, 0.6);
+    }
+}
+
+/* Keyframe: Number counting effect (for JS) */
+@keyframes countUp {
+    from {
+        opacity: 0.5;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Bento box entrance animation */
+.bento-box {
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* Staggered animation delays for bento boxes */
+.bento-grid>.bento-box:nth-child(1),
+.bento-main>.bento-box:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.bento-grid>.bento-box:nth-child(2),
+.bento-main>.bento-box:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.bento-sidebar>.bento-box:nth-child(1) {
+    animation-delay: 0.15s;
+}
+
+.bento-sidebar>.bento-box:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.bento-sidebar>.bento-box:nth-child(3) {
+    animation-delay: 0.25s;
+}
+
+/* Portfolio page staggered animations */
+.portfolio-column:nth-child(1) .bento-box {
+    animation-delay: 0.05s;
+}
+
+.portfolio-column:nth-child(2) .bento-box:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.portfolio-column:nth-child(2) .bento-box:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.portfolio-column:nth-child(3) .bento-box {
+    animation-delay: 0.2s;
+}
+
+/* Enhanced hover lift effect for bento boxes */
+.bento-box.glow-hover {
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.bento-box.glow-hover:hover {
+    transform: translateY(-4px);
+}
+
+/* List item entrance animation */
+.transaction-row,
+.account-row,
+.assets-row,
+.asset-item {
+    animation: fadeIn 0.3s ease-out forwards;
+    opacity: 0;
+}
+
+/* Staggered list item delays */
+.transaction-row:nth-child(1),
+.account-row:nth-child(1),
+.assets-row:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.transaction-row:nth-child(2),
+.account-row:nth-child(2),
+.assets-row:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.transaction-row:nth-child(3),
+.account-row:nth-child(3),
+.assets-row:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.transaction-row:nth-child(4),
+.account-row:nth-child(4),
+.assets-row:nth-child(4) {
+    animation-delay: 0.2s;
+}
+
+.transaction-row:nth-child(5),
+.account-row:nth-child(5),
+.assets-row:nth-child(5) {
+    animation-delay: 0.25s;
+}
+
+.transaction-row:nth-child(n+6),
+.account-row:nth-child(n+6),
+.assets-row:nth-child(n+6) {
+    animation-delay: 0.3s;
+}
+
+/* CTA button glow pulse animation */
+.btn-primary {
+    animation: glowPulse 3s ease-in-out infinite;
+}
+
+.btn-primary:hover {
+    animation: none;
+    box-shadow: 0 4px 35px rgba(102, 126, 234, 0.7);
+}
+
+/* Animated value display */
+.animated-value {
+    animation: countUp 0.5s ease-out forwards;
+}
+
+/* Progress bar fill animation (already exists, enhance it) */
+.wealth-bar-fill {
+    transition: width 1s ease-out;
+}
+
+/* Chart container fade in */
+.chart-container,
+.chart-inner {
+    animation: scaleIn 0.6s ease-out forwards;
+    animation-delay: 0.2s;
+    opacity: 0;
+}
+
+/* Selected portfolio bar animation */
+.selected-portfolio-bar {
+    animation: fadeInUp 0.4s ease-out forwards;
+}
+
+/* Tooltip/hover info fade */
+.tooltip-content {
+    animation: fadeIn 0.2s ease-out forwards;
+}
+
+/* Skeleton loading animation */
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.skeleton-loader {
+    background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0.05) 25%,
+            rgba(255, 255, 255, 0.15) 50%,
+            rgba(255, 255, 255, 0.05) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

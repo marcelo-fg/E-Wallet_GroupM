@@ -97,6 +97,31 @@
                     grid-template-columns: 1fr;
                 }
             }
+
+            /* Period Selection Buttons */
+            .period-btn {
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                color: rgba(255, 255, 255, 0.7);
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-size: 13px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .period-btn:hover {
+                background: rgba(255, 255, 255, 0.2);
+                border-color: rgba(255, 255, 255, 0.4);
+                color: #fff;
+            }
+
+            .period-btn.active {
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                border-color: transparent;
+                color: #fff;
+                font-weight: 600;
+            }
         </style>
 
         <div class="wealth-page">
@@ -112,12 +137,42 @@
                                 <h2>Total Wealth</h2>
                                 <p>Overview of your complete financial portfolio</p>
                             </div>
-                            <span class="wealth-amount">
+                            <span class="wealth-amount animate-count">
                                 <h:outputText value="#{totalWealthBean.totalNetWorth}">
                                     <f:convertNumber type="currency" currencySymbol="$" maxFractionDigits="2" />
                                 </h:outputText>
                             </span>
                         </div>
+
+                        <!-- Period Selection Buttons -->
+                        <h:form id="periodForm" style="margin-bottom: 15px;">
+                            <div style="display: flex; gap: 10px;">
+                                <h:commandButton value="7 Days"
+                                    styleClass="period-btn #{totalWealthBean.selectedPeriod == 7 ? 'active' : ''}"
+                                    action="#{totalWealthBean.changePeriod(7)}">
+                                    <f:ajax render="@form :netWorthData"
+                                        onevent="function(data){if(data.status=='success')location.reload();}" />
+                                </h:commandButton>
+                                <h:commandButton value="14 Days"
+                                    styleClass="period-btn #{totalWealthBean.selectedPeriod == 14 ? 'active' : ''}"
+                                    action="#{totalWealthBean.changePeriod(14)}">
+                                    <f:ajax render="@form :netWorthData"
+                                        onevent="function(data){if(data.status=='success')location.reload();}" />
+                                </h:commandButton>
+                                <h:commandButton value="30 Days"
+                                    styleClass="period-btn #{totalWealthBean.selectedPeriod == 30 ? 'active' : ''}"
+                                    action="#{totalWealthBean.changePeriod(30)}">
+                                    <f:ajax render="@form :netWorthData"
+                                        onevent="function(data){if(data.status=='success')location.reload();}" />
+                                </h:commandButton>
+                                <h:commandButton value="1 Year"
+                                    styleClass="period-btn #{totalWealthBean.selectedPeriod == 365 ? 'active' : ''}"
+                                    action="#{totalWealthBean.changePeriod(365)}">
+                                    <f:ajax render="@form :netWorthData"
+                                        onevent="function(data){if(data.status=='success')location.reload();}" />
+                                </h:commandButton>
+                            </div>
+                        </h:form>
 
                         <!-- Line Chart -->
                         <div class="chart-title">Total Net Worth Evolution</div>

@@ -465,7 +465,7 @@
                             <h2 class="text-title">Total Wealth</h2>
                             <p class="text-subtitle">Overview of your complete financial portfolio</p>
                         </div>
-                        <div class="text-amount-lg">
+                        <div class="text-amount-lg animate-count">
                             <h:outputText value="#{totalWealthBean.totalNetWorth}">
                                 <f:convertNumber type="currency" currencyCode="USD" />
                             </h:outputText>
@@ -492,20 +492,20 @@
                             <h3 class="sidebar-title">Accounts</h3>
                             <div class="sidebar-list">
                                 <ui:repeat value="#{accountBean.accounts}" var="account">
-                                        <div class="list-row">
-                                            <span class="row-main-text">#{account.name}</span>
-                                            <span class="row-amount">
-                                                <h:outputText value="#{account.balance}">
-                                                    <f:convertNumber type="currency" currencyCode="USD" />
-                                                </h:outputText>
-                                            </span>
+                                    <div class="list-row">
+                                        <span class="row-main-text">#{account.name}</span>
+                                        <span class="row-amount animate-count">
+                                            <h:outputText value="#{account.balance}">
+                                                <f:convertNumber type="currency" currencyCode="USD" />
+                                            </h:outputText>
+                                        </span>
+                                    </div>
+                                    <!-- Animated Progress Bar - width based on percentage of total balance -->
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill"
+                                            style="width: #{accountBean.totalBalance > 0 ? (account.balance / accountBean.totalBalance * 100) : 100}%;">
                                         </div>
-                                        <!-- Animated Progress Bar - width based on percentage of total balance -->
-                                        <div class="progress-bar-container">
-                                            <div class="progress-bar-fill"
-                                                style="width: #{accountBean.totalBalance > 0 ? (account.balance / accountBean.totalBalance * 100) : 100}%;">
-                                            </div>
-                                        </div>
+                                    </div>
                                 </ui:repeat>
                             </div>
                         </div>
@@ -523,7 +523,7 @@
                                     <ui:fragment rendered="#{status.index lt 2}">
                                         <div class="list-row">
                                             <span class="row-main-text">#{portfolio.name}</span>
-                                            <span class="row-amount">
+                                            <span class="row-amount animate-count">
                                                 <h:outputText value="#{portfolio.value}">
                                                     <f:convertNumber type="currency" currencyCode="USD" />
                                                 </h:outputText>
@@ -587,7 +587,7 @@
 
         </div>
 
-        <h:outputText id="netWorthData" value="#{totalWealthBean.netWorthHistoryJson}" style="display:none;" />
+        <h:outputText id="netWorthData" value="#{totalWealthBean.netWorthHistoryJson7Days}" style="display:none;" />
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>

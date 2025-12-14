@@ -52,10 +52,9 @@
                                             <td>#{t.category}</td>
                                             <td>#{t.description}</td>
                                             <td style="text-align:right;">
-                                                <h:outputText value="#{t.amount}">
-                                                    <f:convertNumber maxFractionDigits="2" type="number" />
+                                                $<h:outputText value="#{t.amount}">
+                                                    <f:convertNumber maxFractionDigits="2" groupingUsed="true" />
                                                 </h:outputText>
-                                                <span> CHF</span>
                                             </td>
                                         </tr>
                                     </ui:repeat>

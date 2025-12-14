@@ -181,6 +181,57 @@
                     }
                 }
             }
+
+            // Animated number counting
+            function animateValue(element, start, end, duration) {
+                if (start === end) return;
+                var range = end - start;
+                var current = start;
+                var increment = range / (duration / 16);
+                var timer = setInterval(function () {
+                    current += increment;
+                    if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                        current = end;
+                        clearInterval(timer);
+                    }
+                    // Format with commas and 2 decimals
+                    var formatted = current.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                    // Keep the prefix (like $ or CHF)
+                    var prefix = element.getAttribute('data-prefix') || '';
+                    var suffix = element.getAttribute('data-suffix') || '';
+                    element.textContent = prefix + formatted + suffix;
+                }, 16);
+            }
+
+            // Initialize animated counters on page load
+            function initAnimatedCounters() {
+                var counters = document.querySelectorAll('.animate-count');
+                counters.forEach(function (counter) {
+                    var text = counter.textContent.trim();
+                    // Extract numeric value from text (handles $, CHF, etc.)
+                    var numMatch = text.match(/[-]?[\d,]+\.?\d*/);
+                    if (numMatch) {
+                        var num = parseFloat(numMatch[0].replace(/,/g, ''));
+                        var prefix = text.substring(0, text.indexOf(numMatch[0]));
+                        var suffix = text.substring(text.indexOf(numMatch[0]) + numMatch[0].length);
+                        counter.setAttribute('data-prefix', prefix);
+                        counter.setAttribute('data-suffix', suffix);
+                        counter.textContent = prefix + '0.00' + suffix;
+                        // Animate after a small delay for entrance effect
+                        setTimeout(function () {
+                            animateValue(counter, 0, num, 1000);
+                        }, 300);
+                    }
+                });
+            }
+
+            // Run on page load
+            document.addEventListener('DOMContentLoaded', function () {
+                initAnimatedCounters();
+            });
             //]]>
         </script>
 

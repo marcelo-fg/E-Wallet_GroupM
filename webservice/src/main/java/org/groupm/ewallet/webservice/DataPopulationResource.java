@@ -219,8 +219,8 @@ public class DataPopulationResource {
                     Account account = new Account(accountId, userId, type, balance);
                     account.setName(name);
 
-                    // Create 2-5 transactions per account
-                    int numTransactions = 2 + random.nextInt(4);
+                    // Create 10-20 transactions per account (significantly more transactions)
+                    int numTransactions = 10 + random.nextInt(11);
                     for (int k = 0; k < numTransactions; k++) {
                         String txnId = UUID.randomUUID().toString();
                         String txnType = TRANSACTION_TYPES[random.nextInt(TRANSACTION_TYPES.length)];
@@ -228,9 +228,9 @@ public class DataPopulationResource {
                         String description = TRANSACTION_DESCRIPTIONS[random.nextInt(TRANSACTION_DESCRIPTIONS.length)];
 
                         Transaction txn = new Transaction(txnId, txnType, amount, description);
-                        // Random timestamp between Dec 1, 2025 00:00 and Dec 15, 2025 08:00
-                        LocalDateTime startDate = LocalDateTime.of(2025, 12, 1, 0, 0);
-                        long hoursRange = 14 * 24 + 8; // 14 days + 8 hours = 344 hours
+                        // Random timestamp between Dec 8, 2025 00:00 and Dec 15, 2025 23:59
+                        LocalDateTime startDate = LocalDateTime.of(2025, 12, 8, 0, 0);
+                        long hoursRange = 7 * 24; // 7 days = 168 hours
                         txn.setTimestamp(
                                 startDate.plusHours(random.nextLong(hoursRange)).plusMinutes(random.nextInt(60)));
                         account.addTransaction(txn);
