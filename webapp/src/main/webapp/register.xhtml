@@ -37,48 +37,230 @@
             color: rgba(255, 255, 255, 1);
         }
 
-        .strength-box {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 8px 0 15px 0;
-        }
-
-        .strength-bar {
-            flex: 1;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 3px;
+        /* Password strength container */
+        .password-requirements {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin: 12px 0 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             overflow: hidden;
         }
 
-        .strength-fill {
-            height: 100%;
-            width: 0%;
-            border-radius: 3px;
+        .requirements-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s ease;
+        }
+
+        .requirements-header:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .requirements-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+
+        .requirements-arrow {
+            width: 20px;
+            height: 20px;
+            color: rgba(255, 255, 255, 0.5);
+            transition: transform 0.3s ease, color 0.2s ease;
+        }
+
+        .requirements-header:hover .requirements-arrow {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .password-requirements.collapsed .requirements-arrow {
+            transform: rotate(-90deg);
+        }
+
+        .requirements-content {
+            padding: 0 15px 15px 15px;
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+            opacity: 1;
+        }
+
+        .password-requirements.collapsed .requirements-content {
+            max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            opacity: 0;
+        }
+
+        /* Strength bar */
+        .strength-container {
+            margin-bottom: 15px;
+        }
+
+        .strength-bar-wrapper {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .strength-segment {
+            flex: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
             transition: all 0.3s ease;
         }
 
-        .strength-fill.weak {
-            background: #e53935;
+        .strength-segment.active.weak {
+            background: #ef4444;
         }
 
-        .strength-fill.medium {
-            background: #fb8c00;
+        .strength-segment.active.fair {
+            background: #f97316;
         }
 
-        .strength-fill.good {
-            background: #43a047;
+        .strength-segment.active.good {
+            background: #eab308;
         }
 
-        .strength-fill.strong {
-            background: #00c853;
+        .strength-segment.active.strong {
+            background: #22c55e;
+        }
+
+        .strength-segment.active.very-strong {
+            background: #10b981;
         }
 
         .strength-label {
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+            transition: color 0.3s ease;
+        }
+
+        .strength-label.weak {
+            color: #ef4444;
+        }
+
+        .strength-label.fair {
+            color: #f97316;
+        }
+
+        .strength-label.good {
+            color: #eab308;
+        }
+
+        .strength-label.strong {
+            color: #22c55e;
+        }
+
+        .strength-label.very-strong {
+            color: #10b981;
+        }
+
+        /* Requirements checklist */
+        .requirements-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             font-size: 11px;
-            min-width: 60px;
-            text-align: right;
+            color: rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .requirement-item.valid {
+            color: #22c55e;
+        }
+
+        .requirement-item.invalid {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .requirement-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .requirement-icon.valid {
+            background: #22c55e;
+            color: white;
+        }
+
+        .requirement-icon.invalid {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Security warnings */
+        .security-warnings {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .warning-item {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: #f97316;
+            margin-bottom: 6px;
+            padding: 8px 10px;
+            background: rgba(249, 115, 22, 0.1);
+            border-radius: 6px;
+            border-left: 3px solid #f97316;
+        }
+
+        .warning-item.show {
+            display: flex;
+        }
+
+        .warning-item svg {
+            flex-shrink: 0;
+        }
+
+        /* Password match indicator */
+        .match-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            margin-top: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .match-indicator.show {
+            opacity: 1;
+        }
+
+        .match-indicator.match {
+            color: #22c55e;
+        }
+
+        .match-indicator.no-match {
+            color: #ef4444;
         }
     </style>
 </h:head>
@@ -105,20 +287,20 @@
 
                 <label>Email Address</label>
                 <h:inputText id="email" value="#{registerBean.email}" styleClass="input" required="true"
-                    placeholder="Enter your email" />
+                    placeholder="Enter your email" onkeyup="checkPasswordSecurity()" />
 
                 <label>First Name</label>
                 <h:inputText id="firstname" value="#{registerBean.firstname}" styleClass="input" required="true"
-                    placeholder="Your first name" />
+                    placeholder="Your first name" onkeyup="checkPasswordSecurity()" />
 
                 <label>Last Name</label>
                 <h:inputText id="lastname" value="#{registerBean.lastname}" styleClass="input" required="true"
-                    placeholder="Your last name" />
+                    placeholder="Your last name" onkeyup="checkPasswordSecurity()" />
 
                 <label>Password</label>
                 <div class="pwd-container">
                     <h:inputSecret id="password" value="#{registerBean.password}" styleClass="input" required="true"
-                        placeholder="Create a password" onkeyup="checkStrength(this.value)" />
+                        placeholder="Create a strong password" onkeyup="validatePassword(this.value)" />
                     <span class="pwd-eye" onclick="togglePwd('registerForm:password', this)">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -128,18 +310,97 @@
                     </span>
                 </div>
 
-                <!-- Password Strength -->
-                <div class="strength-box">
-                    <div class="strength-bar">
-                        <div id="strengthFill" class="strength-fill"></div>
+                <!-- Password Requirements Box -->
+                <div class="password-requirements" id="passwordRequirements">
+                    <!-- Header with toggle -->
+                    <div class="requirements-header" onclick="toggleRequirements()">
+                        <span class="requirements-title">Password Requirements</span>
+                        <svg class="requirements-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
                     </div>
-                    <span id="strengthLabel" class="strength-label"></span>
+
+                    <!-- Collapsible content -->
+                    <div class="requirements-content" id="requirementsContent">
+                        <!-- Strength Bar -->
+                        <div class="strength-container">
+                            <div class="strength-bar-wrapper">
+                                <div class="strength-segment" id="seg1"></div>
+                                <div class="strength-segment" id="seg2"></div>
+                                <div class="strength-segment" id="seg3"></div>
+                                <div class="strength-segment" id="seg4"></div>
+                                <div class="strength-segment" id="seg5"></div>
+                            </div>
+                            <div class="strength-label" id="strengthLabel">Enter a password</div>
+                        </div>
+
+                        <!-- Requirements Checklist -->
+                        <div class="requirements-list">
+                            <div class="requirement-item" id="req-length">
+                                <span class="requirement-icon invalid" id="icon-length">○</span>
+                                <span>8+ characters</span>
+                            </div>
+                            <div class="requirement-item" id="req-uppercase">
+                                <span class="requirement-icon invalid" id="icon-uppercase">○</span>
+                                <span>Uppercase (A-Z)</span>
+                            </div>
+                            <div class="requirement-item" id="req-lowercase">
+                                <span class="requirement-icon invalid" id="icon-lowercase">○</span>
+                                <span>Lowercase (a-z)</span>
+                            </div>
+                            <div class="requirement-item" id="req-digit">
+                                <span class="requirement-icon invalid" id="icon-digit">○</span>
+                                <span>Number (0-9)</span>
+                            </div>
+                            <div class="requirement-item" id="req-special">
+                                <span class="requirement-icon invalid" id="icon-special">○</span>
+                                <span>Special (!@#$...)</span>
+                            </div>
+                            <div class="requirement-item" id="req-no-repeat">
+                                <span class="requirement-icon invalid" id="icon-no-repeat">○</span>
+                                <span>No repetition</span>
+                            </div>
+                            <div class="requirement-item" id="req-no-sequence">
+                                <span class="requirement-icon invalid" id="icon-no-sequence">○</span>
+                                <span>No sequences</span>
+                            </div>
+                            <div class="requirement-item" id="req-not-common">
+                                <span class="requirement-icon invalid" id="icon-not-common">○</span>
+                                <span>Not common</span>
+                            </div>
+                        </div>
+
+                        <!-- Security Warnings -->
+                        <div class="security-warnings">
+                            <div class="warning-item" id="warn-email">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                    <line x1="12" y1="9" x2="12" y2="13" />
+                                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                                </svg>
+                                <span>Password should not contain your email</span>
+                            </div>
+                            <div class="warning-item" id="warn-name">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                    <line x1="12" y1="9" x2="12" y2="13" />
+                                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                                </svg>
+                                <span>Password should not contain your name</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <label>Confirm Password</label>
                 <div class="pwd-container">
                     <h:inputSecret id="confirmPassword" value="#{registerBean.confirmPassword}" styleClass="input"
-                        required="true" placeholder="Re-enter your password" />
+                        required="true" placeholder="Re-enter your password" onkeyup="checkPasswordMatch()" />
                     <span class="pwd-eye" onclick="togglePwd('registerForm:confirmPassword', this)">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -147,6 +408,15 @@
                             <circle cx="12" cy="12" r="3" />
                         </svg>
                     </span>
+                </div>
+
+                <!-- Password Match Indicator -->
+                <div class="match-indicator" id="matchIndicator">
+                    <svg id="matchIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                    <span id="matchText">Passwords match</span>
                 </div>
 
                 <div style="margin-top: 25px;">
@@ -168,6 +438,24 @@
 
     <script type="text/javascript">
         //<![CDATA[
+
+        // Common sequences to check
+        const BLOCKED_SEQUENCES = [
+            'abc', 'bcd', 'cde', 'def', 'efg', 'fgh', 'ghi', 'hij', 'ijk', 'jkl',
+            'klm', 'lmn', 'mno', 'nop', 'opq', 'pqr', 'qrs', 'rst', 'stu', 'tuv',
+            'uvw', 'vwx', 'wxy', 'xyz',
+            '012', '123', '234', '345', '456', '567', '678', '789', '890',
+            'qwerty', 'azerty', 'qwertz', 'asdf', 'zxcv', 'password', 'passwd'
+        ];
+
+        // Common passwords blacklist
+        const COMMON_PASSWORDS = [
+            'password', 'password1', 'password123', '123456', '12345678', '123456789',
+            '1234567890', 'qwerty', 'qwerty123', 'abc123', '111111', '123123',
+            'admin', 'admin123', 'letmein', 'welcome', 'welcome1', 'monkey',
+            'dragon', 'master', 'login', 'princess', 'starwars', 'passw0rd'
+        ];
+
         function togglePwd(fieldId, btn) {
             var f = document.getElementById(fieldId);
             if (f.type === 'password') {
@@ -179,35 +467,194 @@
             }
         }
 
-        function checkStrength(pwd) {
-            var fill = document.getElementById('strengthFill');
-            var label = document.getElementById('strengthLabel');
-            var score = 0;
+        function toggleRequirements() {
+            const box = document.getElementById('passwordRequirements');
+            box.classList.toggle('collapsed');
+        }
 
-            if (!pwd) { fill.style.width = '0%'; fill.className = 'strength-fill'; label.textContent = ''; return; }
+        function setRequirement(id, isValid) {
+            const item = document.getElementById('req-' + id);
+            const icon = document.getElementById('icon-' + id);
 
-            if (pwd.length >= 6) score++;
-            if (pwd.length >= 8) score++;
-            if (pwd.length >= 12) score++;
-            if (/[a-z]/.test(pwd)) score++;
-            if (/[A-Z]/.test(pwd)) score++;
-            if (/[0-9]/.test(pwd)) score++;
-            if (/[^a-zA-Z0-9]/.test(pwd)) score++;
-
-            if (score <= 2) {
-                fill.style.width = '25%'; fill.className = 'strength-fill weak';
-                label.textContent = 'Weak'; label.style.color = '#e53935';
-            } else if (score <= 4) {
-                fill.style.width = '50%'; fill.className = 'strength-fill medium';
-                label.textContent = 'Medium'; label.style.color = '#fb8c00';
-            } else if (score <= 5) {
-                fill.style.width = '75%'; fill.className = 'strength-fill good';
-                label.textContent = 'Good'; label.style.color = '#43a047';
+            if (isValid) {
+                item.classList.add('valid');
+                item.classList.remove('invalid');
+                icon.classList.add('valid');
+                icon.classList.remove('invalid');
+                icon.innerHTML = '✓';
             } else {
-                fill.style.width = '100%'; fill.className = 'strength-fill strong';
-                label.textContent = 'Strong'; label.style.color = '#00c853';
+                item.classList.remove('valid');
+                item.classList.add('invalid');
+                icon.classList.remove('valid');
+                icon.classList.add('invalid');
+                icon.innerHTML = '○';
             }
         }
+
+        function validatePassword(pwd) {
+            if (!pwd) {
+                resetRequirements();
+                return;
+            }
+
+            const lowerPwd = pwd.toLowerCase();
+
+            // Check each requirement
+            const hasLength = pwd.length >= 8;
+            const hasUppercase = /[A-Z]/.test(pwd);
+            const hasLowercase = /[a-z]/.test(pwd);
+            const hasDigit = /[0-9]/.test(pwd);
+            const hasSpecial = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?\/~`'"\\]/.test(pwd);
+            const noRepeat = !/(.)\\1{3,}/.test(pwd);
+            const noSequence = !BLOCKED_SEQUENCES.some(seq => lowerPwd.includes(seq));
+            const notCommon = !COMMON_PASSWORDS.includes(lowerPwd);
+
+            // Update UI
+            setRequirement('length', hasLength);
+            setRequirement('uppercase', hasUppercase);
+            setRequirement('lowercase', hasLowercase);
+            setRequirement('digit', hasDigit);
+            setRequirement('special', hasSpecial);
+            setRequirement('no-repeat', noRepeat);
+            setRequirement('no-sequence', noSequence);
+            setRequirement('not-common', notCommon);
+
+            // Calculate strength score
+            let score = 0;
+            if (hasLength) score++;
+            if (hasUppercase) score++;
+            if (hasLowercase) score++;
+            if (hasDigit) score++;
+            if (hasSpecial) score++;
+            if (noRepeat && noSequence && notCommon) score++;
+            if (pwd.length >= 12) score++;
+            if (pwd.length >= 16) score++;
+
+            // Update strength bar
+            updateStrengthBar(score);
+
+            // Check security warnings
+            checkPasswordSecurity();
+
+            // Check password match
+            checkPasswordMatch();
+        }
+
+        function updateStrengthBar(score) {
+            const segments = ['seg1', 'seg2', 'seg3', 'seg4', 'seg5'];
+            const label = document.getElementById('strengthLabel');
+
+            // Reset all segments
+            segments.forEach(s => {
+                const el = document.getElementById(s);
+                el.classList.remove('active', 'weak', 'fair', 'good', 'strong', 'very-strong');
+            });
+
+            // Remove all label classes
+            label.classList.remove('weak', 'fair', 'good', 'strong', 'very-strong');
+
+            let activeCount = 0;
+            let strengthClass = '';
+            let strengthText = '';
+
+            if (score <= 2) {
+                activeCount = 1; strengthClass = 'weak'; strengthText = 'Weak';
+            } else if (score <= 4) {
+                activeCount = 2; strengthClass = 'fair'; strengthText = 'Fair';
+            } else if (score <= 5) {
+                activeCount = 3; strengthClass = 'good'; strengthText = 'Good';
+            } else if (score <= 6) {
+                activeCount = 4; strengthClass = 'strong'; strengthText = 'Strong';
+            } else {
+                activeCount = 5; strengthClass = 'very-strong'; strengthText = 'Very Strong';
+            }
+
+            // Activate segments
+            for (let i = 0; i < activeCount; i++) {
+                const el = document.getElementById(segments[i]);
+                el.classList.add('active', strengthClass);
+            }
+
+            // Update label
+            label.textContent = strengthText;
+            label.classList.add(strengthClass);
+        }
+
+        function resetRequirements() {
+            ['length', 'uppercase', 'lowercase', 'digit', 'special', 'no-repeat', 'no-sequence', 'not-common'].forEach(id => {
+                setRequirement(id, false);
+            });
+
+            const segments = ['seg1', 'seg2', 'seg3', 'seg4', 'seg5'];
+            segments.forEach(s => {
+                document.getElementById(s).classList.remove('active', 'weak', 'fair', 'good', 'strong', 'very-strong');
+            });
+
+            const label = document.getElementById('strengthLabel');
+            label.textContent = 'Enter a password';
+            label.classList.remove('weak', 'fair', 'good', 'strong', 'very-strong');
+        }
+
+        function checkPasswordSecurity() {
+            const pwd = document.getElementById('registerForm:password').value.toLowerCase();
+            const email = document.getElementById('registerForm:email').value;
+            const firstname = document.getElementById('registerForm:firstname').value;
+            const lastname = document.getElementById('registerForm:lastname').value;
+
+            const warnEmail = document.getElementById('warn-email');
+            const warnName = document.getElementById('warn-name');
+
+            // Check email in password
+            if (email && email.includes('@')) {
+                const emailPrefix = email.substring(0, email.indexOf('@')).toLowerCase();
+                if (emailPrefix.length >= 3 && pwd.includes(emailPrefix)) {
+                    warnEmail.classList.add('show');
+                } else {
+                    warnEmail.classList.remove('show');
+                }
+            } else {
+                warnEmail.classList.remove('show');
+            }
+
+            // Check name in password
+            const firstLower = firstname ? firstname.toLowerCase() : '';
+            const lastLower = lastname ? lastname.toLowerCase() : '';
+
+            if ((firstLower.length >= 3 && pwd.includes(firstLower)) ||
+                (lastLower.length >= 3 && pwd.includes(lastLower))) {
+                warnName.classList.add('show');
+            } else {
+                warnName.classList.remove('show');
+            }
+        }
+
+        function checkPasswordMatch() {
+            const pwd = document.getElementById('registerForm:password').value;
+            const confirmPwd = document.getElementById('registerForm:confirmPassword').value;
+            const indicator = document.getElementById('matchIndicator');
+            const icon = document.getElementById('matchIcon');
+            const text = document.getElementById('matchText');
+
+            if (!confirmPwd) {
+                indicator.classList.remove('show');
+                return;
+            }
+
+            indicator.classList.add('show');
+
+            if (pwd === confirmPwd) {
+                indicator.classList.add('match');
+                indicator.classList.remove('no-match');
+                icon.innerHTML = '<path d="M20 6L9 17l-5-5"/>';
+                text.textContent = 'Passwords match';
+            } else {
+                indicator.classList.remove('match');
+                indicator.classList.add('no-match');
+                icon.innerHTML = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>';
+                text.textContent = 'Passwords do not match';
+            }
+        }
+
         //]]>
     </script>
 

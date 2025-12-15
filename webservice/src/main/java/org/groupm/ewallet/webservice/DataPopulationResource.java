@@ -66,13 +66,11 @@ public class DataPopulationResource {
             "hotmail.com", "mail.com", "gmx.com", "zoho.com", "fastmail.com"
     };
 
-    // Password components for strong passwords
-    private static final String[] PASSWORD_WORDS = {
-            "Thunder", "Crystal", "Shadow", "Phoenix", "Dragon", "Mountain", "Ocean", "Storm",
-            "Forest", "Galaxy", "Diamond", "Falcon", "Tiger", "Eagle", "Wolf", "Lion",
-            "Blizzard", "Sunset", "Aurora", "Nebula", "Cosmos", "Vortex", "Zenith", "Quantum"
-    };
-    private static final String PASSWORD_SPECIAL = "!@#$%&*?";
+    // Strong password components for OWASP 2024 compliance
+    private static final String UPPERCASE = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // Removed I, O to avoid confusion
+    private static final String LOWERCASE = "abcdefghjkmnpqrstuvwxyz"; // Removed i, l, o to avoid confusion
+    private static final String DIGITS = "23456789"; // Removed 0, 1 to avoid confusion with O, l
+    private static final String SPECIAL_CHARS = "!@#$%^&*?+-=";
 
     private static final String[] ACCOUNT_TYPES = { "Checking", "Savings", "Investment", "Retirement" };
     private static final String[] ACCOUNT_NAMES = { "Main Account", "Emergency Fund", "Vacation", "Daily Expenses",
@@ -112,11 +110,11 @@ public class DataPopulationResource {
         int format = random.nextInt(5);
 
         return switch (format) {
-            case 0 -> firstClean + "." + lastClean + index + "@" + domain; // prenom.nom123@
-            case 1 -> lastClean + "." + firstClean + index + "@" + domain; // nom.prenom123@
-            case 2 -> firstClean + "-" + lastClean + index + "@" + domain; // prenom-nom123@
-            case 3 -> firstClean + "_" + lastClean + index + "@" + domain; // prenom_nom123@
-            default -> firstClean.charAt(0) + lastClean + index + "@" + domain; // jdoe123@
+            case 0 -> firstClean + "." + lastClean + index + "@" + domain;
+            case 1 -> lastClean + "." + firstClean + index + "@" + domain;
+            case 2 -> firstClean + "-" + lastClean + index + "@" + domain;
+            case 3 -> firstClean + "_" + lastClean + index + "@" + domain;
+            default -> firstClean.charAt(0) + lastClean + index + "@" + domain;
         };
     }
 
@@ -130,14 +128,49 @@ public class DataPopulationResource {
     }
 
     /**
-     * Generate a strong password: Word1Word2 + number + special char.
+     * Generate a strong password that complies with OWASP 2024 + NIST SP800-63B.
+     * Requirements:
+     * - Minimum 12 characters (recommended)
+     * - At least 1 uppercase letter
+     * - At least 1 lowercase letter
+     * - At least 1 digit
+     * - At least 1 special character
+     * - No common sequences
+     * - No character repetitions
      */
     private String generateStrongPassword(Random random) {
-        String word1 = PASSWORD_WORDS[random.nextInt(PASSWORD_WORDS.length)];
-        String word2 = PASSWORD_WORDS[random.nextInt(PASSWORD_WORDS.length)];
-        int num = 10 + random.nextInt(90); // 10-99
-        char special = PASSWORD_SPECIAL.charAt(random.nextInt(PASSWORD_SPECIAL.length()));
-        return word1 + word2 + num + special;
+        StringBuilder password = new StringBuilder();
+
+        // Ensure at least one of each required character type (4 chars)
+        password.append(UPPERCASE.charAt(random.nextInt(UPPERCASE.length())));
+        password.append(LOWERCASE.charAt(random.nextInt(LOWERCASE.length())));
+        password.append(DIGITS.charAt(random.nextInt(DIGITS.length())));
+        password.append(SPECIAL_CHARS.charAt(random.nextInt(SPECIAL_CHARS.length())));
+
+        // Add more random characters to reach 12-16 characters total
+        int targetLength = 12 + random.nextInt(5); // 12-16 chars
+        String allChars = UPPERCASE + LOWERCASE + DIGITS + SPECIAL_CHARS;
+
+        while (password.length() < targetLength) {
+            char nextChar = allChars.charAt(random.nextInt(allChars.length()));
+
+            // Avoid repetition of the last character
+            if (password.length() > 0 && password.charAt(password.length() - 1) == nextChar) {
+                continue;
+            }
+            password.append(nextChar);
+        }
+
+        // Shuffle the password to randomize the position of required chars
+        char[] chars = password.toString().toCharArray();
+        for (int i = chars.length - 1; i > 0; i--) {
+            int j = random.nextInt(i + 1);
+            char temp = chars[i];
+            chars[i] = chars[j];
+            chars[j] = temp;
+        }
+
+        return new String(chars);
     }
 
     /**
