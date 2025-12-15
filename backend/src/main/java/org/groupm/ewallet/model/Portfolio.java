@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.json.bind.annotation.JsonbTransient;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +44,27 @@ public class Portfolio implements Serializable {
     /** Version pour optimistic locking - détection des conflits concurrents. */
     @Version
     private Long version;
+
+    /** Date de creation du portefeuille. */
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    /** Date de derniere modification du portefeuille. */
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    // ===================== Lifecycle Callbacks =====================
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 
     // ===================== Constructeurs =====================
 

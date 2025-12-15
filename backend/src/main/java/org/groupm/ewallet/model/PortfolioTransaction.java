@@ -57,6 +57,14 @@ public class PortfolioTransaction implements Serializable {
     @Version
     private Long version;
 
+    /** Date de creation de la transaction. */
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    /** Date de derniere modification de la transaction. */
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     // ===================== Constructors =====================
 
     public PortfolioTransaction() {
@@ -85,6 +93,13 @@ public class PortfolioTransaction implements Serializable {
         if (this.totalValue == null || this.totalValue.equals(BigDecimal.ZERO)) {
             this.totalValue = this.quantity.multiply(this.unitPrice);
         }
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 
     // ===================== Getters =====================
